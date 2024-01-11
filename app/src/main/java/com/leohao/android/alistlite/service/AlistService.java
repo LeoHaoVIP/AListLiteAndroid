@@ -86,6 +86,8 @@ public class AlistService extends Service {
         stopForeground(true);
         //关闭服务
         alistServer.shutdown();
+        //清空webView
+        MainActivity.getInstance().webView.loadUrl("about:blank");
         //更新AList运行状态
         MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
         if (wakeLock != null) {

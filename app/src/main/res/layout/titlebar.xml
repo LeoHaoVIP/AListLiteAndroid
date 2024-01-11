@@ -53,7 +53,7 @@
             android:scaleType="centerInside"
             android:layout_centerVertical="true"
             android:layout_toLeftOf="@id/btn_showSystemInfo"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="15dp"
             android:onClick="setAdminPassword"
             android:src="@drawable/admin"
     />
