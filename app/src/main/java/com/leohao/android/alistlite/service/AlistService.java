@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -45,8 +46,8 @@ public class AlistService extends Service {
         }
         //AList服务前端访问地址
         serverAddress = String.format(Locale.CHINA, "http://%s:%d", alistServer.getBindingIP(), Constants.ALIST_RUNNING_PORT);
-        Intent clickIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(serverAddress));
-        //用于打开浏览器
+        Intent clickIntent = new Intent(getApplicationContext(), MainActivity.class);
+        //用于点击状态栏进入主页面
         PendingIntent pendingIntent;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -54,13 +55,7 @@ public class AlistService extends Service {
             pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_ONE_SHOT);
         }
         //创建消息以维持后台
-        Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setColor(Constants.NOTIFICATION_COLOR)
-                .setContentTitle(getString(R.string.alist_service_is_running))
-                .setContentText(serverAddress)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentIntent(pendingIntent)
-                .build();
+        Notification notification = new NotificationCompat.Builder(this, channelId).setColor(Constants.NOTIFICATION_COLOR).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
         startForeground(startId, notification);
         try {
             //根据action决定是否启动AList服务端
@@ -72,6 +67,9 @@ public class AlistService extends Service {
                 alistServer.startup();
                 //加载AList前端页面
                 MainActivity.getInstance().webView.loadUrl(serverAddress);
+                //更新AList运行状态
+                MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
+                MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
             }
         } catch (Exception e) {
             Log.e(TAG, e.getLocalizedMessage());
@@ -88,8 +86,8 @@ public class AlistService extends Service {
         stopForeground(true);
         //关闭服务
         alistServer.shutdown();
-        //加载AList前端页面
-        MainActivity.getInstance().webView.loadUrl(serverAddress);
+        //更新AList运行状态
+        MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
         if (wakeLock != null) {
             wakeLock.release();
             wakeLock = null;
