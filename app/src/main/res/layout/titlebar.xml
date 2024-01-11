@@ -29,21 +29,17 @@
                 android:text="@string/developer_info"/>
     </LinearLayout>
 
-    <com.kyleduo.switchbutton.SwitchButton
-            android:id="@+id/switchButton"
-            style="@style/SwitchButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:gravity="end"
-            android:layout_alignParentEnd="true"
+    <ImageButton
+            android:id="@+id/btn_homepage"
+            android:background="@null"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:scaleType="centerInside"
             android:layout_centerVertical="true"
-            app:kswAnimationDuration="300"
-            app:kswBackDrawable="@drawable/ios_back_drawable"
-            app:kswThumbDrawable="@drawable/ios_thumb_selector"
-            app:kswThumbMarginLeft="2dp"
-            app:kswThumbMarginBottom="-4dp"
-            app:kswThumbMarginTop="2dp"
+            android:layout_toLeftOf="@id/btn_admin"
+            android:layout_marginRight="15dp"
+            android:onClick="jumpToHomepage"
+            android:src="@drawable/homepage"
     />
     <ImageButton
             android:id="@+id/btn_admin"
@@ -60,8 +56,8 @@
     <ImageButton
             android:id="@+id/btn_showSystemInfo"
             android:background="@null"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:onClick="showSystemInfo"
             android:scaleType="centerInside"
             android:layout_centerVertical="true"
@@ -69,5 +65,20 @@
             android:layout_marginRight="10dp"
             android:src="@drawable/info"
     />
-
+    <com.kyleduo.switchbutton.SwitchButton
+            android:id="@+id/switchButton"
+            style="@style/SwitchButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:gravity="end"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            app:kswAnimationDuration="300"
+            app:kswBackDrawable="@drawable/ios_back_drawable"
+            app:kswThumbDrawable="@drawable/ios_thumb_selector"
+            app:kswThumbMarginLeft="2dp"
+            app:kswThumbMarginBottom="-4dp"
+            app:kswThumbMarginTop="2dp"
+    />
 </RelativeLayout>

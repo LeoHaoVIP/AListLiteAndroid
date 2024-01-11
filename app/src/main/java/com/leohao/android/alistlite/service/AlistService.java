@@ -45,6 +45,7 @@ public class AlistService extends Service {
         }
         //AList服务前端访问地址
         serverAddress = String.format(Locale.CHINA, "http://%s:%d", alistServer.getBindingIP(), Constants.ALIST_RUNNING_PORT);
+        MainActivity.getInstance().serverAddress = serverAddress;
         Intent clickIntent = new Intent(getApplicationContext(), MainActivity.class);
         //用于点击状态栏进入主页面
         PendingIntent pendingIntent;
