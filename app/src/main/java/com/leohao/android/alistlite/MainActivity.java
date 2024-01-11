@@ -1,11 +1,12 @@
 package com.leohao.android.alistlite;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.webkit.SslErrorHandler;
@@ -17,6 +18,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
@@ -61,6 +64,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, e.getLocalizedMessage());
             }
         });
+    }
+
+    private void initView() {
+        serviceSwitch = findViewById(R.id.switchButton);
+        adminButton = findViewById(R.id.btn_admin);
+        runningInfoTextView = findViewById(R.id.tv_alist_status);
+        webView = findViewById(R.id.webview_alist);
         // 设置背景色
         webView.getSettings().setUserAgentString("Android");
         webView.getSettings().setJavaScriptEnabled(true);
@@ -83,14 +93,6 @@ public class MainActivity extends AppCompatActivity {
                 handler.proceed();
             }
         });
-
-    }
-
-    private void initView() {
-        serviceSwitch = findViewById(R.id.switchButton);
-        adminButton = findViewById(R.id.btn_admin);
-        webView = findViewById(R.id.webview_alist);
-        runningInfoTextView = findViewById(R.id.tv_alist_status);
     }
 
     /**
@@ -125,16 +127,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dialog.show();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (webView.canGoBack()) {
-                webView.goBack();
-            }
-        }
-        return super.onKeyDown(keyCode, event);
     }
 
     public static MainActivity getInstance() {
