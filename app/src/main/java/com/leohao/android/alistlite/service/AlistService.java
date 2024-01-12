@@ -102,7 +102,7 @@ public class AlistService extends Service {
         super.onCreate();
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AlistService.class.getName());
-        wakeLock.acquire();
+        wakeLock.acquire(10*60*1000L);
     }
 
     @Nullable

@@ -34,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private Alist alistServer;
     private ImageButton adminButton;
     private ImageButton homepageButton;
+    private ImageButton webViewGoBackButton;
+    private ImageButton webViewGoForwardButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,22 +48,36 @@ public class MainActivity extends AppCompatActivity {
         initView();
         serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
-                //关闭服务
-                startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_SHUTDOWN));
-                adminButton.setVisibility(View.INVISIBLE);
-                homepageButton.setVisibility(View.INVISIBLE);
+                //准备停止AList服务
+                readyToShutdownService();
                 return;
             }
             try {
-                //启动服务
-                startService(new Intent(this, AlistService.class));
-                alistServer = Alist.getInstance();
-                adminButton.setVisibility(View.VISIBLE);
-                homepageButton.setVisibility(View.VISIBLE);
+                //准备开启AList服务
+                readyToStartService();
             } catch (Exception e) {
                 Log.d(TAG, e.getLocalizedMessage());
             }
         });
+    }
+
+    private void readyToStartService() {
+        //启动服务
+        startService(new Intent(this, AlistService.class));
+        alistServer = Alist.getInstance();
+        adminButton.setVisibility(View.VISIBLE);
+        homepageButton.setVisibility(View.VISIBLE);
+        webViewGoBackButton.setVisibility(View.VISIBLE);
+        webViewGoForwardButton.setVisibility(View.VISIBLE);
+    }
+
+    private void readyToShutdownService() {
+        //关闭服务
+        startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_SHUTDOWN));
+        adminButton.setVisibility(View.INVISIBLE);
+        homepageButton.setVisibility(View.INVISIBLE);
+        webViewGoBackButton.setVisibility(View.INVISIBLE);
+        webViewGoForwardButton.setVisibility(View.INVISIBLE);
     }
 
     private void initView() {
@@ -71,6 +87,10 @@ public class MainActivity extends AppCompatActivity {
         adminButton.setVisibility(View.INVISIBLE);
         homepageButton = findViewById(R.id.btn_homepage);
         homepageButton.setVisibility(View.INVISIBLE);
+        webViewGoBackButton = findViewById(R.id.btn_webViewGoBack);
+        webViewGoBackButton.setVisibility(View.INVISIBLE);
+        webViewGoForwardButton = findViewById(R.id.btn_webViewGoForward);
+        webViewGoForwardButton.setVisibility(View.INVISIBLE);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         webView = findViewById(R.id.webview_alist);
         // 设置背景色
@@ -149,9 +169,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void finish() {
         //关闭服务
-        startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_SHUTDOWN));
-        adminButton.setVisibility(View.INVISIBLE);
-        homepageButton.setVisibility(View.INVISIBLE);
+        readyToShutdownService();
         super.finish();
+    }
+
+    /**
+     * 处理webView前进后退按钮点击事件
+     */
+    public void webViewGoBackOrForward(View view) {
+        if (view.getId() == R.id.btn_webViewGoBack) {
+            if (webView.canGoBack()) {
+                webView.goBack();
+            }
+        }
+        if (view.getId() == R.id.btn_webViewGoForward) {
+            if (webView.canGoForward()) {
+                webView.goForward();
+            }
+        }
     }
 }

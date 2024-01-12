@@ -23,4 +23,34 @@
             android:layout_marginTop="5dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
+    <ImageButton
+            android:id="@+id/btn_webViewGoBack"
+            android:background="@null"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:elevation="16dp"
+            android:alpha="0.5"
+            android:scaleType="centerInside"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="40dp"
+            android:onClick="webViewGoBackOrForward"
+            android:src="@drawable/go_back"
+    />
+    <ImageButton
+            android:id="@+id/btn_webViewGoForward"
+            android:background="@null"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:elevation="16dp"
+            android:alpha="0.5"
+            android:scaleType="centerInside"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="40dp"
+            android:onClick="webViewGoBackOrForward"
+            android:src="@drawable/go_forward"
+    />
 </RelativeLayout>
