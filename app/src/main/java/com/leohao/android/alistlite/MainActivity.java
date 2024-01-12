@@ -1,15 +1,12 @@
 package com.leohao.android.alistlite;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.net.http.SslError;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -94,27 +91,8 @@ public class MainActivity extends AppCompatActivity {
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         webView = findViewById(R.id.webview_alist);
         // 设置背景色
-        webView.getSettings().setUserAgentString("Android");
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                Log.i("URL", url);
-                super.onPageStarted(view, url, favicon);
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                view.loadUrl("javascript:window.handler.show(document.body.innerHTML);");
-                super.onPageFinished(view, url);
-            }
-
-            @Override
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.proceed();
-            }
-        });
     }
 
     /**
@@ -171,6 +149,19 @@ public class MainActivity extends AppCompatActivity {
         //关闭服务
         readyToShutdownService();
         super.finish();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        //设置用户按返回键后，APP不退出（针对较低版本的Android）
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            startActivity(intent);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     /**
