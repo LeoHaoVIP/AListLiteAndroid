@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void readyToStartService() {
         //启动服务
-        startService(new Intent(this, AlistService.class));
+        startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_STARTUP));
         alistServer = Alist.getInstance();
         adminButton.setVisibility(View.VISIBLE);
         homepageButton.setVisibility(View.VISIBLE);

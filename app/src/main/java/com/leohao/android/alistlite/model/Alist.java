@@ -7,9 +7,14 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import com.jayway.jsonpath.JsonPath;
 import com.leohao.android.alistlite.MainActivity;
+import com.leohao.android.alistlite.util.Constants;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author LeoHao
@@ -20,7 +25,14 @@ public class Alist {
     final String TYPE_HTTP = "http";
     final String TYPE_HTTPS = "https";
     final String TYPE_UNIX = "unix";
+    /**
+     * 应用数据存储目录
+     */
     String dataPath = context.getExternalFilesDir("data").getAbsolutePath();
+    /**
+     * 配置数据存储目录
+     */
+    String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
 
     private static class SingletonHolder {
         private static final Alist INSTANCE = new Alist();
@@ -57,6 +69,17 @@ public class Alist {
         }, (level, msg) -> {
             //日志记录
         });
+    }
+
+    /**
+     * 从本地配置文件中读取指定配置项
+     *
+     * @param jsonPath 配置项路径 如 scheme.http_port
+     */
+    public String getConfigValue(String jsonPath) throws IOException {
+        File configFile = new File(configPath);
+        String configString = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+        return JsonPath.read(configString, jsonPath).toString();
     }
 
     public void setAdminPassword(String pwd) throws Exception {

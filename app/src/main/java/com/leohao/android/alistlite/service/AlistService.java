@@ -30,8 +30,12 @@ public class AlistService extends Service {
     private final static String TAG = "AListService";
     private final static String CHANNEL_ID = "com.leohao.android.alistlite";
     private final static String CHANNEL_NAME = "AlistService";
+    public final static String ACTION_STARTUP = "com.leohao.android.alistlite.ACTION_STARTUP";
     public final static String ACTION_SHUTDOWN = "com.leohao.android.alistlite.ACTION_SHUTDOWN";
     private final Alist alistServer = Alist.getInstance();
+    /**
+     * AList服务前端访问地址
+     */
     private String serverAddress;
 
     @Override
@@ -43,9 +47,6 @@ public class AlistService extends Service {
         } else {
             channelId = "";
         }
-        //AList服务前端访问地址
-        serverAddress = String.format(Locale.CHINA, "http://%s:%d", alistServer.getBindingIP(), Constants.ALIST_RUNNING_PORT);
-        MainActivity.getInstance().serverAddress = serverAddress;
         Intent clickIntent = new Intent(getApplicationContext(), MainActivity.class);
         //用于点击状态栏进入主页面
         PendingIntent pendingIntent;
@@ -54,25 +55,36 @@ public class AlistService extends Service {
         } else {
             pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_ONE_SHOT);
         }
-        //创建消息以维持后台
-        Notification notification = new NotificationCompat.Builder(this, channelId).setColor(Constants.NOTIFICATION_COLOR).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
-        startForeground(startId, notification);
-        try {
-            //根据action决定是否启动AList服务端
-            if (ACTION_SHUTDOWN.equals(intent.getAction())) {
-                //关闭服务
-                exitService();
-            } else if (!alistServer.hasRunning()) {
-                //开启AList服务端
-                alistServer.startup();
-                //加载AList前端页面
-                MainActivity.getInstance().webView.loadUrl(serverAddress);
-                //更新AList运行状态
-                MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
-                MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
+        //根据action决定是否启动AList服务端
+        if (ACTION_SHUTDOWN.equals(intent.getAction())) {
+            //关闭服务
+            exitService();
+        }
+        if (ACTION_STARTUP.equals(intent.getAction())) {
+            if (!alistServer.hasRunning()) {
+                try {
+                    //开启AList服务端
+                    alistServer.startup();
+                    //读取AList服务运行端口
+                    String serverPort = alistServer.getConfigValue("scheme.http_port");
+                    //AList服务前端访问地址
+                    serverAddress = String.format(Locale.CHINA, "http://%s:%s", alistServer.getBindingIP(), serverPort);
+                    MainActivity.getInstance().serverAddress = serverAddress;
+                    //加载AList前端页面
+                    MainActivity.getInstance().webView.loadUrl(serverAddress);
+                    //更新AList运行状态
+                    MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
+                    MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
+                    //创建消息以维持后台
+                    Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
+                    startForeground(startId, notification);
+                } catch (Exception e) {
+                    Log.e(TAG, e.getLocalizedMessage());
+                    //状态开关恢复到关闭状态
+                    MainActivity.getInstance().serviceSwitch.setChecked(false);
+                    showToast(String.format("AList 启动失败: %s", e.getLocalizedMessage()));
+                }
             }
-        } catch (Exception e) {
-            Log.e(TAG, e.getLocalizedMessage());
         }
         return START_NOT_STICKY;
     }
@@ -102,7 +114,7 @@ public class AlistService extends Service {
         super.onCreate();
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AlistService.class.getName());
-        wakeLock.acquire(10*60*1000L);
+        wakeLock.acquire();
     }
 
     @Nullable
