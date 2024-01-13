@@ -5,5 +5,11 @@
     <string name="alist_service_is_running">AList 服务运行中</string>
     <string name="alist_service_not_running">AList 服务未启动</string>
     <string name="app_name_ext">AList on Android</string>
+    <string name="alist_version">AList v3.26.0&#160;</string>
+    <string name="check_updates">|&#160;检查更新</string>
     <string name="developer_info">Developed by LeoHao</string>
+    <string name="support_me">“你的支持是我持续优化的强大动力”</string>
+    <string name="opensource_info">OpenSource at http://z6b.cn/QEihu</string>
+    <string name="setup_tutorial">视频教程 http://z6b.cn/vNa12</string>
+    <string name="contact_me">联系作者 zhaowenhao2867@outlook.com</string>
 </resources>

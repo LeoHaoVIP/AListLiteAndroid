@@ -1,14 +1,14 @@
 package com.leohao.android.alistlite;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.net.http.SslError;
 import android.os.Bundle;
+import android.text.InputType;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -97,30 +97,22 @@ public class MainActivity extends AppCompatActivity {
         // 设置背景色
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                Log.i("URL", url);
-                super.onPageStarted(view, url, favicon);
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-            }
-
-            @Override
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.proceed();
-            }
-        });
+        webView.setWebViewClient(new WebViewClient());
     }
 
     /**
      * 显示系统信息
      */
     public void showSystemInfo(View view) {
-        showToast("AList version: " + Constants.ALIST_VERSION);
+        AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.system_info, null);
+        systemInfoDialog.setView(dialogView);
+        systemInfoDialog.show();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        //窗口大小设置必须在show()之后
+        systemInfoDialog.getWindow().setLayout(width - 100, height * 2 / 5);
     }
 
     /**
@@ -128,6 +120,9 @@ public class MainActivity extends AppCompatActivity {
      */
     public void setAdminPassword(View view) {
         final EditText editText = new EditText(MainActivity.this);
+        //设置密码不可见
+        editText.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        editText.setSingleLine();
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
         dialog.setTitle("设置管理员密码");
         dialog.setView(editText);
@@ -138,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 String pwd = editText.getText().toString().trim();
                 if (!"".equals(pwd)) {
                     alistServer.setAdminPassword(editText.getText().toString());
-                    showToast("管理员密码已更新: " + pwd);
+                    showToast("管理员密码已更新");
                 } else {
                     showToast("管理员密码不能为空");
                 }
@@ -155,6 +150,10 @@ public class MainActivity extends AppCompatActivity {
      */
     public void jumpToHomepage(View view) {
         webView.loadUrl(serverAddress);
+    }
+
+    public void checkUpdates(View view) {
+        showToast("checkUpdates");
     }
 
     public static MainActivity getInstance() {
