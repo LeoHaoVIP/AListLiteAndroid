@@ -1,8 +1,10 @@
 package com.leohao.android.alistlite;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.InputType;
+import android.os.Looper;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -17,10 +19,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import cn.hutool.http.Method;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.MyHttpUtil;
 
 /**
  * @author LeoHao
@@ -37,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton homepageButton;
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
+    String currentAppVersion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
         //初始化控件
-        initView();
+        init();
         serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
                 //准备停止AList服务
@@ -81,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         webViewGoForwardButton.setVisibility(View.INVISIBLE);
     }
 
-    private void initView() {
+    private void init() {
         serviceSwitch = findViewById(R.id.switchButton);
         adminButton = findViewById(R.id.btn_admin);
         //服务未开启时禁止用户设置管理员密码
@@ -98,6 +105,8 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.setWebViewClient(new WebViewClient());
+        //获取当前APP版本号
+        currentAppVersion = getCurrentAppVersion();
     }
 
     /**
@@ -107,6 +116,9 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.system_info, null);
+        //设定APP版本号
+        TextView appVersionTextView = dialogView.findViewById(R.id.tv_app_version);
+        appVersionTextView.setText(String.format("v%s ", currentAppVersion));
         systemInfoDialog.setView(dialogView);
         systemInfoDialog.show();
         int width = getResources().getDisplayMetrics().widthPixels;
@@ -153,7 +165,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void checkUpdates(View view) {
-        showToast("checkUpdates");
+        new Thread(() -> {
+            //获取最新release版本信息
+            String releaseInfo = MyHttpUtil.request(Constants.updateCheckUrl, Method.GET);
+            JSONObject release = JSONUtil.parseObj(releaseInfo);
+            if (!release.containsKey("tag_name")) {
+                Looper.prepare();
+                showToast("无法获取更新");
+                Looper.loop();
+                return;
+            }
+            //最新版本号
+            String latestVersion = release.getStr("tag_name").substring(1);
+            //最新版本基于的AList版本
+            String latestOnAlistVersion = release.getStr("name").substring(12);
+            //新版本APK下载地址
+            String latestAppDownloadLink = (String) release.getByPath("assets[0].browser_download_url");
+            //发现新版本
+            if (latestVersion.compareTo(currentAppVersion) > 0) {
+                Looper.prepare();
+                showToast("发现新版本 " + latestVersion + " | AList " + latestOnAlistVersion);
+                //跳转到浏览器下载
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(latestAppDownloadLink));
+                startActivity(intent);
+                Looper.loop();
+            } else {
+                Looper.prepare();
+                showToast("当前已是最新版本");
+                Looper.loop();
+            }
+        }).start();
+    }
+
+    /**
+     * 获取当前APP版本
+     */
+    private String getCurrentAppVersion() {
+        String versionName = "unknown";
+        try {
+            versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "getCurrentVersion: ", e);
+        }
+        return versionName;
     }
 
     public static MainActivity getInstance() {

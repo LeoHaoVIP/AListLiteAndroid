@@ -61,11 +61,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         <TextView
+                android:id="@+id/tv_app_version"
                 android:background="@null"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:text="@string/alist_version"
+                android:text="@string/app_version"
         />
         <TextView
                 android:background="@null"
