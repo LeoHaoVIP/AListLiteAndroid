@@ -69,6 +69,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        serviceSwitch.setChecked(true);
+    }
+
     private void readyToStartService() {
         //启动服务
         startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_STARTUP));
