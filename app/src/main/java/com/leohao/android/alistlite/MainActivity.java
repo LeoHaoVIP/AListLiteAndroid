@@ -1,9 +1,13 @@
 package com.leohao.android.alistlite;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
@@ -19,12 +23,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
+import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
 
@@ -37,12 +43,13 @@ public class MainActivity extends AppCompatActivity {
     public WebView webView = null;
     public TextView runningInfoTextView = null;
     public SwitchButton serviceSwitch = null;
-    public String serverAddress = "about:blank";
+    public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
     private ImageButton adminButton;
     private ImageButton homepageButton;
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
+    private SwipeRefreshLayout swipeRefreshLayout;
     String currentAppVersion;
 
     @Override
@@ -54,19 +61,6 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
         //初始化控件
         init();
-        serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!isChecked) {
-                //准备停止AList服务
-                readyToShutdownService();
-                return;
-            }
-            try {
-                //准备开启AList服务
-                readyToStartService();
-            } catch (Exception e) {
-                Log.d(TAG, e.getLocalizedMessage());
-            }
-        });
     }
 
     @Override
@@ -106,13 +100,42 @@ public class MainActivity extends AppCompatActivity {
         webViewGoForwardButton = findViewById(R.id.btn_webViewGoForward);
         webViewGoForwardButton.setVisibility(View.INVISIBLE);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         webView = findViewById(R.id.webview_alist);
         // 设置背景色
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (webView.getProgress() == 100) {
+                    //停止下拉刷新动画
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            }
+        });
         //获取当前APP版本号
         currentAppVersion = getCurrentAppVersion();
+        //设置服务开关监听
+        serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked) {
+                //准备停止AList服务
+                readyToShutdownService();
+                return;
+            }
+            try {
+                //准备开启AList服务
+                readyToStartService();
+            } catch (Exception e) {
+                Log.d(TAG, e.getLocalizedMessage());
+            }
+        });
+        //设置下滑刷新控件监听
+        swipeRefreshLayout.setOnRefreshListener(() -> new Handler().postDelayed(() -> {
+            //webView刷新
+            webView.reload();
+        }, 0));
     }
 
     /**
@@ -257,6 +280,17 @@ public class MainActivity extends AppCompatActivity {
             if (webView.canGoForward()) {
                 webView.goForward();
             }
+        }
+    }
+
+    /**
+     * 复制 AList 服务地址到剪切板
+     */
+    public void copyAddressToClipboard(View view) {
+        ClipBoardHelper clipBoardHelper = new ClipBoardHelper(getApplicationContext());
+        if (!Constants.URL_ABOUT_BLANK.equals(this.serverAddress)) {
+            clipBoardHelper.copyText(this.serverAddress);
+            showToast("AList 服务地址已复制");
         }
     }
 }

@@ -13,16 +13,24 @@
             android:textSize="15sp"
             android:layout_marginLeft="15dp"
             android:gravity="left"
+            android:clickable="true"
+            android:onClick="copyAddressToClipboard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
     />
-    <WebView
-            android:id="@+id/webview_alist"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_layout"
             android:layout_below="@id/tv_alist_status"
-            android:background="@color/gray"
-            android:layout_marginTop="5dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:layout_marginTop="5dp"
+            android:orientation="vertical">
+        <WebView
+                android:id="@+id/webview_alist"
+                android:background="@color/gray"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     <ImageButton
             android:id="@+id/btn_webViewGoBack"
             android:background="@null"

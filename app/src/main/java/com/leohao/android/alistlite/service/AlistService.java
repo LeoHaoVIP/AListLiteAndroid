@@ -102,6 +102,8 @@ public class AlistService extends Service {
         MainActivity.getInstance().webView.loadUrl("about:blank");
         //更新AList运行状态
         MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
+        //重置 AList 服务地址
+        MainActivity.getInstance().serverAddress = Constants.URL_ABOUT_BLANK;
         if (wakeLock != null) {
             wakeLock.release();
             wakeLock = null;
