@@ -27,7 +27,7 @@ public class AlistService extends Service {
      * 电源唤醒锁
      */
     private PowerManager.WakeLock wakeLock = null;
-    private final static String TAG = "AListService";
+    public final static String TAG = "AListService";
     private final static String CHANNEL_ID = "com.leohao.android.alistlite";
     private final static String CHANNEL_NAME = "AlistService";
     public final static String ACTION_STARTUP = "com.leohao.android.alistlite.ACTION_STARTUP";

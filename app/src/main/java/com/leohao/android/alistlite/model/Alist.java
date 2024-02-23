@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.jayway.jsonpath.JsonPath;
 import com.leohao.android.alistlite.MainActivity;
+import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
 import org.apache.commons.io.FileUtils;
 
@@ -67,7 +68,8 @@ public class Alist {
                 notifyStatusChanged();
             }
         }, (level, msg) -> {
-            //日志记录
+            //日志捕捉
+            Log.i(AlistService.TAG, String.format("level : %s | msg : %s", level, msg));
         });
     }
 
