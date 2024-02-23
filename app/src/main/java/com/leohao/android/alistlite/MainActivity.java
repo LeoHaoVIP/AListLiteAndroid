@@ -70,8 +70,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void readyToStartService() {
-        //启动服务
-        startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_STARTUP));
+        //Service启动Intent
+        Intent intent = new Intent(this, AlistService.class).setAction(AlistService.ACTION_STARTUP);
+        //调用服务
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
         alistServer = Alist.getInstance();
         adminButton.setVisibility(View.VISIBLE);
         homepageButton.setVisibility(View.VISIBLE);
@@ -80,8 +86,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void readyToShutdownService() {
-        //关闭服务
-        startService(new Intent(this, AlistService.class).setAction(AlistService.ACTION_SHUTDOWN));
+        //Service关闭Intent
+        Intent intent = new Intent(this, AlistService.class).setAction(AlistService.ACTION_SHUTDOWN);
+        //调用服务
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
         adminButton.setVisibility(View.INVISIBLE);
         homepageButton.setVisibility(View.INVISIBLE);
         webViewGoBackButton.setVisibility(View.INVISIBLE);

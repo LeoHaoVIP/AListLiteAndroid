@@ -95,7 +95,11 @@ public class AlistService extends Service {
     }
 
     public void exitService() {
-        stopForeground(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);
+        }
         //关闭服务
         alistServer.shutdown();
         //清空webView
