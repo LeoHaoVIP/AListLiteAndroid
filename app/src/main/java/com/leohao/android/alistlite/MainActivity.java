@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     public WebView webView = null;
     public TextView runningInfoTextView = null;
+    public TextView AppInfoTextView = null;
     public SwitchButton serviceSwitch = null;
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
@@ -102,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         serviceSwitch = findViewById(R.id.switchButton);
+        AppInfoTextView = findViewById(R.id.tv_app_info);
         adminButton = findViewById(R.id.btn_admin);
         //服务未开启时禁止用户设置管理员密码
         adminButton.setVisibility(View.INVISIBLE);
@@ -129,6 +131,8 @@ public class MainActivity extends AppCompatActivity {
         });
         //获取当前APP版本号
         currentAppVersion = getCurrentAppVersion();
+        //更新AppName显示版本信息
+        AppInfoTextView.setText(String.format("%s %s", AppInfoTextView.getText(), currentAppVersion));
         //设置服务开关监听
         serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
