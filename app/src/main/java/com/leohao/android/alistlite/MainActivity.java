@@ -1,8 +1,5 @@
 package com.leohao.android.alistlite;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -42,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     public WebView webView = null;
     public TextView runningInfoTextView = null;
-    public TextView AppInfoTextView = null;
+    public TextView appInfoTextView = null;
     public SwitchButton serviceSwitch = null;
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
@@ -103,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         serviceSwitch = findViewById(R.id.switchButton);
-        AppInfoTextView = findViewById(R.id.tv_app_info);
+        appInfoTextView = findViewById(R.id.tv_app_info);
         adminButton = findViewById(R.id.btn_admin);
         //服务未开启时禁止用户设置管理员密码
         adminButton.setVisibility(View.INVISIBLE);
@@ -132,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         //获取当前APP版本号
         currentAppVersion = getCurrentAppVersion();
         //更新AppName显示版本信息
-        AppInfoTextView.setText(String.format("%s %s", AppInfoTextView.getText(), currentAppVersion));
+        appInfoTextView.setText(String.format("%s %s", appInfoTextView.getText(), currentAppVersion));
         //设置服务开关监听
         serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
@@ -212,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
     public void checkUpdates(View view) {
         new Thread(() -> {
             //获取最新release版本信息
-            String releaseInfo = MyHttpUtil.request(Constants.updateCheckUrl, Method.GET);
+            String releaseInfo = MyHttpUtil.request(Constants.UPDATE_CHECK_URL, Method.GET);
             JSONObject release = JSONUtil.parseObj(releaseInfo);
             if (!release.containsKey("tag_name")) {
                 Looper.prepare();
@@ -224,14 +221,16 @@ public class MainActivity extends AppCompatActivity {
             String latestVersion = release.getStr("tag_name").substring(1);
             //最新版本基于的AList版本
             String latestOnAlistVersion = release.getStr("name").substring(12);
-            //新版本APK下载地址
-            String latestAppDownloadLink = (String) release.getByPath("assets[0].browser_download_url");
+            //新版本APK下载地址（Github）
+//            String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
+            //加速地址（pan.leohao.cn）
+            String downloadLinkFast = String.format("%s/AListLite-v%s.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion);
             //发现新版本
             if (latestVersion.compareTo(currentAppVersion) > 0) {
                 Looper.prepare();
                 showToast("发现新版本 " + latestVersion + " | AList " + latestOnAlistVersion);
                 //跳转到浏览器下载
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(latestAppDownloadLink));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkFast));
                 startActivity(intent);
                 Looper.loop();
             } else {
