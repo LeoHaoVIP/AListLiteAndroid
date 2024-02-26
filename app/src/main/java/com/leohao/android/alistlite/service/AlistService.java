@@ -33,10 +33,6 @@ public class AlistService extends Service {
     public final static String ACTION_STARTUP = "com.leohao.android.alistlite.ACTION_STARTUP";
     public final static String ACTION_SHUTDOWN = "com.leohao.android.alistlite.ACTION_SHUTDOWN";
     private final Alist alistServer = Alist.getInstance();
-    /**
-     * AList服务前端访问地址
-     */
-    private String serverAddress;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -61,29 +57,29 @@ public class AlistService extends Service {
             exitService();
         }
         if (ACTION_STARTUP.equals(intent.getAction())) {
-            if (!alistServer.hasRunning()) {
-                try {
+            try {
+                if (!alistServer.hasRunning()) {
                     //开启AList服务端
                     alistServer.startup();
-                    //读取AList服务运行端口
-                    String serverPort = alistServer.getConfigValue("scheme.http_port");
-                    //AList服务前端访问地址
-                    serverAddress = String.format(Locale.CHINA, "http://%s:%s", alistServer.getBindingIP(), serverPort);
-                    MainActivity.getInstance().serverAddress = serverAddress;
-                    //加载AList前端页面
-                    MainActivity.getInstance().webView.loadUrl(serverAddress);
-                    //更新AList运行状态
-                    MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
-                    MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
-                    //创建消息以维持后台
-                    Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
-                    startForeground(startId, notification);
-                } catch (Exception e) {
-                    Log.e(TAG, e.getLocalizedMessage());
-                    //状态开关恢复到关闭状态
-                    MainActivity.getInstance().serviceSwitch.setChecked(false);
-                    showToast(String.format("AList 启动失败: %s", e.getLocalizedMessage()));
                 }
+                //读取AList服务运行端口
+                String serverPort = alistServer.getConfigValue("scheme.http_port");
+                //AList服务前端访问地址
+                String serverAddress = String.format(Locale.CHINA, "http://%s:%s", alistServer.getBindingIP(), serverPort);
+                MainActivity.getInstance().serverAddress = serverAddress;
+                //加载AList前端页面
+                MainActivity.getInstance().webView.loadUrl(serverAddress);
+                //更新AList运行状态
+                MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
+                MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
+                //创建消息以维持后台
+                Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
+                startForeground(startId, notification);
+            } catch (Exception e) {
+                Log.e(TAG, e.getLocalizedMessage());
+                //状态开关恢复到关闭状态
+                MainActivity.getInstance().serviceSwitch.setChecked(false);
+                showToast(String.format("AList 启动失败: %s", e.getLocalizedMessage()));
             }
         }
         return START_NOT_STICKY;

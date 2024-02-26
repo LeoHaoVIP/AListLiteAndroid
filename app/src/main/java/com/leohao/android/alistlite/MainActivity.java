@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -18,6 +19,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -30,11 +32,15 @@ import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
+
+import java.util.List;
 
 /**
  * @author LeoHao
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
     private static MainActivity instance;
     private static final String TAG = "MainActivity";
     public WebView webView = null;
@@ -48,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private final int SYSTEM_PERMISSIONS = 145;
     String currentAppVersion;
 
     @Override
@@ -59,11 +66,46 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
         //初始化控件
         init();
+        //权限检查
+        checkPermissions();
+    }
+
+    /**
+     * 权限检查
+     */
+    @AfterPermissionGranted(SYSTEM_PERMISSIONS)
+    private void checkPermissions() {
+        String[] perms = {Manifest.permission.POST_NOTIFICATIONS,
+                Manifest.permission.FOREGROUND_SERVICE,
+                Manifest.permission.FOREGROUND_SERVICE_SPECIAL_USE,
+                Manifest.permission.INTERNET,
+                Manifest.permission.WAKE_LOCK,
+        };
+        if (!EasyPermissions.hasPermissions(this, perms)) {
+            EasyPermissions.requestPermissions(this, Constants.PERMISSION_APPLY_MSG,
+                    SYSTEM_PERMISSIONS, perms);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // Forward results to EasyPermissions
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, List<String> list) {
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        //默认开启服务
         serviceSwitch.setChecked(true);
     }
 

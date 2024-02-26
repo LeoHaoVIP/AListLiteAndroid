@@ -8,7 +8,7 @@ import android.util.Log;
 import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.jayway.jsonpath.JsonPath;
-import com.leohao.android.alistlite.MainActivity;
+import com.leohao.android.alistlite.AlistLiteApplication;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
 import org.apache.commons.io.FileUtils;
@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
  * @author LeoHao
  */
 public class Alist {
-    private final Context context = MainActivity.getInstance().getApplicationContext();
+    private final Context context = AlistLiteApplication.context;
     public static String ACTION_STATUS_CHANGED = "com.leohao.android.alistlite.ACTION_STATUS_CHANGED";
     final String TYPE_HTTP = "http";
     final String TYPE_HTTPS = "https";
