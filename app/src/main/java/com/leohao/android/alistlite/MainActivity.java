@@ -1,6 +1,5 @@
 package com.leohao.android.alistlite;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -26,21 +25,24 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.hjq.permissions.OnPermissionCallback;
+import com.hjq.permissions.Permission;
+import com.hjq.permissions.XXPermissions;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
-import pub.devrel.easypermissions.AfterPermissionGranted;
-import pub.devrel.easypermissions.EasyPermissions;
 
 import java.util.List;
+
+import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
  * @author LeoHao
  */
-public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
+public class MainActivity extends AppCompatActivity {
     private static MainActivity instance;
     private static final String TAG = "MainActivity";
     public WebView webView = null;
@@ -54,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private final int SYSTEM_PERMISSIONS = 145;
     String currentAppVersion;
 
     @Override
@@ -73,33 +74,28 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     /**
      * 权限检查
      */
-    @AfterPermissionGranted(SYSTEM_PERMISSIONS)
     private void checkPermissions() {
-        String[] perms = {Manifest.permission.POST_NOTIFICATIONS,
-                Manifest.permission.FOREGROUND_SERVICE,
-                Manifest.permission.FOREGROUND_SERVICE_SPECIAL_USE,
-                Manifest.permission.INTERNET,
-                Manifest.permission.WAKE_LOCK,
-        };
-        if (!EasyPermissions.hasPermissions(this, perms)) {
-            EasyPermissions.requestPermissions(this, Constants.PERMISSION_APPLY_MSG,
-                    SYSTEM_PERMISSIONS, perms);
-        }
-    }
+        XXPermissions.with(this)
+                // 申请单个权限
+                .permission(Permission.POST_NOTIFICATIONS)
+                .permission(Permission.NOTIFICATION_SERVICE)
+                .request(new OnPermissionCallback() {
+                    @Override
+                    public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
+                        if (!allGranted) {
+                            showToast("部分权限未授予，软件可能无法正常运行");
+                        }
+                    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Forward results to EasyPermissions
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
-    }
-
-    @Override
-    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
-    }
-
-    @Override
-    public void onPermissionsDenied(int requestCode, List<String> list) {
+                    @Override
+                    public void onDenied(@NonNull List<String> permissions, boolean doNotAskAgain) {
+                        if (doNotAskAgain) {
+                            showToast("请手动授予相关权限");
+                            // 如果是被永久拒绝就跳转到应用权限系统设置页面
+                            XXPermissions.startPermissionActivity(context, permissions);
+                        }
+                    }
+                });
     }
 
     @Override
