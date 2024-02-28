@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         XXPermissions.with(this)
                 // 申请单个权限
                 .permission(Permission.POST_NOTIFICATIONS)
+                .permission(Permission.MANAGE_EXTERNAL_STORAGE)
                 .request(new OnPermissionCallback() {
                     @Override
                     public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
