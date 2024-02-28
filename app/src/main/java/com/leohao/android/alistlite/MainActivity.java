@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
         XXPermissions.with(this)
                 // 申请单个权限
                 .permission(Permission.POST_NOTIFICATIONS)
-                .permission(Permission.NOTIFICATION_SERVICE)
                 .request(new OnPermissionCallback() {
                     @Override
                     public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
@@ -91,8 +90,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onDenied(@NonNull List<String> permissions, boolean doNotAskAgain) {
                         if (doNotAskAgain) {
                             showToast("请手动授予相关权限");
-                            // 如果是被永久拒绝就跳转到应用权限系统设置页面
-                            XXPermissions.startPermissionActivity(context, permissions);
                         }
                     }
                 });
