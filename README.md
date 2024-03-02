@@ -4,9 +4,10 @@
   <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/releases/latest" target="_blank" rel="noopener noreferrer">
    <img alt="release" src="https://img.shields.io/github/v/release/LeoHaoVIP/AListLiteAndroid">
    </a>
-   <img alt="platform" src="https://img.shields.io/badge/platform-android-ff69b4.svg">
+  <img alt="platform" src="https://img.shields.io/badge/platform-android-ff69b4.svg">
  <img alt="language" src="https://img.shields.io/badge/language-java-green.svg">
 </p>
+
 
 # AListLite
 
@@ -69,10 +70,21 @@
 新版本将发布在 [GitHub Release](https://github.com/LeoHaoVIP/AListLiteAndroid/releases/latest)。对于已安装 APP 的用户，点击标题栏中 <img src="./README/info.png" style="height: 1em;">按钮，在版本信息页面点击下方“检查更新”即可获取最新版本。
 
 <center class="half">
-<img src="./README/update-page.jpg" alt="检查更新页面" style="zoom:15%"/>
+<img src="./README/update-page.jpg" alt="版本信息页面" style="zoom:15%"/>
 </center>
 
+# Advanced
+
+为最大程度匹配 AList 本身的能力，AListLite 支持用户手动修改 AList 配置文件，文件位置为 `/Android/data/com.leohao.android.alistlite/files/data/config.json`，配置修改入口为版本信息页面下方的`高级配置`。
+
+> 注意：错误的配置可能导致服务无法启动，请谨慎操作！
+
+<center class="half">
+<img src="./README/config-manage.jpg" alt="高级配置管理页面" style="zoom:15%"/>
+</center>
 
 # Support
 
 Email: <zhaowenhao2867@outlook.com>
+
+Bilibili: [AListLite | 一款支持运行 AList 服务的 Android 应用](https://www.bilibili.com/video/BV1PA4m1G7Ui)
