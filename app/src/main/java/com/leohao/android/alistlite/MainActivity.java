@@ -286,48 +286,40 @@ public class MainActivity extends AppCompatActivity {
         //配置编辑按钮点击事件
         String finalConfigJsonData = configJsonData;
         AtomicBoolean isEditing = new AtomicBoolean(false);
-        AtomicBoolean configDataChanged = new AtomicBoolean(false);
         editButton.setOnClickListener(v -> {
             //若当前为编辑状态则保存配置，否则进入编辑模式
             if (isEditing.get()) {
+                //json合法性验证
+                boolean isJsonLegal = true;
+                try {
+                    JSONUtil.parseObj(jsonEditText.getText());
+                } catch (Exception ignored) {
+                    isJsonLegal = false;
+                }
+                if (!isJsonLegal) {
+                    showToast("配置文件不是合法的JSON文件");
+                    return;
+                }
+                try {
+                    //持久化配置
+                    FileUtils.write(configFile, jsonEditText.getText());
+                    showToast("重启服务以应用新配置");
+                } catch (IOException e) {
+                    showToast(Constants.ERROR_MSG_CONFIG_DATA_WRITE);
+                }
                 isEditing.set(false);
                 //显示jsonView
                 jsonView.setVisibility(View.VISIBLE);
                 jsonEditText.setVisibility(View.INVISIBLE);
                 editButton.setImageResource(R.drawable.edit);
-                if (configDataChanged.get()) {
-                    try {
-                        //持久化配置
-                        FileUtils.write(configFile, jsonEditText.getText());
-                        showToast("配置已更新，请重启服务");
-                    } catch (IOException e) {
-                        showToast(Constants.ERROR_MSG_CONFIG_DATA_WRITE);
-                    }
-                } else {
-                    showToast("配置无更新");
-                }
             } else {
+                showToast("错误配置可能导致服务无法启动，请谨慎修改！");
                 isEditing.set(true);
                 jsonEditText.setText(finalConfigJsonData);
                 //隐藏jsonView
                 jsonView.setVisibility(View.INVISIBLE);
                 jsonEditText.setVisibility(View.VISIBLE);
                 editButton.setImageResource(R.drawable.save);
-                //监听文本内容变化
-                jsonEditText.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                    }
-
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    }
-
-                    @Override
-                    public void afterTextChanged(Editable s) {
-                        configDataChanged.set(true);
-                    }
-                });
             }
         });
     }

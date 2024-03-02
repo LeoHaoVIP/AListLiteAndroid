@@ -11,6 +11,7 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:textSize="20sp"
+            android:textStyle="bold"
             android:text="@string/current_alist_config"
     />
     <HorizontalScrollView
@@ -31,7 +32,7 @@
             android:visibility="invisible"
             android:textSize="15sp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"/>
     <ImageButton
             android:id="@+id/btn_edit_config"
             android:background="@null"

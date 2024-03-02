@@ -4,6 +4,7 @@ import alistlib.Alistlib;
 import alistlib.Event;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -64,7 +65,11 @@ public class Alist {
 
             @Override
             public void onStartError(String s, String s1) {
-                Log.e("AListServer", "onStartError: " + s + " " + s1);
+                String errorMsg = "onStartError: " + s + " " + s1;
+                Log.e("AListServer", errorMsg);
+                Looper.prepare();
+                showToast(errorMsg);
+                Looper.loop();
                 notifyStatusChanged();
             }
         }, (level, msg) -> {
