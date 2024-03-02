@@ -6,7 +6,9 @@
     <string name="alist_service_not_running">AList 服务未启动</string>
     <string name="app_name_ext">AListLite</string>
     <string name="app_version">v1.0.0&#160;</string>
+    <string name="config_view">|&#160;查看配置&#160;</string>
     <string name="check_updates">|&#160;检查更新</string>
+    <string name="current_alist_config">AList 配置文件</string>
     <string name="developer_info">Developed by LeoHao</string>
     <string name="support_me">“你的支持是我持续优化的强大动力”</string>
     <string name="opensource_info">OpenSource at http://z6b.cn/QEihu</string>

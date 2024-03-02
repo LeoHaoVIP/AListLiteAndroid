@@ -33,8 +33,8 @@
     <ImageButton
             android:id="@+id/btn_homepage"
             android:background="@null"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
             android:scaleType="centerInside"
             android:layout_centerVertical="true"
             android:layout_toLeftOf="@id/btn_admin"
@@ -52,13 +52,13 @@
             android:layout_toLeftOf="@id/btn_showSystemInfo"
             android:layout_marginRight="15dp"
             android:onClick="setAdminPassword"
-            android:src="@drawable/admin"
+            android:src="@drawable/key"
     />
     <ImageButton
             android:id="@+id/btn_showSystemInfo"
             android:background="@null"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
             android:onClick="showSystemInfo"
             android:scaleType="centerInside"
             android:layout_centerVertical="true"

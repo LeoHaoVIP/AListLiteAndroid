@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -34,8 +36,15 @@ import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
+import com.yuyh.jsonviewer.library.JsonRecyclerView;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
@@ -240,6 +249,87 @@ public class MainActivity extends AppCompatActivity {
      */
     public void jumpToHomepage(View view) {
         webView.loadUrl(serverAddress);
+    }
+
+    /**
+     * 管理(查看/修改) AList 配置文件
+     */
+    public void manageConfigData(View view) {
+        AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.config_view, null);
+        JsonRecyclerView jsonView = dialogView.findViewById(R.id.json_view_config);
+        ImageButton editButton = dialogView.findViewById(R.id.btn_edit_config);
+        EditText jsonEditText = dialogView.findViewById(R.id.edit_text_config);
+        jsonView.setTextSize(14);
+        //读取 AList 配置
+        String dataPath = context.getExternalFilesDir("data").getAbsolutePath();
+        String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
+        String configJsonData;
+        File configFile = new File(configPath);
+        try {
+            //AList 配置数据
+            configJsonData = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            configJsonData = Constants.ERROR_MSG_CONFIG_DATA_READ.
+                    replace("MSG", Objects.requireNonNull(e.getLocalizedMessage()));
+            editButton.setVisibility(View.INVISIBLE);
+        }
+        //显示 AList 配置
+        jsonView.bindJson(configJsonData);
+        systemInfoDialog.setView(dialogView);
+        systemInfoDialog.show();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        //窗口大小设置必须在show()之后
+        systemInfoDialog.getWindow().setLayout(width - 100, height / 2);
+        //配置编辑按钮点击事件
+        String finalConfigJsonData = configJsonData;
+        AtomicBoolean isEditing = new AtomicBoolean(false);
+        AtomicBoolean configDataChanged = new AtomicBoolean(false);
+        editButton.setOnClickListener(v -> {
+            //若当前为编辑状态则保存配置，否则进入编辑模式
+            if (isEditing.get()) {
+                isEditing.set(false);
+                //显示jsonView
+                jsonView.setVisibility(View.VISIBLE);
+                jsonEditText.setVisibility(View.INVISIBLE);
+                editButton.setImageResource(R.drawable.edit);
+                if (configDataChanged.get()) {
+                    try {
+                        //持久化配置
+                        FileUtils.write(configFile, jsonEditText.getText());
+                        showToast("配置已更新，请重启服务");
+                    } catch (IOException e) {
+                        showToast(Constants.ERROR_MSG_CONFIG_DATA_WRITE);
+                    }
+                } else {
+                    showToast("配置无更新");
+                }
+            } else {
+                isEditing.set(true);
+                jsonEditText.setText(finalConfigJsonData);
+                //隐藏jsonView
+                jsonView.setVisibility(View.INVISIBLE);
+                jsonEditText.setVisibility(View.VISIBLE);
+                editButton.setImageResource(R.drawable.save);
+                //监听文本内容变化
+                jsonEditText.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable s) {
+                        configDataChanged.set(true);
+                    }
+                });
+            }
+        });
     }
 
     public void checkUpdates(View view) {
