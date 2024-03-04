@@ -11,4 +11,5 @@ public class Constants {
     public static String BUGLY_APP_ID = "8a7088fc39";
     public static String ERROR_MSG_CONFIG_DATA_READ = "{\"info\":\"无法读取配置，请检查存储权限\",\"msg\":\"MSG\"}";
     public static String ERROR_MSG_CONFIG_DATA_WRITE = "配置更新失败";
+    public static String CRASH_REPORT_SERVER_URL = "https://android.crashsight.qq.com/pb/async";
 }
