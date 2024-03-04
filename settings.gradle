@@ -2,6 +2,6 @@ rootProject.name = "AndroidAListLite"
 include ':app'
 dependencyResolutionManagement {
     repositories {
-        maven { url '"https://mirrors.tencent.com/nexus/repository/maven-public" ' }
+        maven { url 'https://jitpack.io' }
     }
 }

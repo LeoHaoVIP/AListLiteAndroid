@@ -45,7 +45,7 @@ dependencies {
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
     implementation 'com.kyleduo.switchbutton:library:2.1.0'
     implementation "cn.hutool:hutool-all:5.8.16"
-    implementation 'net.crashsight:crashsight-android:4.2.14'
+    implementation 'com.tencent.bugly:crashreport:4.1.9.3'
     implementation 'com.github.getActivity:XXPermissions:18.6'
     implementation 'com.github.smuyyh:JsonViewer:1.0.7'
     testImplementation 'junit:junit:4.+'
