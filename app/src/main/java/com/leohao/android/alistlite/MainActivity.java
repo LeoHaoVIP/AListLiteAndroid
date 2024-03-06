@@ -327,34 +327,41 @@ public class MainActivity extends AppCompatActivity {
     public void checkUpdates(View view) {
         new Thread(() -> {
             //获取最新release版本信息
-            String releaseInfo = MyHttpUtil.request(Constants.UPDATE_CHECK_URL, Method.GET);
-            JSONObject release = JSONUtil.parseObj(releaseInfo);
-            if (!release.containsKey("tag_name")) {
-                Looper.prepare();
-                showToast("无法获取更新");
-                Looper.loop();
-                return;
-            }
-            //最新版本号
-            String latestVersion = release.getStr("tag_name").substring(1);
-            //最新版本基于的AList版本
-            String latestOnAlistVersion = release.getStr("name").substring(12);
-            //新版本APK下载地址（Github）
+            try {
+                String releaseInfo = MyHttpUtil.request(Constants.UPDATE_CHECK_URL, Method.GET);
+                JSONObject release = JSONUtil.parseObj(releaseInfo);
+                if (!release.containsKey("tag_name")) {
+                    Looper.prepare();
+                    showToast("无法获取更新");
+                    Looper.loop();
+                    return;
+                }
+                //最新版本号
+                String latestVersion = release.getStr("tag_name").substring(1);
+                //最新版本基于的AList版本
+                String latestOnAlistVersion = release.getStr("name").substring(12);
+                //新版本APK下载地址（Github）
 //            String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
-            //加速地址（pan.leohao.cn）
-            String downloadLinkFast = String.format("%s/AListLite-v%s.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion);
-            //发现新版本
-            if (latestVersion.compareTo(currentAppVersion) > 0) {
+                //加速地址（pan.leohao.cn）
+                String downloadLinkFast = String.format("%s/AListLite-v%s.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion);
+                //发现新版本
+                if (latestVersion.compareTo(currentAppVersion) > 0) {
+                    Looper.prepare();
+                    showToast("发现新版本 " + latestVersion + " | AList " + latestOnAlistVersion);
+                    //跳转到浏览器下载
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkFast));
+                    startActivity(intent);
+                    Looper.loop();
+                } else {
+                    Looper.prepare();
+                    showToast("当前已是最新版本");
+                    Looper.loop();
+                }
+            } catch (Exception e) {
                 Looper.prepare();
-                showToast("发现新版本 " + latestVersion + " | AList " + latestOnAlistVersion);
-                //跳转到浏览器下载
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkFast));
-                startActivity(intent);
+                showToast("无法获取新版本信息");
                 Looper.loop();
-            } else {
-                Looper.prepare();
-                showToast("当前已是最新版本");
-                Looper.loop();
+                Log.e(TAG, "checkUpdates: " + e.getLocalizedMessage());
             }
         }).start();
     }
