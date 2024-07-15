@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 这里是设置背景色-->
+<!--    <solid android:color="#000000" />-->
+    <!-- 这里是设置为四周 也可以单独设置某个位置为圆角-->
+    <corners android:topLeftRadius="5dp"
+             android:topRightRadius="5dp"
+             android:bottomRightRadius="5dp"
+             android:bottomLeftRadius="5dp"/>
+    <padding
+            android:left="2dp"
+            android:top="2dp"
+            android:right="2dp"
+            android:bottom="2dp" />
+    <!-- 这里设置边框 -->
+    <stroke android:width="2dp" android:color="#999999" />
+</shape>

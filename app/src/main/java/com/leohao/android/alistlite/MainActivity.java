@@ -1,25 +1,21 @@
 package com.leohao.android.alistlite;
 
+import android.app.Activity;
+import android.app.UiModeManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.Window;
+import android.view.*;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,6 +29,7 @@ import com.hjq.permissions.XXPermissions;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
+import com.leohao.android.alistlite.util.ActivityUtil;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
@@ -42,6 +39,8 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private Alist alistServer;
     private ImageButton adminButton;
     private ImageButton homepageButton;
+    private ImageButton systemInfoButton;
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -75,9 +75,33 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
         //初始化控件
-        init();
+        initWidgets();
+        //焦点设置
+        initFocusSettings();
         //权限检查
         checkPermissions();
+    }
+
+    /**
+     * 初始化焦点设置
+     */
+    private void initFocusSettings() {
+        //初始化焦点为密码按钮，便于用户设置
+        adminButton.postDelayed(() -> {
+            //初始时焦点设置为密码按钮
+            adminButton.requestFocus();
+        }, 500);
+        //适配 TV 端操作，控件获取到焦点时显示边框
+        List<View> buttons = ActivityUtil.getAllViews(this);
+        for (View button : buttons) {
+            button.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    button.setBackgroundResource(R.drawable.background_border);
+                } else {
+                    button.setBackground(null);
+                }
+            });
+        }
     }
 
     /**
@@ -143,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
         webViewGoForwardButton.setVisibility(View.INVISIBLE);
     }
 
-    private void init() {
+    private void initWidgets() {
         serviceSwitch = findViewById(R.id.switchButton);
         appInfoTextView = findViewById(R.id.tv_app_info);
         adminButton = findViewById(R.id.btn_admin);
@@ -151,6 +175,7 @@ public class MainActivity extends AppCompatActivity {
         adminButton.setVisibility(View.INVISIBLE);
         homepageButton = findViewById(R.id.btn_homepage);
         homepageButton.setVisibility(View.INVISIBLE);
+        systemInfoButton = findViewById(R.id.btn_showSystemInfo);
         webViewGoBackButton = findViewById(R.id.btn_webViewGoBack);
         webViewGoBackButton.setVisibility(View.INVISIBLE);
         webViewGoForwardButton = findViewById(R.id.btn_webViewGoForward);
