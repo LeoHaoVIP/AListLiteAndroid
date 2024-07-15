@@ -1,21 +1,23 @@
 package com.leohao.android.alistlite;
 
-import android.app.Activity;
-import android.app.UiModeManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
-import android.view.*;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.*;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,8 +41,6 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
     private Alist alistServer;
     private ImageButton adminButton;
     private ImageButton homepageButton;
-    private ImageButton systemInfoButton;
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -92,13 +91,13 @@ public class MainActivity extends AppCompatActivity {
             adminButton.requestFocus();
         }, 500);
         //适配 TV 端操作，控件获取到焦点时显示边框
-        List<View> buttons = ActivityUtil.getAllViews(this);
-        for (View button : buttons) {
-            button.setOnFocusChangeListener((v, hasFocus) -> {
+        List<View> views = ActivityUtil.getAllViews(this);
+        for (View view : views) {
+            view.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
-                    button.setBackgroundResource(R.drawable.background_border);
+                    view.setBackgroundResource(R.drawable.background_border);
                 } else {
-                    button.setBackground(null);
+                    view.setBackground(null);
                 }
             });
         }
@@ -175,7 +174,6 @@ public class MainActivity extends AppCompatActivity {
         adminButton.setVisibility(View.INVISIBLE);
         homepageButton = findViewById(R.id.btn_homepage);
         homepageButton.setVisibility(View.INVISIBLE);
-        systemInfoButton = findViewById(R.id.btn_showSystemInfo);
         webViewGoBackButton = findViewById(R.id.btn_webViewGoBack);
         webViewGoBackButton.setVisibility(View.INVISIBLE);
         webViewGoForwardButton = findViewById(R.id.btn_webViewGoForward);
@@ -236,7 +234,11 @@ public class MainActivity extends AppCompatActivity {
         int width = getResources().getDisplayMetrics().widthPixels;
         int height = getResources().getDisplayMetrics().heightPixels;
         //窗口大小设置必须在show()之后
-        systemInfoDialog.getWindow().setLayout(width - 100, height * 2 / 5);
+        if (width < height) {
+            systemInfoDialog.getWindow().setLayout(width - 100, height * 2 / 5);
+        } else {
+            systemInfoDialog.getWindow().setLayout(width * 2 / 5, height - 200);
+        }
     }
 
     /**
@@ -280,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
      * 管理(查看/修改) AList 配置文件
      */
     public void manageConfigData(View view) {
-        AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
+        AlertDialog configDataDialog = new AlertDialog.Builder(this).create();
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.config_view, null);
         JsonRecyclerView jsonView = dialogView.findViewById(R.id.json_view_config);
@@ -302,12 +304,16 @@ public class MainActivity extends AppCompatActivity {
         }
         //显示 AList 配置
         jsonView.bindJson(configJsonData);
-        systemInfoDialog.setView(dialogView);
-        systemInfoDialog.show();
+        configDataDialog.setView(dialogView);
+        configDataDialog.show();
         int width = getResources().getDisplayMetrics().widthPixels;
         int height = getResources().getDisplayMetrics().heightPixels;
         //窗口大小设置必须在show()之后
-        systemInfoDialog.getWindow().setLayout(width - 100, height / 2);
+        if (width < height) {
+            configDataDialog.getWindow().setLayout(width - 50, height * 2 / 5);
+        } else {
+            configDataDialog.getWindow().setLayout(width * 5 / 6, height - 200);
+        }
         //配置编辑按钮点击事件
         String finalConfigJsonData = configJsonData;
         AtomicBoolean isEditing = new AtomicBoolean(false);

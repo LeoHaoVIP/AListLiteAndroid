@@ -11,8 +11,14 @@ import java.util.List;
  * @author LeoHao
  */
 public class ActivityUtil {
-    public static List<View> getAllViews(Activity act) {
-        return getAllChildViews(act.getWindow().getDecorView());
+    /**
+     * 获取指定 Activity 所有控件
+     *
+     * @param activity
+     * @return 控件列表
+     */
+    public static List<View> getAllViews(Activity activity) {
+        return getAllChildViews(activity.getWindow().getDecorView());
     }
 
     private static List<View> getAllChildViews(View view) {

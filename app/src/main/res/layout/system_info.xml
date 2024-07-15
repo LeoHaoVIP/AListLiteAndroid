@@ -14,6 +14,7 @@
                 android:layout_height="wrap_content">
             <ImageView
                     android:id="@+id/img_reward_code"
+                    android:focusable="true"
                     android:src="@drawable/rewardcode"
                     android:layout_width="90dp"
                     android:layout_height="90dp"
@@ -21,6 +22,7 @@
             />
             <TextView
                     android:id="@+id/tv_support_me"
+                    android:focusable="true"
                     android:layout_below="@id/img_reward_code"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -31,6 +33,7 @@
             />
             <TextView
                     android:id="@+id/tv_opensource"
+                    android:focusable="true"
                     android:autoLink="web"
                     android:layout_below="@id/tv_support_me"
                     android:layout_width="wrap_content"
@@ -42,6 +45,7 @@
             />
             <TextView
                     android:id="@+id/tv_setup_tutorial"
+                    android:focusable="true"
                     android:autoLink="web"
                     android:layout_below="@id/tv_opensource"
                     android:layout_width="wrap_content"
@@ -52,6 +56,7 @@
             />
             <TextView
                     android:id="@+id/tv_contact_me"
+                    android:focusable="true"
                     android:autoLink="email"
                     android:layout_below="@id/tv_setup_tutorial"
                     android:layout_width="wrap_content"
@@ -62,6 +67,7 @@
             />
             <LinearLayout
                     android:orientation="horizontal"
+                    android:focusable="true"
                     android:layout_centerHorizontal="true"
                     android:layout_below="@id/tv_contact_me"
                     android:layout_marginTop="20dp"
@@ -69,6 +75,7 @@
                     android:layout_height="wrap_content">
                 <TextView
                         android:id="@+id/tv_app_version"
+                        android:focusable="true"
                         android:background="@null"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

@@ -19,6 +19,8 @@
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="15dp"
                 android:textSize="18sp"
+                android:clickable="true"
+                android:onClick="checkUpdates"
                 android:text="@string/app_name_ext"/>
         <TextView
                 android:focusable="true"
