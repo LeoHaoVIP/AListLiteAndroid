@@ -1,8 +1,10 @@
 package com.leohao.android.alistlite;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +14,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -139,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         //Service启动Intent
         Intent intent = new Intent(this, AlistService.class).setAction(AlistService.ACTION_STARTUP);
         //调用服务
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent);
         } else {
             startService(intent);
@@ -155,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         //Service关闭Intent
         Intent intent = new Intent(this, AlistService.class).setAction(AlistService.ACTION_SHUTDOWN);
         //调用服务
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent);
         } else {
             startService(intent);
@@ -192,6 +195,28 @@ public class MainActivity extends AppCompatActivity {
                     //停止下拉刷新动画
                     swipeRefreshLayout.setRefreshing(false);
                 }
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // WebView可以加载Http、Https和file这三种URL，所以除了这三种URL外，其他都要另外处理
+                if (!url.startsWith("http") && !url.startsWith("file")) {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    } catch (Exception e) {
+                        // 如果找不到合适的APP来加载URL，则会抛出异常
+                        e.printStackTrace();
+                    }
+                    return true;
+                }
+                return super.shouldOverrideUrlLoading(view, url);
+            }
+
+            @TargetApi(Build.VERSION_CODES.N)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return shouldOverrideUrlLoading(view, request.getUrl().toString());
             }
         });
         //获取当前APP版本号
