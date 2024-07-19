@@ -2,6 +2,7 @@ package com.leohao.android.alistlite;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -13,17 +14,16 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
@@ -56,6 +56,7 @@ import static com.leohao.android.alistlite.AlistLiteApplication.context;
 public class MainActivity extends AppCompatActivity {
     private static MainActivity instance;
     private static final String TAG = "MainActivity";
+    public ActionBar actionBar = null;
     public WebView webView = null;
     public TextView runningInfoTextView = null;
     public TextView appInfoTextView = null;
@@ -73,9 +74,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         instance = this;
-        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.activity_main);
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
         //初始化控件
         initWidgets();
         //焦点设置
@@ -112,9 +111,7 @@ public class MainActivity extends AppCompatActivity {
     private void checkPermissions() {
         XXPermissions.with(this)
                 // 申请单个权限
-                .permission(Permission.POST_NOTIFICATIONS)
-                .permission(Permission.MANAGE_EXTERNAL_STORAGE)
-                .request(new OnPermissionCallback() {
+                .permission(Permission.POST_NOTIFICATIONS).permission(Permission.MANAGE_EXTERNAL_STORAGE).request(new OnPermissionCallback() {
                     @Override
                     public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
                         if (!allGranted) {
@@ -170,10 +167,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initWidgets() {
+        // 设置标题栏
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        actionBar = getSupportActionBar();
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         serviceSwitch = findViewById(R.id.switchButton);
         appInfoTextView = findViewById(R.id.tv_app_info);
         adminButton = findViewById(R.id.btn_admin);
-        //服务未开启时禁止用户设置管理员密码
+        // 服务未开启时禁止用户设置管理员密码
         adminButton.setVisibility(View.INVISIBLE);
         homepageButton = findViewById(R.id.btn_homepage);
         homepageButton.setVisibility(View.INVISIBLE);
@@ -187,6 +189,51 @@ public class MainActivity extends AppCompatActivity {
         // 设置背景色
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
+        webView.removeJavascriptInterface("searchBoxJavaBredge_");
+        webView.setWebChromeClient(new WebChromeClient() {
+            private View mCustomView;
+            private CustomViewCallback mCustomViewCallback;
+            final FrameLayout videoContainer = findViewById(R.id.video_container);
+
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                super.onShowCustomView(view, callback);
+                if (mCustomView != null) {
+                    callback.onCustomViewHidden();
+                    return;
+                }
+                mCustomView = view;
+                videoContainer.addView(mCustomView);
+                mCustomViewCallback = callback;
+                webView.setVisibility(View.GONE);
+                //隐藏标题栏
+                actionBar.hide();
+                // 隐藏状态栏
+                getWindow().getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                //切换至横屏
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                webView.setVisibility(View.VISIBLE);
+                if (mCustomView == null) {
+                    return;
+                }
+                mCustomView.setVisibility(View.GONE);
+                videoContainer.removeView(mCustomView);
+                mCustomViewCallback.onCustomViewHidden();
+                mCustomView = null;
+                //显示标题栏
+                actionBar.show();
+                //显示状态栏
+                getWindow().getDecorView().setSystemUiVisibility(0);
+                //切换至竖屏
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                super.onHideCustomView();
+            }
+        });
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -200,13 +247,10 @@ public class MainActivity extends AppCompatActivity {
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // WebView可以加载Http、Https和file这三种URL，所以除了这三种URL外，其他都要另外处理
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
                         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                    } catch (Exception e) {
-                        // 如果找不到合适的APP来加载URL，则会抛出异常
-                        e.printStackTrace();
+                    } catch (Exception ignored) {
                     }
                     return true;
                 }
@@ -323,8 +367,7 @@ public class MainActivity extends AppCompatActivity {
             //AList 配置数据
             configJsonData = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            configJsonData = Constants.ERROR_MSG_CONFIG_DATA_READ.
-                    replace("MSG", Objects.requireNonNull(e.getLocalizedMessage()));
+            configJsonData = Constants.ERROR_MSG_CONFIG_DATA_READ.replace("MSG", Objects.requireNonNull(e.getLocalizedMessage()));
             editButton.setVisibility(View.INVISIBLE);
         }
         //显示 AList 配置

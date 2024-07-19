@@ -6,11 +6,106 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".MainActivity">
+    <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        <RelativeLayout android:orientation="horizontal"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent">
+
+            <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_centerVertical="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                <TextView
+                        android:id="@+id/tv_app_info"
+                        android:focusable="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:textSize="18sp"
+                        android:clickable="true"
+                        android:onClick="checkUpdates"
+                        android:text="@string/app_name_ext"/>
+                <TextView
+                        android:focusable="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_below="@id/switchButton"
+                        android:textSize="13sp"
+                        android:text="@string/developer_info"/>
+            </LinearLayout>
+
+            <ImageButton
+                    android:id="@+id/btn_homepage"
+                    android:focusable="true"
+                    android:background="@null"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:scaleType="centerInside"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@id/btn_admin"
+                    android:layout_marginRight="15dp"
+                    android:tooltipText="@string/tooltip_homepage"
+                    android:onClick="jumpToHomepage"
+                    android:src="@drawable/homepage"
+            />
+            <ImageButton
+                    android:id="@+id/btn_admin"
+                    android:focusable="true"
+                    android:background="@null"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:scaleType="centerInside"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@id/btn_showSystemInfo"
+                    android:layout_marginRight="15dp"
+                    android:onClick="setAdminPassword"
+                    android:src="@drawable/key"
+            />
+            <ImageButton
+                    android:id="@+id/btn_showSystemInfo"
+                    android:focusable="true"
+                    android:background="@null"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:onClick="showSystemInfo"
+                    android:scaleType="centerInside"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@id/switchButton"
+                    android:layout_marginRight="10dp"
+                    android:src="@drawable/info"
+            />
+            <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/switchButton"
+                    android:focusable="true"
+                    style="@style/SwitchButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:gravity="end"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    app:kswAnimationDuration="300"
+                    app:kswBackDrawable="@drawable/ios_back_drawable"
+                    app:kswThumbDrawable="@drawable/ios_thumb_selector"
+                    app:kswThumbMarginLeft="2dp"
+                    app:kswThumbMarginBottom="-4dp"
+                    app:kswThumbMarginTop="2dp"
+            />
+        </RelativeLayout>
+    </androidx.appcompat.widget.Toolbar>
     <TextView
             android:visibility="visible"
             android:id="@+id/tv_alist_status"
             android:text="@string/alist_service_not_running"
             android:textSize="15sp"
+            android:layout_below="@id/toolbar"
             android:layout_marginLeft="15dp"
             android:gravity="left"
             android:clickable="true"
@@ -61,4 +156,8 @@
             android:onClick="webViewGoBackOrForward"
             android:src="@drawable/go_forward"
     />
+    <FrameLayout
+            android:id="@+id/video_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 </RelativeLayout>
