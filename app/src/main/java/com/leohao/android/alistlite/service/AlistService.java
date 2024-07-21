@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -53,14 +54,19 @@ public class AlistService extends Service {
         }
         //根据action决定是否启动AList服务端
         if (ACTION_SHUTDOWN.equals(intent.getAction())) {
-            //关闭服务
-            exitService();
+            if (alistServer.hasRunning()) {
+                //关闭服务
+                exitService();
+            }
         }
         if (ACTION_STARTUP.equals(intent.getAction())) {
             try {
                 if (!alistServer.hasRunning()) {
                     //开启AList服务端
                     alistServer.startup();
+                    //挂载本地存储
+                    alistServer.addLocalStorageDriver(Environment.getExternalStorageDirectory().getAbsolutePath(),
+                            Constants.ALIST_STORAGE_DRIVER_MOUNT_PATH);
                 }
                 //读取AList服务运行端口
                 String serverPort = alistServer.getConfigValue("scheme.http_port");

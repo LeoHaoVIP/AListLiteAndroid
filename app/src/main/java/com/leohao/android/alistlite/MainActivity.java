@@ -186,7 +186,34 @@ public class MainActivity extends AppCompatActivity {
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         webView = findViewById(R.id.webview_alist);
-        // 设置背景色
+        //初始化 webView 设定
+        initWebview();
+        //获取当前APP版本号
+        currentAppVersion = getCurrentAppVersion();
+        //更新AppName显示版本信息
+        appInfoTextView.setText(String.format("%s %s", appInfoTextView.getText(), currentAppVersion));
+        //设置服务开关监听
+        serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked) {
+                //准备停止AList服务
+                readyToShutdownService();
+                return;
+            }
+            try {
+                //准备开启AList服务
+                readyToStartService();
+            } catch (Exception e) {
+                Log.d(TAG, e.getLocalizedMessage());
+            }
+        });
+        //设置下滑刷新控件监听
+        swipeRefreshLayout.setOnRefreshListener(() -> new Handler().postDelayed(() -> {
+            //webView刷新
+            webView.reload();
+        }, 0));
+    }
+
+    private void initWebview() {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.removeJavascriptInterface("searchBoxJavaBredge_");
@@ -263,29 +290,6 @@ public class MainActivity extends AppCompatActivity {
                 return shouldOverrideUrlLoading(view, request.getUrl().toString());
             }
         });
-        //获取当前APP版本号
-        currentAppVersion = getCurrentAppVersion();
-        //更新AppName显示版本信息
-        appInfoTextView.setText(String.format("%s %s", appInfoTextView.getText(), currentAppVersion));
-        //设置服务开关监听
-        serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!isChecked) {
-                //准备停止AList服务
-                readyToShutdownService();
-                return;
-            }
-            try {
-                //准备开启AList服务
-                readyToStartService();
-            } catch (Exception e) {
-                Log.d(TAG, e.getLocalizedMessage());
-            }
-        });
-        //设置下滑刷新控件监听
-        swipeRefreshLayout.setOnRefreshListener(() -> new Handler().postDelayed(() -> {
-            //webView刷新
-            webView.reload();
-        }, 0));
     }
 
     /**

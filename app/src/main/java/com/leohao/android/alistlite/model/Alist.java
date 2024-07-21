@@ -96,6 +96,19 @@ public class Alist {
         Alistlib.setAdminPassword(pwd);
     }
 
+    /**
+     * 挂载本地存储配置
+     *
+     * @param localPath 本地路径
+     * @param mountPath 挂载路径
+     */
+    public void addLocalStorageDriver(String localPath, String mountPath) throws Exception {
+        if (!hasRunning()) {
+            init();
+        }
+        Alistlib.addLocalStorage(localPath, mountPath);
+    }
+
     private void notifyStatusChanged() {
         LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(ACTION_STATUS_CHANGED));
     }
