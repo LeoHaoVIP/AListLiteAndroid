@@ -8,6 +8,7 @@
         tools:context=".MainActivity">
     <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
+            android:focusable="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         <RelativeLayout android:orientation="horizontal"

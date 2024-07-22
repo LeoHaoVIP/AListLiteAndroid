@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat;
 import com.leohao.android.alistlite.MainActivity;
 import com.leohao.android.alistlite.R;
 import com.leohao.android.alistlite.model.Alist;
+import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.Constants;
 
 import java.util.Locale;
@@ -64,9 +65,17 @@ public class AlistService extends Service {
                 if (!alistServer.hasRunning()) {
                     //开启AList服务端
                     alistServer.startup();
-                    //挂载本地存储
-                    alistServer.addLocalStorageDriver(Environment.getExternalStorageDirectory().getAbsolutePath(),
-                            Constants.ALIST_STORAGE_DRIVER_MOUNT_PATH);
+                    //判断 AList 是否为首次初始化
+                    boolean hasInitialized = AppUtil.checkAlistHasInitialized();
+                    if (!hasInitialized) {
+                        //挂载本地存储
+                        alistServer.addLocalStorageDriver(Environment.getExternalStorageDirectory().getAbsolutePath(),
+                                Constants.ALIST_STORAGE_DRIVER_MOUNT_PATH);
+                        //初始化密码
+                        alistServer.setAdminPassword(Constants.ALIST_DEFAULT_PASSWORD);
+                        showToast(String.format("初始登录信息：%s | %s",
+                                Constants.ALIST_DEFAULT_ADMIN_USERNAME, Constants.ALIST_DEFAULT_PASSWORD), Toast.LENGTH_LONG);
+                    }
                 }
                 //读取AList服务运行端口
                 String serverPort = alistServer.getConfigValue("scheme.http_port");
@@ -148,5 +157,9 @@ public class AlistService extends Service {
 
     private void showToast(String msg) {
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void showToast(String msg, int duration) {
+        Toast.makeText(getApplicationContext(), msg, duration).show();
     }
 }

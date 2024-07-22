@@ -34,7 +34,7 @@ import com.hjq.permissions.XXPermissions;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
-import com.leohao.android.alistlite.util.ActivityUtil;
+import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
@@ -56,6 +56,7 @@ import static com.leohao.android.alistlite.AlistLiteApplication.context;
 public class MainActivity extends AppCompatActivity {
     private static MainActivity instance;
     private static final String TAG = "MainActivity";
+    private String currentAppVersion;
     public ActionBar actionBar = null;
     public WebView webView = null;
     public TextView runningInfoTextView = null;
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton webViewGoBackButton;
     private ImageButton webViewGoForwardButton;
     private SwipeRefreshLayout swipeRefreshLayout;
-    String currentAppVersion;
+    private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
             adminButton.requestFocus();
         }, 500);
         //适配 TV 端操作，控件获取到焦点时显示边框
-        List<View> views = ActivityUtil.getAllViews(this);
+        List<View> views = AppUtil.getAllViews(this);
         for (View view : views) {
             view.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
@@ -238,6 +239,9 @@ public class MainActivity extends AppCompatActivity {
                 // 隐藏状态栏
                 getWindow().getDecorView().setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                //隐藏前进和返回按钮
+                webViewGoBackButton.setVisibility(View.INVISIBLE);
+                webViewGoForwardButton.setVisibility(View.INVISIBLE);
                 //切换至横屏
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             }
@@ -256,6 +260,9 @@ public class MainActivity extends AppCompatActivity {
                 actionBar.show();
                 //显示状态栏
                 getWindow().getDecorView().setSystemUiVisibility(0);
+                //恢复显示前进和返回按钮
+                webViewGoBackButton.setVisibility(View.VISIBLE);
+                webViewGoForwardButton.setVisibility(View.VISIBLE);
                 //切换至竖屏
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 super.onHideCustomView();
@@ -530,7 +537,6 @@ public class MainActivity extends AppCompatActivity {
      * 复制 AList 服务地址到剪切板
      */
     public void copyAddressToClipboard(View view) {
-        ClipBoardHelper clipBoardHelper = new ClipBoardHelper(getApplicationContext());
         if (!Constants.URL_ABOUT_BLANK.equals(this.serverAddress)) {
             clipBoardHelper.copyText(this.serverAddress);
             showToast("AList 服务地址已复制");

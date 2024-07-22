@@ -5,20 +5,23 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import com.leohao.android.alistlite.AlistLiteApplication;
+
+import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
  * @author LeoHao
  */
 public class ClipBoardHelper {
     private static ClipBoardHelper instance = null;
-    private static ClipboardManager manager;
+    private final ClipboardManager manager;
 
-    public ClipBoardHelper(Context context) {
+    private ClipBoardHelper(Context context) {
         //获取剪贴板管理器：
         manager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
     }
 
-    public synchronized static ClipBoardHelper getInstance(Context context) {
+    public synchronized static ClipBoardHelper getInstance() {
         if (instance == null) {
             instance = new ClipBoardHelper(context);
         }
