@@ -1,9 +1,5 @@
 package com.leohao.android.alistlite.util;
 
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.Method;
 
