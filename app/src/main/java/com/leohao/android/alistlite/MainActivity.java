@@ -509,8 +509,9 @@ public class MainActivity extends AppCompatActivity {
         //设置用户按返回键后，APP不退出（针对较低版本的Android）
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.addCategory(Intent.CATEGORY_HOME)
+                    .addCategory(Intent.CATEGORY_DEFAULT)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             return true;
         }
