@@ -446,6 +446,12 @@ public class MainActivity extends AppCompatActivity {
                     Looper.loop();
                     return;
                 }
+                //设备 CPU 支持的 ABI 名称
+                String abiName = AppUtil.getAbiName();
+                //若 ABI 名称不在支持的分包架构列表中，则下载完整的安装包
+                if (!Constants.SUPPORTED_DOWNLOAD_ABI_NAMES.contains(abiName)) {
+                    abiName = Constants.UNIVERSAL_ABI_NAME;
+                }
                 //最新版本号
                 String latestVersion = release.getStr("tag_name").substring(1);
                 //最新版本基于的AList版本
@@ -453,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
                 //新版本APK下载地址（Github）
 //            String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
                 //加速地址（pan.leohao.cn）
-                String downloadLinkFast = String.format("%s/AListLite-v%s.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion);
+                String downloadLinkFast = String.format("%s/AListLite-v%s-%s-release.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion, abiName);
                 //发现新版本
                 if (latestVersion.compareTo(currentAppVersion) > 0) {
                     Looper.prepare();

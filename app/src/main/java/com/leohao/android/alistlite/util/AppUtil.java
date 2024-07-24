@@ -1,6 +1,7 @@
 package com.leohao.android.alistlite.util;
 
 import android.app.Activity;
+import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -48,5 +49,20 @@ public class AppUtil {
             }
         }
         return allChildren;
+    }
+
+    /**
+     * 获取设备 CPU 对应的 ABI 名称
+     *
+     * @return ABI
+     */
+    public static String getAbiName() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // For Android API 21 and above
+            String[] supportedABIs = Build.SUPPORTED_ABIS;
+            return supportedABIs.length > 0 ? supportedABIs[0] : "unknown";
+        } else {
+            return Build.CPU_ABI;
+        }
     }
 }

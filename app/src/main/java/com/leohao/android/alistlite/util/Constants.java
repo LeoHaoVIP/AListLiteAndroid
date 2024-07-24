@@ -1,5 +1,8 @@
 package com.leohao.android.alistlite.util;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author LeoHao
  */
@@ -16,4 +19,6 @@ public class Constants {
     public static String ERROR_MSG_CONFIG_DATA_WRITE = "配置更新失败";
     public static String ANDROID_SHARED_DATA_PREFERENCES_NAME = "USER_INFO";
     public static String ANDROID_SHARED_DATA_KEY_ALIST_INITIALIZED = "alist_initialized";
+    public static String UNIVERSAL_ABI_NAME = "universal";
+    public static List<String> SUPPORTED_DOWNLOAD_ABI_NAMES = Arrays.asList("x86", "armeabi-v7a", "x86_64", "arm64-v8a");
 }

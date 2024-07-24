@@ -11,13 +11,17 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0.9-beta3"
-        ndk {
-            abiFilters 'armeabi', 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
-        }
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        setProperty("archivesBaseName", "AListLite-v${versionName}")
     }
-
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+            universalApk true
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
