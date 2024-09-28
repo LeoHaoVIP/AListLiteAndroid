@@ -57,10 +57,12 @@ public class MainActivity extends AppCompatActivity {
     private static MainActivity instance;
     private static final String TAG = "MainActivity";
     private String currentAppVersion;
+    private String currentAlistVersion;
     public ActionBar actionBar = null;
     public WebView webView = null;
     public TextView runningInfoTextView = null;
     public TextView appInfoTextView = null;
+    public TextView alistVersionTextView = null;
     public SwitchButton serviceSwitch = null;
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
@@ -82,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         initFocusSettings();
         //权限检查
         checkPermissions();
+        //检查系统更新
+        checkUpdates(null);
     }
 
     /**
@@ -175,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         serviceSwitch = findViewById(R.id.switchButton);
         appInfoTextView = findViewById(R.id.tv_app_info);
+        alistVersionTextView = findViewById(R.id.tv_alist_version);
         adminButton = findViewById(R.id.btn_admin);
         // 服务未开启时禁止用户设置管理员密码
         adminButton.setVisibility(View.INVISIBLE);
@@ -191,8 +196,11 @@ public class MainActivity extends AppCompatActivity {
         initWebview();
         //获取当前APP版本号
         currentAppVersion = getCurrentAppVersion();
+        //获取基于的AList版本
+        currentAlistVersion = getCurrentAlistVersion();
         //更新AppName显示版本信息
         appInfoTextView.setText(String.format("%s %s", appInfoTextView.getText(), currentAppVersion));
+        alistVersionTextView.setText(String.format("Powered by AList v%s", currentAlistVersion));
         //设置服务开关监听
         serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
@@ -434,6 +442,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 检查版本更新
+     *
+     * @param view view
+     */
     public void checkUpdates(View view) {
         new Thread(() -> {
             //获取最新release版本信息
@@ -469,9 +482,11 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                     Looper.loop();
                 } else {
-                    Looper.prepare();
-                    showToast("当前已是最新版本");
-                    Looper.loop();
+                    if (view != null) {
+                        Looper.prepare();
+                        showToast("当前已是最新版本");
+                        Looper.loop();
+                    }
                 }
             } catch (Exception e) {
                 Looper.prepare();
@@ -493,6 +508,13 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "getCurrentVersion: ", e);
         }
         return versionName;
+    }
+
+    /**
+     * 获取当前AList版本
+     */
+    private String getCurrentAlistVersion() {
+        return Constants.ALIST_VERSION;
     }
 
     public static MainActivity getInstance() {

@@ -32,6 +32,7 @@
                         android:onClick="checkUpdates"
                         android:text="@string/app_name_ext"/>
                 <TextView
+                        android:id="@+id/tv_alist_version"
                         android:focusable="true"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -39,7 +40,7 @@
                         android:layout_centerVertical="true"
                         android:layout_below="@id/switchButton"
                         android:textSize="13sp"
-                        android:text="@string/developer_info"/>
+                        android:text="@string/alist_version"/>
             </LinearLayout>
 
             <ImageButton

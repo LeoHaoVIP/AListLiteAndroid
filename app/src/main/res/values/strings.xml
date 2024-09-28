@@ -11,6 +11,7 @@
     <string name="check_updates">|&#160;检查更新</string>
     <string name="current_alist_config">AList 配置文件</string>
     <string name="developer_info">Developed by LeoHao</string>
+    <string name="alist_version">From AList</string>
     <string name="support_me">“你的支持是我持续优化的强大动力”</string>
     <string name="opensource_info">https://github.com/LeoHaoVIP/AListLiteAndroid</string>
     <string name="setup_tutorial">https://www.bilibili.com/video/BV1PA4m1G7Ui</string>
