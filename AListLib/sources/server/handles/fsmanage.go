@@ -2,7 +2,7 @@ package handles
 
 import (
 	"fmt"
-	"github.com/xhofe/tache"
+	"github.com/alist-org/alist/v3/internal/task"
 	"io"
 	stdpath "path"
 
@@ -121,7 +121,7 @@ func FsCopy(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	var addedTasks []tache.TaskWithInfo
+	var addedTasks []task.TaskInfoWithCreator
 	for i, name := range req.Names {
 		t, err := fs.Copy(c, stdpath.Join(srcDir, name), dstDir, len(req.Names) > i+1)
 		if t != nil {

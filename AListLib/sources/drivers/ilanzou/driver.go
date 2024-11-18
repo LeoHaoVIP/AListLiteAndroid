@@ -66,12 +66,13 @@ func (d *ILanZou) Drop(ctx context.Context) error {
 }
 
 func (d *ILanZou) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([]model.Obj, error) {
+	offset := 1
 	var res []ListItem
 	for {
 		var resp ListResp
 		_, err := d.proved("/record/file/list", http.MethodGet, func(req *resty.Request) {
 			params := []string{
-				"offset=1",
+				"offset=" + strconv.Itoa(offset),
 				"limit=60",
 				"folderId=" + dir.GetID(),
 				"type=0",
@@ -83,7 +84,9 @@ func (d *ILanZou) List(ctx context.Context, dir model.Obj, args model.ListArgs) 
 			return nil, err
 		}
 		res = append(res, resp.List...)
-		if resp.TotalPage <= resp.Offset {
+		if resp.Offset < resp.TotalPage {
+			offset++
+		} else {
 			break
 		}
 	}
@@ -286,7 +289,7 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 		req.SetBody(base.Json{
 			"fileId":   "",
 			"fileName": stream.GetName(),
-			"fileSize": stream.GetSize() / 1024,
+			"fileSize": stream.GetSize()/1024 + 1,
 			"folderId": dstDir.GetID(),
 			"md5":      etag,
 			"type":     1,

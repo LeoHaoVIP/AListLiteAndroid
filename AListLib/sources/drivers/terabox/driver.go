@@ -10,8 +10,6 @@ import (
 	"math"
 	stdpath "path"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/pkg/utils"
@@ -24,9 +22,9 @@ import (
 type Terabox struct {
 	model.Storage
 	Addition
-	JsToken         string
+	JsToken           string
 	url_domain_prefix string
-	base_url        string
+	base_url          string
 }
 
 func (d *Terabox) Config() driver.Config {
@@ -145,52 +143,24 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	}
 	log.Debugln(locateupload_resp)
 
-	tempFile, err := stream.CacheFullInTempFile()
-	if err != nil {
-		return err
-	}
-	var Default int64 = 4 * 1024 * 1024
-	defaultByteData := make([]byte, Default)
-	count := int(math.Ceil(float64(stream.GetSize()) / float64(Default)))
-	// cal md5
-	h1 := md5.New()
-	h2 := md5.New()
-	block_list := make([]string, 0)
-	left := stream.GetSize()
-	for i := 0; i < count; i++ {
-		byteSize := Default
-		var byteData []byte
-		if left < Default {
-			byteSize = left
-			byteData = make([]byte, byteSize)
-		} else {
-			byteData = defaultByteData
-		}
-		left -= byteSize
-		_, err = io.ReadFull(tempFile, byteData)
-		if err != nil {
-			return err
-		}
-		h1.Write(byteData)
-		h2.Write(byteData)
-		block_list = append(block_list, fmt.Sprintf("\"%s\"", hex.EncodeToString(h2.Sum(nil))))
-		h2.Reset()
-	}
-
-	_, err = tempFile.Seek(0, io.SeekStart)
-	if err != nil {
-		return err
-	}
-
+	// precreate file
 	rawPath := stdpath.Join(dstDir.GetPath(), stream.GetName())
 	path := encodeURIComponent(rawPath)
-	block_list_str := fmt.Sprintf("[%s]", strings.Join(block_list, ","))
+
+	var precreateBlockListStr string
+	if stream.GetSize() > initialChunkSize {
+		precreateBlockListStr = `["5910a591dd8fc18c32a8f3df4fdc1761","a5fc157d78e6ad1c7e114b056c92821e"]`
+	} else {
+		precreateBlockListStr = `["5910a591dd8fc18c32a8f3df4fdc1761"]`
+	}
+
 	data := map[string]string{
-		"path":        rawPath,
-		"autoinit":    "1",
-		"target_path": dstDir.GetPath(),
-		"block_list":  block_list_str,
-		"local_mtime": strconv.FormatInt(time.Now().Unix(), 10),
+		"path":                  rawPath,
+		"autoinit":              "1",
+		"target_path":           dstDir.GetPath(),
+		"block_list":            precreateBlockListStr,
+		"local_mtime":           strconv.FormatInt(stream.ModTime().Unix(), 10),
+		"file_limit_switch_v34": "true",
 	}
 	var precreateResp PrecreateResp
 	log.Debugln(data)
@@ -206,6 +176,13 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	if precreateResp.ReturnType == 2 {
 		return nil
 	}
+
+	// upload chunks
+	tempFile, err := stream.CacheFullInTempFile()
+	if err != nil {
+		return err
+	}
+
 	params := map[string]string{
 		"method":     "upload",
 		"path":       path,
@@ -215,24 +192,37 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 		"channel":    "dubox",
 		"clienttype": "0",
 	}
-	left = stream.GetSize()
-	for i, partseq := range precreateResp.BlockList {
+
+	streamSize := stream.GetSize()
+	chunkSize := calculateChunkSize(streamSize)
+	chunkByteData := make([]byte, chunkSize)
+	count := int(math.Ceil(float64(streamSize) / float64(chunkSize)))
+	left := streamSize
+	uploadBlockList := make([]string, 0, count)
+	h := md5.New()
+	for partseq := 0; partseq < count; partseq++ {
 		if utils.IsCanceled(ctx) {
 			return ctx.Err()
 		}
-		byteSize := Default
+		byteSize := chunkSize
 		var byteData []byte
-		if left < Default {
+		if left >= chunkSize {
+			byteData = chunkByteData
+		} else {
 			byteSize = left
 			byteData = make([]byte, byteSize)
-		} else {
-			byteData = defaultByteData
 		}
 		left -= byteSize
 		_, err = io.ReadFull(tempFile, byteData)
 		if err != nil {
 			return err
 		}
+
+		// calculate md5
+		h.Write(byteData)
+		uploadBlockList = append(uploadBlockList, hex.EncodeToString(h.Sum(nil)))
+		h.Reset()
+
 		u := "https://" + locateupload_resp.Host + "/rest/2.0/pcs/superfile2"
 		params["partseq"] = strconv.Itoa(partseq)
 		res, err := base.RestyClient.R().
@@ -245,25 +235,39 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 			return err
 		}
 		log.Debugln(res.String())
-		if len(precreateResp.BlockList) > 0 {
-			up(float64(i) * 100 / float64(len(precreateResp.BlockList)))
+		if count > 0 {
+			up(float64(partseq) * 100 / float64(count))
 		}
 	}
+
+	// create file
 	params = map[string]string{
 		"isdir": "0",
 		"rtype": "1",
+	}
+
+	uploadBlockListStr, err := utils.Json.MarshalToString(uploadBlockList)
+	if err != nil {
+		return err
 	}
 	data = map[string]string{
 		"path":        rawPath,
 		"size":        strconv.FormatInt(stream.GetSize(), 10),
 		"uploadid":    precreateResp.Uploadid,
 		"target_path": dstDir.GetPath(),
-		"block_list":  block_list_str,
-		"local_mtime": strconv.FormatInt(time.Now().Unix(), 10),
+		"block_list":  uploadBlockListStr,
+		"local_mtime": strconv.FormatInt(stream.ModTime().Unix(), 10),
 	}
-	res, err = d.post_form("/api/create", params, data, nil)
+	var createResp CreateResp
+	res, err = d.post_form("/api/create", params, data, &createResp)
 	log.Debugln(string(res))
-	return err
+	if err != nil {
+		return err
+	}
+	if createResp.Errno != 0 {
+		return fmt.Errorf("[terabox] failed to create file, errno: %d", createResp.Errno)
+	}
+	return nil
 }
 
 var _ driver.Driver = (*Terabox)(nil)

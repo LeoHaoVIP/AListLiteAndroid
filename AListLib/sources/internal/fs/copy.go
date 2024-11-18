@@ -11,13 +11,14 @@ import (
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/internal/stream"
+	"github.com/alist-org/alist/v3/internal/task"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/xhofe/tache"
 )
 
 type CopyTask struct {
-	tache.Base
+	task.TaskWithCreator
 	Status       string        `json:"-"` //don't save status to save space
 	SrcObjPath   string        `json:"src_path"`
 	DstDirPath   string        `json:"dst_path"`
@@ -53,7 +54,7 @@ var CopyTaskManager *tache.Manager[*CopyTask]
 
 // Copy if in the same storage, call move method
 // if not, add copy task
-func _copy(ctx context.Context, srcObjPath, dstDirPath string, lazyCache ...bool) (tache.TaskWithInfo, error) {
+func _copy(ctx context.Context, srcObjPath, dstDirPath string, lazyCache ...bool) (task.TaskInfoWithCreator, error) {
 	srcStorage, srcObjActualPath, err := op.GetStorageAndActualPath(srcObjPath)
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed get src storage")
@@ -92,7 +93,11 @@ func _copy(ctx context.Context, srcObjPath, dstDirPath string, lazyCache ...bool
 		}
 	}
 	// not in the same storage
+	taskCreator, _ := ctx.Value("user").(*model.User) // taskCreator is nil when convert failed
 	t := &CopyTask{
+		TaskWithCreator: task.TaskWithCreator{
+			Creator: taskCreator,
+		},
 		srcStorage:   srcStorage,
 		dstStorage:   dstStorage,
 		SrcObjPath:   srcObjActualPath,
@@ -123,6 +128,9 @@ func copyBetween2Storages(t *CopyTask, srcStorage, dstStorage driver.Driver, src
 			srcObjPath := stdpath.Join(srcObjPath, obj.GetName())
 			dstObjPath := stdpath.Join(dstDirPath, srcObj.GetName())
 			CopyTaskManager.Add(&CopyTask{
+				TaskWithCreator: task.TaskWithCreator{
+					Creator: t.Creator,
+				},
 				srcStorage:   srcStorage,
 				dstStorage:   dstStorage,
 				SrcObjPath:   srcObjPath,

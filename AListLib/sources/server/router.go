@@ -76,6 +76,7 @@ func Init(e *gin.Engine) {
 	public.Any("/offline_download_tools", handles.OfflineDownloadTools)
 
 	_fs(auth.Group("/fs"))
+	_task(auth.Group("/task", middlewares.AuthNotGuest))
 	admin(auth.Group("/admin", middlewares.AuthAdmin))
 	if flags.Debug || flags.Dev {
 		debug(g.Group("/debug"))
@@ -127,8 +128,8 @@ func admin(g *gin.RouterGroup) {
 	setting.POST("/set_qbit", handles.SetQbittorrent)
 	setting.POST("/set_transmission", handles.SetTransmission)
 
-	task := g.Group("/task")
-	handles.SetupTaskRoute(task)
+	// retain /admin/task API to ensure compatibility with legacy automation scripts
+	_task(g.Group("/task"))
 
 	ms := g.Group("/message")
 	ms.POST("/get", message.HttpInstance.GetHandle)
@@ -164,6 +165,10 @@ func _fs(g *gin.RouterGroup) {
 	// g.POST("/add_qbit", handles.AddQbittorrent)
 	// g.POST("/add_transmission", handles.SetTransmission)
 	g.POST("/add_offline_download", handles.AddOfflineDownload)
+}
+
+func _task(g *gin.RouterGroup) {
+	handles.SetupTaskRoute(g)
 }
 
 func Cors(r *gin.Engine) {

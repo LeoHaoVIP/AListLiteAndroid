@@ -7,7 +7,7 @@ import java.util.List;
  * @author LeoHao
  */
 public class Constants {
-    public static String ALIST_VERSION = "3.38.0";
+    public static String ALIST_VERSION = "3.39.4";
     public static String ALIST_CONFIG_FILENAME = "config.json";
     public static String ALIST_STORAGE_DRIVER_MOUNT_PATH = "本地存储";
     public static String ALIST_DEFAULT_ADMIN_USERNAME = "admin";

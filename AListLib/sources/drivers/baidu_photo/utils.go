@@ -2,8 +2,12 @@ package baiduphoto
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/errs"
@@ -475,4 +479,41 @@ func (d *BaiduPhoto) uInfo() (*UInfo, error) {
 		return nil, err
 	}
 	return &info, nil
+}
+
+func DecryptMd5(encryptMd5 string) string {
+	if _, err := hex.DecodeString(encryptMd5); err == nil {
+		return encryptMd5
+	}
+
+	var out strings.Builder
+	out.Grow(len(encryptMd5))
+	for i, n := 0, int64(0); i < len(encryptMd5); i++ {
+		if i == 9 {
+			n = int64(unicode.ToLower(rune(encryptMd5[i])) - 'g')
+		} else {
+			n, _ = strconv.ParseInt(encryptMd5[i:i+1], 16, 64)
+		}
+		out.WriteString(strconv.FormatInt(n^int64(15&i), 16))
+	}
+
+	encryptMd5 = out.String()
+	return encryptMd5[8:16] + encryptMd5[:8] + encryptMd5[24:32] + encryptMd5[16:24]
+}
+
+func EncryptMd5(originalMd5 string) string {
+	reversed := originalMd5[8:16] + originalMd5[:8] + originalMd5[24:32] + originalMd5[16:24]
+
+	var out strings.Builder
+	out.Grow(len(reversed))
+	for i, n := 0, int64(0); i < len(reversed); i++ {
+		n, _ = strconv.ParseInt(reversed[i:i+1], 16, 64)
+		n ^= int64(15 & i)
+		if i == 9 {
+			out.WriteRune(rune(n) + 'g')
+		} else {
+			out.WriteString(strconv.FormatInt(n, 16))
+		}
+	}
+	return out.String()
 }

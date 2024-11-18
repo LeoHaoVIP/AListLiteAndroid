@@ -5,8 +5,8 @@ import (
 	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
+	"github.com/alist-org/alist/v3/internal/task"
 	log "github.com/sirupsen/logrus"
-	"github.com/xhofe/tache"
 )
 
 // the param named path of functions in this package is a mount path
@@ -69,7 +69,7 @@ func Move(ctx context.Context, srcPath, dstDirPath string, lazyCache ...bool) er
 	return err
 }
 
-func Copy(ctx context.Context, srcObjPath, dstDirPath string, lazyCache ...bool) (tache.TaskWithInfo, error) {
+func Copy(ctx context.Context, srcObjPath, dstDirPath string, lazyCache ...bool) (task.TaskInfoWithCreator, error) {
 	res, err := _copy(ctx, srcObjPath, dstDirPath, lazyCache...)
 	if err != nil {
 		log.Errorf("failed copy %s to %s: %+v", srcObjPath, dstDirPath, err)
@@ -101,8 +101,8 @@ func PutDirectly(ctx context.Context, dstDirPath string, file model.FileStreamer
 	return err
 }
 
-func PutAsTask(dstDirPath string, file model.FileStreamer) (tache.TaskWithInfo, error) {
-	t, err := putAsTask(dstDirPath, file)
+func PutAsTask(ctx context.Context, dstDirPath string, file model.FileStreamer) (task.TaskInfoWithCreator, error) {
+	t, err := putAsTask(ctx, dstDirPath, file)
 	if err != nil {
 		log.Errorf("failed put %s: %+v", dstDirPath, err)
 	}

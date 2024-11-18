@@ -131,22 +131,22 @@ func DefaultConfig() *Config {
 		TlsInsecureSkipVerify: true,
 		Tasks: TasksConfig{
 			Download: TaskConfig{
-				Workers:        5,
-				MaxRetry:       1,
-				TaskPersistant: true,
+				Workers:  5,
+				MaxRetry: 1,
+				// TaskPersistant: true,
 			},
 			Transfer: TaskConfig{
-				Workers:        5,
-				MaxRetry:       2,
-				TaskPersistant: true,
+				Workers:  5,
+				MaxRetry: 2,
+				// TaskPersistant: true,
 			},
 			Upload: TaskConfig{
 				Workers: 5,
 			},
 			Copy: TaskConfig{
-				Workers:        5,
-				MaxRetry:       2,
-				TaskPersistant: true,
+				Workers:  5,
+				MaxRetry: 2,
+				// TaskPersistant: true,
 			},
 		},
 		Cors: Cors{

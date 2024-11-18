@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -73,6 +72,34 @@ func (d *Pan115) getFiles(fileId string) ([]FileObj, error) {
 		res = append(res, FileObj{file})
 	}
 	return res, nil
+}
+
+func (d *Pan115) getNewFile(fileId string) (*FileObj, error) {
+	file, err := d.client.GetFile(fileId)
+	if err != nil {
+		return nil, err
+	}
+	return &FileObj{*file}, nil
+}
+
+func (d *Pan115) getNewFileByPickCode(pickCode string) (*FileObj, error) {
+	result := driver115.GetFileInfoResponse{}
+	req := d.client.NewRequest().
+		SetQueryParam("pick_code", pickCode).
+		ForceContentType("application/json;charset=UTF-8").
+		SetResult(&result)
+	resp, err := req.Get(driver115.ApiFileInfo)
+	if err := driver115.CheckErr(err, &result, resp); err != nil {
+		return nil, err
+	}
+	if len(result.Files) == 0 {
+		return nil, errors.New("not get file info")
+	}
+	fileInfo := result.Files[0]
+
+	f := &FileObj{}
+	f.From(fileInfo)
+	return f, nil
 }
 
 func (d *Pan115) getUA() string {
@@ -245,8 +272,38 @@ func UploadDigestRange(stream model.FileStreamer, rangeSpec string) (result stri
 	return
 }
 
+// UploadByOSS use aliyun sdk to upload
+func (c *Pan115) UploadByOSS(params *driver115.UploadOSSParams, r io.Reader, dirID string) (*UploadResult, error) {
+	ossToken, err := c.client.GetOSSToken()
+	if err != nil {
+		return nil, err
+	}
+	ossClient, err := oss.New(driver115.OSSEndpoint, ossToken.AccessKeyID, ossToken.AccessKeySecret)
+	if err != nil {
+		return nil, err
+	}
+	bucket, err := ossClient.Bucket(params.Bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	var bodyBytes []byte
+	if err = bucket.PutObject(params.Object, r, append(
+		driver115.OssOption(params, ossToken),
+		oss.CallbackResult(&bodyBytes),
+	)...); err != nil {
+		return nil, err
+	}
+
+	var uploadResult UploadResult
+	if err = json.Unmarshal(bodyBytes, &uploadResult); err != nil {
+		return nil, err
+	}
+	return &uploadResult, uploadResult.Err(string(bodyBytes))
+}
+
 // UploadByMultipart upload by mutipart blocks
-func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize int64, stream model.FileStreamer, dirID string, opts ...driver115.UploadMultipartOption) error {
+func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize int64, stream model.FileStreamer, dirID string, opts ...driver115.UploadMultipartOption) (*UploadResult, error) {
 	var (
 		chunks    []oss.FileChunk
 		parts     []oss.UploadPart
@@ -254,12 +311,13 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 		ossClient *oss.Client
 		bucket    *oss.Bucket
 		ossToken  *driver115.UploadOSSTokenResp
+		bodyBytes []byte
 		err       error
 	)
 
 	tmpF, err := stream.CacheFullInTempFile()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	options := driver115.DefalutUploadMultipartOptions()
@@ -268,17 +326,19 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 			f(options)
 		}
 	}
+	// oss 启用Sequential必须按顺序上传
+	options.ThreadsNum = 1
 
 	if ossToken, err = d.client.GetOSSToken(); err != nil {
-		return err
+		return nil, err
 	}
 
-	if ossClient, err = oss.New(driver115.OSSEndpoint, ossToken.AccessKeyID, ossToken.AccessKeySecret); err != nil {
-		return err
+	if ossClient, err = oss.New(driver115.OSSEndpoint, ossToken.AccessKeyID, ossToken.AccessKeySecret, oss.EnableMD5(true), oss.EnableCRC(true)); err != nil {
+		return nil, err
 	}
 
 	if bucket, err = ossClient.Bucket(params.Bucket); err != nil {
-		return err
+		return nil, err
 	}
 
 	// ossToken一小时后就会失效，所以每50分钟重新获取一次
@@ -288,14 +348,15 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 	timeout := time.NewTimer(options.Timeout)
 
 	if chunks, err = SplitFile(fileSize); err != nil {
-		return err
+		return nil, err
 	}
 
 	if imur, err = bucket.InitiateMultipartUpload(params.Object,
 		oss.SetHeader(driver115.OssSecurityTokenHeaderName, ossToken.SecurityToken),
 		oss.UserAgentHeader(driver115.OSSUserAgent),
+		oss.EnableSha1(), oss.Sequential(),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	wg := sync.WaitGroup{}
@@ -337,8 +398,7 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 						continue
 					}
 
-					b := bytes.NewBuffer(buf)
-					if part, err = bucket.UploadPart(imur, b, chunk.Size, chunk.Number, driver115.OssOption(params, ossToken)...); err == nil {
+					if part, err = bucket.UploadPart(imur, bytes.NewBuffer(buf), chunk.Size, chunk.Number, driver115.OssOption(params, ossToken)...); err == nil {
 						break
 					}
 				}
@@ -362,52 +422,37 @@ LOOP:
 		case <-ticker.C:
 			// 到时重新获取ossToken
 			if ossToken, err = d.client.GetOSSToken(); err != nil {
-				return err
+				return nil, err
 			}
 		case <-quit:
 			break LOOP
 		case <-errCh:
-			return err
+			return nil, err
 		case <-timeout.C:
-			return fmt.Errorf("time out")
+			return nil, fmt.Errorf("time out")
 		}
 	}
 
-	// EOF错误是xml的Unmarshal导致的，响应其实是json格式，所以实际上上传是成功的
-	if _, err = bucket.CompleteMultipartUpload(imur, parts, driver115.OssOption(params, ossToken)...); err != nil && !errors.Is(err, io.EOF) {
-		// 当文件名含有 &< 这两个字符之一时响应的xml解析会出现错误，实际上上传是成功的
-		if filename := filepath.Base(stream.GetName()); !strings.ContainsAny(filename, "&<") {
-			return err
-		}
+	// 不知道啥原因，oss那边分片上传不计算sha1，导致115服务器校验错误
+	// params.Callback.Callback = strings.ReplaceAll(params.Callback.Callback, "${sha1}", params.SHA1)
+	if _, err := bucket.CompleteMultipartUpload(imur, parts, append(
+		driver115.OssOption(params, ossToken),
+		oss.CallbackResult(&bodyBytes),
+	)...); err != nil {
+		return nil, err
 	}
-	return d.checkUploadStatus(dirID, params.SHA1)
+
+	var uploadResult UploadResult
+	if err = json.Unmarshal(bodyBytes, &uploadResult); err != nil {
+		return nil, err
+	}
+	return &uploadResult, uploadResult.Err(string(bodyBytes))
 }
 
 func chunksProducer(ch chan oss.FileChunk, chunks []oss.FileChunk) {
 	for _, chunk := range chunks {
 		ch <- chunk
 	}
-}
-
-func (d *Pan115) checkUploadStatus(dirID, sha1 string) error {
-	// 验证上传是否成功
-	req := d.client.NewRequest().ForceContentType("application/json;charset=UTF-8")
-	opts := []driver115.GetFileOptions{
-		driver115.WithOrder(driver115.FileOrderByTime),
-		driver115.WithShowDirEnable(false),
-		driver115.WithAsc(false),
-		driver115.WithLimit(500),
-	}
-	fResp, err := driver115.GetFiles(req, dirID, opts...)
-	if err != nil {
-		return err
-	}
-	for _, fileInfo := range fResp.Files {
-		if fileInfo.Sha1 == sha1 {
-			return nil
-		}
-	}
-	return driver115.ErrUploadFailed
 }
 
 func SplitFile(fileSize int64) (chunks []oss.FileChunk, err error) {

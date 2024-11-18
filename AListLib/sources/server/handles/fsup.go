@@ -1,17 +1,16 @@
 package handles
 
 import (
-	"github.com/xhofe/tache"
+	"github.com/alist-org/alist/v3/internal/task"
 	"io"
 	"net/url"
 	stdpath "path"
 	"strconv"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/stream"
-
 	"github.com/alist-org/alist/v3/internal/fs"
 	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/alist-org/alist/v3/internal/stream"
 	"github.com/alist-org/alist/v3/server/common"
 	"github.com/gin-gonic/gin"
 )
@@ -58,9 +57,9 @@ func FsStream(c *gin.Context) {
 		Mimetype:     c.GetHeader("Content-Type"),
 		WebPutAsTask: asTask,
 	}
-	var t tache.TaskWithInfo
+	var t task.TaskInfoWithCreator
 	if asTask {
-		t, err = fs.PutAsTask(dir, s)
+		t, err = fs.PutAsTask(c, dir, s)
 	} else {
 		err = fs.PutDirectly(c, dir, s, true)
 	}
@@ -123,12 +122,12 @@ func FsForm(c *gin.Context) {
 		Mimetype:     file.Header.Get("Content-Type"),
 		WebPutAsTask: asTask,
 	}
-	var t tache.TaskWithInfo
+	var t task.TaskInfoWithCreator
 	if asTask {
 		s.Reader = struct {
 			io.Reader
 		}{f}
-		t, err = fs.PutAsTask(dir, &s)
+		t, err = fs.PutAsTask(c, dir, &s)
 	} else {
 		ss, err := stream.NewSeekableStream(s, nil)
 		if err != nil {

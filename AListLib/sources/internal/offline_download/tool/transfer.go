@@ -8,6 +8,7 @@ import (
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/internal/stream"
+	"github.com/alist-org/alist/v3/internal/task"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +16,7 @@ import (
 )
 
 type TransferTask struct {
-	tache.Base
+	task.TaskWithCreator
 	FileDir      string       `json:"file_dir"`
 	DstDirPath   string       `json:"dst_dir_path"`
 	TempDir      string       `json:"temp_dir"`

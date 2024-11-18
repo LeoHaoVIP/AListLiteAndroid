@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/alist-org/alist/v3/pkg/utils"
 )
 
 type TokenErrResp struct {
@@ -72,7 +73,7 @@ func fileToObj(f File) *model.ObjThumb {
 			IsFolder: f.Isdir == 1,
 
 			// 直接获取的MD5是错误的
-			// HashInfo: utils.NewHashInfo(utils.MD5, f.Md5),
+			HashInfo: utils.NewHashInfo(utils.MD5, DecryptMd5(f.Md5)),
 		},
 		Thumbnail: model.Thumbnail{Thumbnail: f.Thumbs.Url3},
 	}

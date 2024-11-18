@@ -101,7 +101,7 @@ func initStorage(ctx context.Context, storage model.Storage, storageDriver drive
 			log.Errorf("panic init storage: %s", errInfo)
 			driverStorage.SetStatus(errInfo)
 			MustSaveDriverStorage(storageDriver)
-			storagesMap.Delete(driverStorage.MountPath)
+			storagesMap.Store(driverStorage.MountPath, storageDriver)
 		}
 	}()
 	// Unmarshal Addition

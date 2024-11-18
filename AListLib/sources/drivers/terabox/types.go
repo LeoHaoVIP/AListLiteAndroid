@@ -99,3 +99,7 @@ type CheckLoginResp struct {
 type LocateUploadResp struct {
 	Host string `json:"host"`
 }
+
+type CreateResp struct {
+	Errno int `json:"errno"`
+}

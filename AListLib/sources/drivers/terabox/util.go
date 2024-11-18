@@ -17,6 +17,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	initialChunkSize     int64 = 4 << 20 // 4MB
+	initialSizeThreshold int64 = 4 << 30 // 4GB
+)
+
 func getStrBetween(raw, start, end string) string {
 	regexPattern := fmt.Sprintf(`%s(.*?)%s`, regexp.QuoteMeta(start), regexp.QuoteMeta(end))
 	regex := regexp.MustCompile(regexPattern)
@@ -86,11 +91,15 @@ func (d *Terabox) request(rurl string, method string, callback base.ReqCallback,
 			return d.request(rurl, method, callback, resp, true)
 		}
 	} else if errno == -6 {
-		log.Debugln(res.Header())
-		d.url_domain_prefix = res.Header()["Url-Domain-Prefix"][0]
-		d.base_url = "https://" + d.url_domain_prefix + ".terabox.com"
-		log.Debugln("Redirect base_url to", d.base_url)
-		return d.request(rurl, method, callback, resp, noRetry...)
+		header := res.Header()
+		log.Debugln(header)
+		urlDomainPrefix := header.Get("Url-Domain-Prefix")
+		if len(urlDomainPrefix) > 0 {
+			d.url_domain_prefix = urlDomainPrefix
+			d.base_url = "https://" + d.url_domain_prefix + ".terabox.com"
+			log.Debugln("Redirect base_url to", d.base_url)
+			return d.request(rurl, method, callback, resp, noRetry...)
+		}
 	}
 	return res.Body(), nil
 }
@@ -257,4 +266,20 @@ func encodeURIComponent(str string) string {
 	r := url.QueryEscape(str)
 	r = strings.ReplaceAll(r, "+", "%20")
 	return r
+}
+
+func calculateChunkSize(streamSize int64) int64 {
+	chunkSize := initialChunkSize
+	sizeThreshold := initialSizeThreshold
+
+	if streamSize < chunkSize {
+		return streamSize
+	}
+
+	for streamSize > sizeThreshold {
+		chunkSize <<= 1
+		sizeThreshold <<= 1
+	}
+
+	return chunkSize
 }

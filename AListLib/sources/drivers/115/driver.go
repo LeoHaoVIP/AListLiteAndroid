@@ -79,28 +79,60 @@ func (d *Pan115) Link(ctx context.Context, file model.Obj, args model.LinkArgs) 
 	return link, nil
 }
 
-func (d *Pan115) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) error {
+func (d *Pan115) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) (model.Obj, error) {
 	if err := d.WaitLimit(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	if _, err := d.client.Mkdir(parentDir.GetID(), dirName); err != nil {
-		return err
+
+	result := driver115.MkdirResp{}
+	form := map[string]string{
+		"pid":   parentDir.GetID(),
+		"cname": dirName,
 	}
-	return nil
+	req := d.client.NewRequest().
+		SetFormData(form).
+		SetResult(&result).
+		ForceContentType("application/json;charset=UTF-8")
+
+	resp, err := req.Post(driver115.ApiDirAdd)
+
+	err = driver115.CheckErr(err, &result, resp)
+	if err != nil {
+		return nil, err
+	}
+	f, err := d.getNewFile(result.FileID)
+	if err != nil {
+		return nil, nil
+	}
+	return f, nil
 }
 
-func (d *Pan115) Move(ctx context.Context, srcObj, dstDir model.Obj) error {
+func (d *Pan115) Move(ctx context.Context, srcObj, dstDir model.Obj) (model.Obj, error) {
 	if err := d.WaitLimit(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return d.client.Move(dstDir.GetID(), srcObj.GetID())
+	if err := d.client.Move(dstDir.GetID(), srcObj.GetID()); err != nil {
+		return nil, err
+	}
+	f, err := d.getNewFile(srcObj.GetID())
+	if err != nil {
+		return nil, nil
+	}
+	return f, nil
 }
 
-func (d *Pan115) Rename(ctx context.Context, srcObj model.Obj, newName string) error {
+func (d *Pan115) Rename(ctx context.Context, srcObj model.Obj, newName string) (model.Obj, error) {
 	if err := d.WaitLimit(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return d.client.Rename(srcObj.GetID(), newName)
+	if err := d.client.Rename(srcObj.GetID(), newName); err != nil {
+		return nil, err
+	}
+	f, err := d.getNewFile((srcObj.GetID()))
+	if err != nil {
+		return nil, nil
+	}
+	return f, nil
 }
 
 func (d *Pan115) Copy(ctx context.Context, srcObj, dstDir model.Obj) error {
@@ -117,9 +149,9 @@ func (d *Pan115) Remove(ctx context.Context, obj model.Obj) error {
 	return d.client.Delete(obj.GetID())
 }
 
-func (d *Pan115) Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) error {
+func (d *Pan115) Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) (model.Obj, error) {
 	if err := d.WaitLimit(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	var (
@@ -128,10 +160,10 @@ func (d *Pan115) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 	)
 
 	if ok, err := d.client.UploadAvailable(); err != nil || !ok {
-		return err
+		return nil, err
 	}
 	if stream.GetSize() > d.client.UploadMetaInfo.SizeLimit {
-		return driver115.ErrUploadTooLarge
+		return nil, driver115.ErrUploadTooLarge
 	}
 	//if digest, err = d.client.GetDigestResult(stream); err != nil {
 	//	return err
@@ -144,22 +176,22 @@ func (d *Pan115) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 	}
 	reader, err := stream.RangeRead(http_range.Range{Start: 0, Length: hashSize})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	preHash, err := utils.HashReader(utils.SHA1, reader)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	preHash = strings.ToUpper(preHash)
 	fullHash := stream.GetHash().GetHash(utils.SHA1)
 	if len(fullHash) <= 0 {
 		tmpF, err := stream.CacheFullInTempFile()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		fullHash, err = utils.HashFile(utils.SHA1, tmpF)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	fullHash = strings.ToUpper(fullHash)
@@ -168,20 +200,36 @@ func (d *Pan115) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 	// note that 115 add timeout for rapid-upload,
 	// and "sig invalid" err is thrown even when the hash is correct after timeout.
 	if fastInfo, err = d.rapidUpload(stream.GetSize(), stream.GetName(), dirID, preHash, fullHash, stream); err != nil {
-		return err
+		return nil, err
 	}
 	if matched, err := fastInfo.Ok(); err != nil {
-		return err
+		return nil, err
 	} else if matched {
-		return nil
+		f, err := d.getNewFileByPickCode(fastInfo.PickCode)
+		if err != nil {
+			return nil, nil
+		}
+		return f, nil
 	}
 
+	var uploadResult *UploadResult
 	// 闪传失败，上传
-	if stream.GetSize() <= utils.KB { // 文件大小小于1KB，改用普通模式上传
-		return d.client.UploadByOSS(&fastInfo.UploadOSSParams, stream, dirID)
+	if stream.GetSize() <= 10*utils.MB { // 文件大小小于10MB，改用普通模式上传
+		if uploadResult, err = d.UploadByOSS(&fastInfo.UploadOSSParams, stream, dirID); err != nil {
+			return nil, err
+		}
+	} else {
+		// 分片上传
+		if uploadResult, err = d.UploadByMultipart(&fastInfo.UploadOSSParams, stream.GetSize(), stream, dirID); err != nil {
+			return nil, err
+		}
 	}
-	// 分片上传
-	return d.UploadByMultipart(&fastInfo.UploadOSSParams, stream.GetSize(), stream, dirID)
+
+	file, err := d.getNewFile(uploadResult.Data.FileID)
+	if err != nil {
+		return nil, nil
+	}
+	return file, nil
 }
 
 func (d *Pan115) OfflineList(ctx context.Context) ([]*driver115.OfflineTask, error) {

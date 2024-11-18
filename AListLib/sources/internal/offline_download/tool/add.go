@@ -2,6 +2,8 @@ package tool
 
 import (
 	"context"
+	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/alist-org/alist/v3/internal/task"
 	"path/filepath"
 
 	"github.com/alist-org/alist/v3/internal/conf"
@@ -9,7 +11,6 @@ import (
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/xhofe/tache"
 )
 
 type DeletePolicy string
@@ -28,7 +29,7 @@ type AddURLArgs struct {
 	DeletePolicy DeletePolicy
 }
 
-func AddURL(ctx context.Context, args *AddURLArgs) (tache.TaskWithInfo, error) {
+func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskInfoWithCreator, error) {
 	// get tool
 	tool, err := Tools.Get(args.Tool)
 	if err != nil {
@@ -77,8 +78,12 @@ func AddURL(ctx context.Context, args *AddURLArgs) (tache.TaskWithInfo, error) {
 		// 防止将下载好的文件删除
 		deletePolicy = DeleteNever
 	}
-	
+
+	taskCreator, _ := ctx.Value("user").(*model.User) // taskCreator is nil when convert failed
 	t := &DownloadTask{
+		TaskWithCreator: task.TaskWithCreator{
+			Creator: taskCreator,
+		},
 		Url:          args.URL,
 		DstDirPath:   args.DstDirPath,
 		TempDir:      tempDir,

@@ -1,11 +1,14 @@
 package baidu_netdisk
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/errs"
@@ -153,8 +156,6 @@ func (d *BaiduNetdisk) linkOfficial(file model.Obj, args model.LinkArgs) (*model
 	u = res.Header().Get("location")
 	//}
 
-	updateObjMd5(file, "pan.baidu.com", u)
-
 	return &model.Link{
 		URL: u,
 		Header: http.Header{
@@ -177,8 +178,6 @@ func (d *BaiduNetdisk) linkCrack(file model.Obj, args model.LinkArgs) (*model.Li
 	if err != nil {
 		return nil, err
 	}
-
-	updateObjMd5(file, d.CustomCrackUA, resp.Info[0].Dlink)
 
 	return &model.Link{
 		URL: resp.Info[0].Dlink,
@@ -229,19 +228,6 @@ func joinTime(form map[string]string, ctime, mtime int64) {
 	form["local_ctime"] = strconv.FormatInt(ctime, 10)
 }
 
-func updateObjMd5(obj model.Obj, userAgent, u string) {
-	object := model.GetRawObject(obj)
-	if object != nil {
-		req, _ := http.NewRequest(http.MethodHead, u, nil)
-		req.Header.Add("User-Agent", userAgent)
-		resp, _ := base.HttpClient.Do(req)
-		if resp != nil {
-			contentMd5 := resp.Header.Get("Content-Md5")
-			object.HashInfo = utils.NewHashInfo(utils.MD5, contentMd5)
-		}
-	}
-}
-
 const (
 	DefaultSliceSize int64 = 4 * utils.MB
 	VipSliceSize           = 16 * utils.MB
@@ -267,3 +253,40 @@ func (d *BaiduNetdisk) getSliceSize() int64 {
 // 	r = strings.ReplaceAll(r, "+", "%20")
 // 	return r
 // }
+
+func DecryptMd5(encryptMd5 string) string {
+	if _, err := hex.DecodeString(encryptMd5); err == nil {
+		return encryptMd5
+	}
+
+	var out strings.Builder
+	out.Grow(len(encryptMd5))
+	for i, n := 0, int64(0); i < len(encryptMd5); i++ {
+		if i == 9 {
+			n = int64(unicode.ToLower(rune(encryptMd5[i])) - 'g')
+		} else {
+			n, _ = strconv.ParseInt(encryptMd5[i:i+1], 16, 64)
+		}
+		out.WriteString(strconv.FormatInt(n^int64(15&i), 16))
+	}
+
+	encryptMd5 = out.String()
+	return encryptMd5[8:16] + encryptMd5[:8] + encryptMd5[24:32] + encryptMd5[16:24]
+}
+
+func EncryptMd5(originalMd5 string) string {
+	reversed := originalMd5[8:16] + originalMd5[:8] + originalMd5[24:32] + originalMd5[16:24]
+
+	var out strings.Builder
+	out.Grow(len(reversed))
+	for i, n := 0, int64(0); i < len(reversed); i++ {
+		n, _ = strconv.ParseInt(reversed[i:i+1], 16, 64)
+		n ^= int64(15 & i)
+		if i == 9 {
+			out.WriteRune(rune(n) + 'g')
+		} else {
+			out.WriteString(strconv.FormatInt(n, 16))
+		}
+	}
+	return out.String()
+}

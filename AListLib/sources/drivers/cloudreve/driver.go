@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 
@@ -90,7 +91,7 @@ func (d *Cloudreve) MakeDir(ctx context.Context, parentDir model.Obj, dirName st
 func (d *Cloudreve) Move(ctx context.Context, srcObj, dstDir model.Obj) error {
 	body := base.Json{
 		"action":  "move",
-		"src_dir": srcObj.GetPath(),
+		"src_dir": path.Dir(srcObj.GetPath()),
 		"dst":     dstDir.GetPath(),
 		"src":     convertSrc(srcObj),
 	}
@@ -112,7 +113,7 @@ func (d *Cloudreve) Rename(ctx context.Context, srcObj model.Obj, newName string
 
 func (d *Cloudreve) Copy(ctx context.Context, srcObj, dstDir model.Obj) error {
 	body := base.Json{
-		"src_dir": srcObj.GetPath(),
+		"src_dir": path.Dir(srcObj.GetPath()),
 		"dst":     dstDir.GetPath(),
 		"src":     convertSrc(srcObj),
 	}
