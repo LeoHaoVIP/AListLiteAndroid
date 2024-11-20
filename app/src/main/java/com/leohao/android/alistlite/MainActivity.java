@@ -534,13 +534,18 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        //设置用户按返回键后，APP不退出（针对较低版本的Android）
+        //自定义返回键功能，实现webView的后退以及退出时保持后台运行而不是关闭app
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_HOME)
-                    .addCategory(Intent.CATEGORY_DEFAULT)
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
+            if (webView.canGoBack()) {
+                webView.goBack();
+            }
+            else{
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME)
+                        .addCategory(Intent.CATEGORY_DEFAULT)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
             return true;
         }
         return super.onKeyDown(keyCode, event);
