@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -114,11 +115,13 @@ public class AlistService extends Service {
         //关闭服务
         alistServer.shutdown();
         //清空webView
-        MainActivity.getInstance().webView.loadUrl("about:blank");
-        //更新AList运行状态
-        MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
+        MainActivity.getInstance().webView.clearCache(true);
+        MainActivity.getInstance().webView.clearHistory();
         //重置 AList 服务地址
         MainActivity.getInstance().serverAddress = Constants.URL_ABOUT_BLANK;
+        MainActivity.getInstance().webView.loadUrl(Constants.URL_ABOUT_BLANK);
+        //更新AList运行状态
+        MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
         if (wakeLock != null) {
             wakeLock.release();
             wakeLock = null;
