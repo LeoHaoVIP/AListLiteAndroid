@@ -562,11 +562,7 @@ public class MainActivity extends AppCompatActivity {
             if (webView.canGoBack()) {
                 webView.goBack();
             } else {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.addCategory(Intent.CATEGORY_HOME)
-                        .addCategory(Intent.CATEGORY_DEFAULT)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                moveTaskToBack(true);
             }
             return true;
         }
