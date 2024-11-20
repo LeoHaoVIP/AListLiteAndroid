@@ -28,7 +28,7 @@
                 android:name=".MainActivity"
                 android:hardwareAccelerated ="true"
                 android:launchMode="singleTask"
-                android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+                android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
