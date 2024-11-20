@@ -451,11 +451,20 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             //获取最新release版本信息
             try {
-                String releaseInfo = MyHttpUtil.request(Constants.UPDATE_CHECK_URL, Method.GET);
+                //捕捉HTTP请求异常
+                String releaseInfo = null;
+                try {
+                    releaseInfo = MyHttpUtil.request(Constants.UPDATE_CHECK_URL, Method.GET);
+                } catch (Throwable t) {
+                    Looper.prepare();
+                    showToast("无法获取更新: " + t.getLocalizedMessage());
+                    Looper.loop();
+                    Log.e(TAG, "checkUpdates: " + t.getLocalizedMessage());
+                }
                 JSONObject release = JSONUtil.parseObj(releaseInfo);
                 if (!release.containsKey("tag_name")) {
                     Looper.prepare();
-                    showToast("无法获取更新");
+                    showToast("未发现新版本信息");
                     Looper.loop();
                     return;
                 }
@@ -469,17 +478,34 @@ public class MainActivity extends AppCompatActivity {
                 String latestVersion = release.getStr("tag_name").substring(1);
                 //最新版本基于的AList版本
                 String latestOnAlistVersion = release.getStr("name").substring(12);
+                //版本更新日志
+                String updateJournal = release.getStr("body");
                 //新版本APK下载地址（Github）
-//            String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
-                //加速地址（pan.leohao.cn）
+                String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
+                //镜像加速地址
                 String downloadLinkFast = String.format("%s/AListLite-v%s-%s-release.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion, abiName);
                 //发现新版本
                 if (latestVersion.compareTo(currentAppVersion) > 0) {
                     Looper.prepare();
-                    showToast("发现新版本 " + latestVersion + " | AList " + latestOnAlistVersion);
-                    //跳转到浏览器下载
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkFast));
-                    startActivity(intent);
+                    String dialogTitle = String.format("发现新版本 %s (AList %s)", latestVersion, latestOnAlistVersion);
+                    //弹出更新下载确认
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+                    dialog.setTitle(dialogTitle);
+                    dialog.setMessage(updateJournal);
+                    dialog.setCancelable(true);
+                    dialog.setPositiveButton("镜像加速下载", (dialog1, which) -> {
+                        //跳转到浏览器下载
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkFast));
+                        startActivity(intent);
+                    });
+                    dialog.setNeutralButton("GitHub官网下载", (dialog2, which) -> {
+                        //跳转到浏览器下载
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkGitHub));
+                        startActivity(intent);
+                    });
+                    dialog.setNegativeButton("取消", (dialog3, which) -> {
+                    });
+                    dialog.show();
                     Looper.loop();
                 } else {
                     if (view != null) {
@@ -489,9 +515,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             } catch (Exception e) {
-                Looper.prepare();
-                showToast("无法获取新版本信息");
-                Looper.loop();
                 Log.e(TAG, "checkUpdates: " + e.getLocalizedMessage());
             }
         }).start();
@@ -538,8 +561,7 @@ public class MainActivity extends AppCompatActivity {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (webView.canGoBack()) {
                 webView.goBack();
-            }
-            else{
+            } else {
                 Intent intent = new Intent(Intent.ACTION_MAIN);
                 intent.addCategory(Intent.CATEGORY_HOME)
                         .addCategory(Intent.CATEGORY_DEFAULT)
