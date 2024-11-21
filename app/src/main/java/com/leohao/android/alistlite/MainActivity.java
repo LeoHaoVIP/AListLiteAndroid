@@ -479,7 +479,7 @@ public class MainActivity extends AppCompatActivity {
                 //最新版本基于的AList版本
                 String latestOnAlistVersion = release.getStr("name").substring(12);
                 //版本更新日志
-                String updateJournal = release.getStr("body");
+                String updateJournal = String.format("\uD83D\uDD25 新版本基于 AList %s 构建\r\n\r\n%s", latestOnAlistVersion, release.getStr("body"));
                 //新版本APK下载地址（Github）
                 String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
                 //镜像加速地址
@@ -487,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
                 //发现新版本
                 if (latestVersion.compareTo(currentAppVersion) > 0) {
                     Looper.prepare();
-                    String dialogTitle = String.format("发现新版本 %s (AList %s)", latestVersion, latestOnAlistVersion);
+                    String dialogTitle = String.format("\uD83C\uDF89 AListLite %s 已发布", latestVersion);
                     //弹出更新下载确认
                     AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
                     dialog.setTitle(dialogTitle);
