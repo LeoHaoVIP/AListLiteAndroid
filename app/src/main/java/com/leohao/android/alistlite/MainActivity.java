@@ -559,7 +559,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         //自定义返回键功能，实现webView的后退以及退出时保持后台运行而不是关闭app
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (webView.canGoBack()) {
+            if (webView.canGoBack() && alistServer.hasRunning()) {
                 webView.goBack();
             } else {
                 moveTaskToBack(true);
@@ -589,7 +589,7 @@ public class MainActivity extends AppCompatActivity {
      * 复制 AList 服务地址到剪切板
      */
     public void copyAddressToClipboard(View view) {
-        if (!Constants.URL_ABOUT_BLANK.equals(this.serverAddress)) {
+        if (alistServer.hasRunning()) {
             clipBoardHelper.copyText(this.serverAddress);
             showToast("AList 服务地址已复制");
         }

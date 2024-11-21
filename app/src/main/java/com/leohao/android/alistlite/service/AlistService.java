@@ -82,8 +82,8 @@ public class AlistService extends Service {
                 String serverPort = alistServer.getConfigValue("scheme.http_port");
                 //AList服务前端访问地址
                 String serverAddress = String.format(Locale.CHINA, "http://%s:%s", alistServer.getBindingIP(), serverPort);
-                MainActivity.getInstance().serverAddress = serverAddress;
                 //加载AList前端页面
+                MainActivity.getInstance().serverAddress = serverAddress;
                 MainActivity.getInstance().webView.loadUrl(serverAddress);
                 //更新AList运行状态
                 MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
@@ -114,12 +114,8 @@ public class AlistService extends Service {
         }
         //关闭服务
         alistServer.shutdown();
-        //清空webView
-        MainActivity.getInstance().webView.clearCache(true);
-        MainActivity.getInstance().webView.clearHistory();
-        //重置 AList 服务地址
-        MainActivity.getInstance().serverAddress = Constants.URL_ABOUT_BLANK;
-        MainActivity.getInstance().webView.loadUrl(Constants.URL_ABOUT_BLANK);
+        //刷新 webview
+        MainActivity.getInstance().webView.reload();
         //更新AList运行状态
         MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
         if (wakeLock != null) {
