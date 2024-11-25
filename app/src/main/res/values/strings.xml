@@ -5,6 +5,7 @@
     <string name="btn_text_stop">OFF</string>
     <string name="alist_service_is_running">AList 服务运行中</string>
     <string name="alist_service_not_running">AList 服务未启动</string>
+    <string name="alist_tile_label">AList</string>
     <string name="app_name_ext">AListLite</string>
     <string name="app_version">v1.0.0&#160;</string>
     <string name="config_view">|&#160;高级配置&#160;</string>

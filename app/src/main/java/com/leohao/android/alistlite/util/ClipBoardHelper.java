@@ -5,7 +5,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import com.leohao.android.alistlite.AlistLiteApplication;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 

@@ -1,6 +1,7 @@
 package com.leohao.android.alistlite;
 
 import android.annotation.TargetApi;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -9,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.service.quicksettings.TileService;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -24,6 +26,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
@@ -34,6 +37,7 @@ import com.hjq.permissions.XXPermissions;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
+import com.leohao.android.alistlite.service.AlistTileService;
 import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
@@ -46,6 +50,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
@@ -56,6 +63,10 @@ import static com.leohao.android.alistlite.AlistLiteApplication.context;
 public class MainActivity extends AppCompatActivity {
     private static MainActivity instance;
     private static final String TAG = "MainActivity";
+    /**
+     * 广播定时发送定时器（用于实时更新服务磁贴状态）
+     */
+    private ScheduledExecutorService broadcastScheduler = null;
     private String currentAppVersion;
     private String currentAlistVersion;
     public ActionBar actionBar = null;
@@ -86,6 +97,28 @@ public class MainActivity extends AppCompatActivity {
         checkPermissions();
         //检查系统更新
         checkUpdates(null);
+        //初始化广播发送定时器
+        initBroadcastScheduler();
+    }
+
+    /**
+     * 初始化广播发送定时器
+     */
+    private void initBroadcastScheduler() {
+        //初始化广播定时发送定时器
+        broadcastScheduler = Executors.newSingleThreadScheduledExecutor();
+        //定时向 TileService 发送服务开启状态
+        broadcastScheduler.scheduleAtFixedRate(() -> {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                //请求监听状态
+                TileService.requestListeningState(this, new ComponentName(this, AlistTileService.class));
+                //根据 AList 服务开启状态选择广播消息类型
+                String actionName = alistServer.hasRunning() ? AlistTileService.ACTION_TILE_ON : AlistTileService.ACTION_TILE_OFF;
+                //更新磁贴开关状态
+                Intent tileServiceIntent = new Intent(this, AlistTileService.class).setAction(actionName);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(tileServiceIntent);
+            }
+        }, 2, 1, TimeUnit.SECONDS);
     }
 
     /**
@@ -116,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
     private void checkPermissions() {
         XXPermissions.with(this)
                 // 申请单个权限
-                .permission(Permission.POST_NOTIFICATIONS).permission(Permission.MANAGE_EXTERNAL_STORAGE).request(new OnPermissionCallback() {
+                .permission(Permission.POST_NOTIFICATIONS).permission(Permission.MANAGE_EXTERNAL_STORAGE).permission(Permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).request(new OnPermissionCallback() {
                     @Override
                     public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
                         if (!allGranted) {
@@ -245,8 +278,7 @@ public class MainActivity extends AppCompatActivity {
                 //隐藏标题栏
                 actionBar.hide();
                 // 隐藏状态栏
-                getWindow().getDecorView().setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
                 //隐藏前进和返回按钮
                 webViewGoBackButton.setVisibility(View.INVISIBLE);
                 webViewGoForwardButton.setVisibility(View.INVISIBLE);
@@ -592,6 +624,15 @@ public class MainActivity extends AppCompatActivity {
         if (alistServer.hasRunning()) {
             clipBoardHelper.copyText(this.serverAddress);
             showToast("AList 服务地址已复制");
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 关闭定时任务调度器
+        if (broadcastScheduler != null) {
+            broadcastScheduler.shutdownNow();
         }
     }
 }
