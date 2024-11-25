@@ -56,11 +56,11 @@ func fileToObj(f File) *model.ObjThumb {
 	if f.ServerFilename == "" {
 		f.ServerFilename = path.Base(f.Path)
 	}
-	if f.LocalCtime == 0 {
-		f.LocalCtime = f.Ctime
+	if f.ServerCtime == 0 {
+		f.ServerCtime = f.Ctime
 	}
-	if f.LocalMtime == 0 {
-		f.LocalMtime = f.Mtime
+	if f.ServerMtime == 0 {
+		f.ServerMtime = f.Mtime
 	}
 	return &model.ObjThumb{
 		Object: model.Object{
@@ -68,8 +68,8 @@ func fileToObj(f File) *model.ObjThumb {
 			Path:     f.Path,
 			Name:     f.ServerFilename,
 			Size:     f.Size,
-			Modified: time.Unix(f.LocalMtime, 0),
-			Ctime:    time.Unix(f.LocalCtime, 0),
+			Modified: time.Unix(f.ServerMtime, 0),
+			Ctime:    time.Unix(f.ServerCtime, 0),
 			IsFolder: f.Isdir == 1,
 
 			// 直接获取的MD5是错误的

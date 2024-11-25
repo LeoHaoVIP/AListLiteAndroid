@@ -280,7 +280,7 @@ func (d *Local) Copy(_ context.Context, srcObj, dstDir model.Obj) error {
 	return cp.Copy(srcPath, dstPath, cp.Options{
 		Sync:          true, // Sync file to disk after copy, may have performance penalty in filesystem such as ZFS
 		PreserveTimes: true,
-		NumOfWorkers:  0, // Serialized copy without using goroutine
+		PreserveOwner: true,
 	})
 }
 
