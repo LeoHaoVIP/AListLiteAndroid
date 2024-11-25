@@ -25,6 +25,8 @@
             android:supportsRtl="true"
             android:requestLegacyExternalStorage="true"
             android:theme="@style/Theme.AList">
+        <meta-data android:name="BUGLY_APPID" android:value="<YOUR_BUGLY_APP_ID>"/>
+        <meta-data android:name="BUGLY_ENABLE_DEBUG" android:value="false"/>
         <activity
                 android:name=".MainActivity"
                 android:hardwareAccelerated="true"
@@ -60,5 +62,4 @@
             </intent-filter>
         </receiver>
     </application>
-
 </manifest>
