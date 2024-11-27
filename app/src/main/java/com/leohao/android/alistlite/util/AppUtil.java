@@ -38,7 +38,7 @@ public class AppUtil {
         return getAllChildViews(activity.getWindow().getDecorView());
     }
 
-    private static List<View> getAllChildViews(View view) {
+    public static List<View> getAllChildViews(View view) {
         List<View> allChildren = new ArrayList<>();
         if (view instanceof ViewGroup) {
             ViewGroup vp = (ViewGroup) view;

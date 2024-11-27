@@ -14,7 +14,6 @@ import static com.leohao.android.alistlite.AlistLiteApplication.context;
  */
 public class PopupMenuWindow extends PopupWindow {
     public PopupMenuWindow() {
-        //TODO 更改触发方法的位置到popupwindow中
         super(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         //再次点击菜单时隐藏菜单
         setOutsideTouchable(true);

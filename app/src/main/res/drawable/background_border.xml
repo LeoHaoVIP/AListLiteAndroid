@@ -7,11 +7,6 @@
              android:topRightRadius="5dp"
              android:bottomRightRadius="5dp"
              android:bottomLeftRadius="5dp"/>
-    <padding
-            android:left="2dp"
-            android:top="2dp"
-            android:right="2dp"
-            android:bottom="2dp" />
     <!-- 这里设置边框 -->
     <stroke android:width="2dp" android:color="#999999" />
 </shape>

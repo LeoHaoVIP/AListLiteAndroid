@@ -128,8 +128,14 @@ public class MainActivity extends AppCompatActivity {
      * 初始化焦点设置
      */
     private void initFocusSettings() {
+        //初始化焦点为密码按钮，便于用户设置
+        homepageButton.postDelayed(() -> {
+            //初始时焦点设置为密码按钮
+            homepageButton.requestFocus();
+        }, 1000);
         //适配 TV 端操作，控件获取到焦点时显示边框
         List<View> views = AppUtil.getAllViews(this);
+        views.addAll(AppUtil.getAllChildViews(popupMenuWindow.getContentView()));
         for (View view : views) {
             view.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) {
@@ -719,8 +725,12 @@ public class MainActivity extends AppCompatActivity {
      * @param url URL 链接
      */
     private void openExternalUrl(String url) {
-        //跳转到浏览器下载
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        startActivity(intent);
+        try {
+            //跳转到浏览器下载
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            showToast("无法打开外部链接，请检查浏览器是否正常");
+        }
     }
 }
