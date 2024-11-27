@@ -12,7 +12,11 @@ public class Constants {
     public static String ALIST_STORAGE_DRIVER_MOUNT_PATH = "本地存储";
     public static String ALIST_DEFAULT_ADMIN_USERNAME = "admin";
     public static String ALIST_DEFAULT_PASSWORD = "123456";
-    public static String UPDATE_CHECK_URL = "https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest";
+    public static Integer RECENT_RELEASE_RECORD_SIZE = 10;
+    public static String URL_RELEASE_LATEST = "https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest";
+    public static String URL_RELEASES = "https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases";
+    public static String URL_OPEN_ISSUE = "https://github.com/LeoHaoVIP/AListLiteAndroid/issues";
+    public static String URL_OPEN_DISCUSSION = "https://github.com/LeoHaoVIP/AListLiteAndroid/discussions";
     public static String URL_ABOUT_BLANK = "about:blank";
     public static String QUICK_DOWNLOAD_ADDRESS = "https://pan.leohao.cn/d/LeoHao/files/share/APP/AListLite";
     public static String ERROR_MSG_CONFIG_DATA_READ = "{\"info\":\"无法读取配置，请检查存储权限\",\"msg\":\"MSG\"}";

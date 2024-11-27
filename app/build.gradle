@@ -42,6 +42,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
     implementation 'commons-io:commons-io:2.4'
+    implementation 'org.apache.commons:commons-lang3:3.11'
     implementation 'com.jayway.jsonpath:json-path:2.8.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.3.0'

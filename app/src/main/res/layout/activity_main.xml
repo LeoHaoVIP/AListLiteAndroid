@@ -42,7 +42,34 @@
                         android:textSize="13sp"
                         android:text="@string/alist_version"/>
             </LinearLayout>
-
+            <ImageButton
+                    android:id="@+id/btn_webViewGoBack"
+                    android:focusable="true"
+                    android:background="@null"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:elevation="16dp"
+                    android:scaleType="centerInside"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@id/btn_webViewGoForward"
+                    android:layout_marginRight="13dp"
+                    android:onClick="webViewGoBackOrForward"
+                    android:src="@drawable/go_back"
+            />
+            <ImageButton
+                    android:id="@+id/btn_webViewGoForward"
+                    android:focusable="true"
+                    android:background="@null"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:elevation="16dp"
+                    android:scaleType="centerInside"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@id/btn_homepage"
+                    android:layout_marginRight="13dp"
+                    android:onClick="webViewGoBackOrForward"
+                    android:src="@drawable/go_forward"
+            />
             <ImageButton
                     android:id="@+id/btn_homepage"
                     android:focusable="true"
@@ -51,37 +78,25 @@
                     android:layout_height="25dp"
                     android:scaleType="centerInside"
                     android:layout_centerVertical="true"
-                    android:layout_toLeftOf="@id/btn_admin"
-                    android:layout_marginRight="15dp"
+                    android:layout_toLeftOf="@id/btn_showPopupMenu"
+                    android:layout_marginRight="13dp"
                     android:tooltipText="@string/tooltip_homepage"
                     android:onClick="jumpToHomepage"
                     android:src="@drawable/homepage"
             />
             <ImageButton
-                    android:id="@+id/btn_admin"
+                    android:id="@+id/btn_showPopupMenu"
                     android:focusable="true"
                     android:background="@null"
                     android:layout_width="25dp"
                     android:layout_height="25dp"
-                    android:scaleType="centerInside"
-                    android:layout_centerVertical="true"
-                    android:layout_toLeftOf="@id/btn_showSystemInfo"
-                    android:layout_marginRight="15dp"
-                    android:onClick="setAdminPassword"
-                    android:src="@drawable/key"
-            />
-            <ImageButton
-                    android:id="@+id/btn_showSystemInfo"
-                    android:focusable="true"
-                    android:background="@null"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:onClick="showSystemInfo"
-                    android:scaleType="centerInside"
-                    android:layout_centerVertical="true"
                     android:layout_toLeftOf="@id/switchButton"
-                    android:layout_marginRight="10dp"
-                    android:src="@drawable/info"
+                    android:layout_marginRight="5dp"
+                    android:gravity="end"
+                    android:scaleType="centerInside"
+                    android:layout_centerVertical="true"
+                    android:onClick="showPopupMenu"
+                    android:src="@drawable/more"
             />
             <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/switchButton"
@@ -90,21 +105,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
-                    android:gravity="end"
-                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="10dp"
                     android:layout_centerVertical="true"
+                    android:layout_alignParentRight="true"
                     app:kswAnimationDuration="300"
                     app:kswBackDrawable="@drawable/ios_back_drawable"
                     app:kswThumbDrawable="@drawable/ios_thumb_selector"
                     app:kswThumbMarginLeft="2dp"
                     app:kswThumbMarginBottom="-4dp"
-                    app:kswThumbMarginTop="2dp"
-            />
+                    app:kswThumbMarginTop="2dp"/>
         </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
     <TextView
-            android:visibility="visible"
             android:id="@+id/tv_alist_status"
+            android:focusable="true"
             android:text="@string/alist_service_not_running"
             android:textSize="15sp"
             android:layout_below="@id/toolbar"
@@ -128,36 +142,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-    <ImageButton
-            android:id="@+id/btn_webViewGoBack"
-            android:background="@null"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:elevation="16dp"
-            android:alpha="0.5"
-            android:scaleType="centerInside"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="40dp"
-            android:onClick="webViewGoBackOrForward"
-            android:src="@drawable/go_back"
-    />
-    <ImageButton
-            android:id="@+id/btn_webViewGoForward"
-            android:background="@null"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:elevation="16dp"
-            android:alpha="0.5"
-            android:scaleType="centerInside"
-            android:layout_centerVertical="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="40dp"
-            android:onClick="webViewGoBackOrForward"
-            android:src="@drawable/go_forward"
-    />
     <FrameLayout
             android:id="@+id/video_container"
             android:layout_width="match_parent"

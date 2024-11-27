@@ -88,6 +88,9 @@ public class AlistService extends Service {
                 //AList服务前端访问地址
                 String serverAddress = String.format(Locale.CHINA, "http://%s:%s", alistServer.getBindingIP(), serverPort);
                 if (MainActivity.getInstance() != null) {
+                    MainActivity.getInstance().homepageButton.setVisibility(View.VISIBLE);
+                    MainActivity.getInstance().webViewGoBackButton.setVisibility(View.VISIBLE);
+                    MainActivity.getInstance().webViewGoForwardButton.setVisibility(View.VISIBLE);
                     //状态开关恢复到开启状态（不触发监听事件）
                     MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(true);
                     //加载AList前端页面
@@ -131,6 +134,9 @@ public class AlistService extends Service {
         //关闭服务
         alistServer.shutdown();
         if (MainActivity.getInstance() != null) {
+            MainActivity.getInstance().homepageButton.setVisibility(View.INVISIBLE);
+            MainActivity.getInstance().webViewGoBackButton.setVisibility(View.INVISIBLE);
+            MainActivity.getInstance().webViewGoForwardButton.setVisibility(View.INVISIBLE);
             //状态开关恢复到关闭状态（不触发监听事件）
             MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(false);
             //刷新 webview

@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -29,6 +30,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.hjq.permissions.OnPermissionCallback;
@@ -42,6 +44,7 @@ import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
 import com.leohao.android.alistlite.util.MyHttpUtil;
+import com.leohao.android.alistlite.window.PopupMenuWindow;
 import com.yuyh.jsonviewer.library.JsonRecyclerView;
 import org.apache.commons.io.FileUtils;
 
@@ -77,11 +80,11 @@ public class MainActivity extends AppCompatActivity {
     public SwitchButton serviceSwitch = null;
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
-    private ImageButton adminButton;
-    private ImageButton homepageButton;
-    private ImageButton webViewGoBackButton;
-    private ImageButton webViewGoForwardButton;
+    public ImageButton homepageButton;
+    public ImageButton webViewGoBackButton;
+    public ImageButton webViewGoForwardButton;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private PopupMenuWindow popupMenuWindow;
     private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
 
     @Override
@@ -125,11 +128,6 @@ public class MainActivity extends AppCompatActivity {
      * 初始化焦点设置
      */
     private void initFocusSettings() {
-        //初始化焦点为密码按钮，便于用户设置
-        adminButton.postDelayed(() -> {
-            //初始时焦点设置为密码按钮
-            adminButton.requestFocus();
-        }, 500);
         //适配 TV 端操作，控件获取到焦点时显示边框
         List<View> views = AppUtil.getAllViews(this);
         for (View view : views) {
@@ -183,10 +181,6 @@ public class MainActivity extends AppCompatActivity {
             startService(intent);
         }
         alistServer = Alist.getInstance();
-        adminButton.setVisibility(View.VISIBLE);
-        homepageButton.setVisibility(View.VISIBLE);
-        webViewGoBackButton.setVisibility(View.VISIBLE);
-        webViewGoForwardButton.setVisibility(View.VISIBLE);
     }
 
     private void readyToShutdownService() {
@@ -198,10 +192,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(intent);
         }
-        adminButton.setVisibility(View.INVISIBLE);
-        homepageButton.setVisibility(View.INVISIBLE);
-        webViewGoBackButton.setVisibility(View.INVISIBLE);
-        webViewGoForwardButton.setVisibility(View.INVISIBLE);
     }
 
     private void initWidgets() {
@@ -213,9 +203,6 @@ public class MainActivity extends AppCompatActivity {
         serviceSwitch = findViewById(R.id.switchButton);
         appInfoTextView = findViewById(R.id.tv_app_info);
         alistVersionTextView = findViewById(R.id.tv_alist_version);
-        adminButton = findViewById(R.id.btn_admin);
-        // 服务未开启时禁止用户设置管理员密码
-        adminButton.setVisibility(View.INVISIBLE);
         homepageButton = findViewById(R.id.btn_homepage);
         homepageButton.setVisibility(View.INVISIBLE);
         webViewGoBackButton = findViewById(R.id.btn_webViewGoBack);
@@ -225,6 +212,11 @@ public class MainActivity extends AppCompatActivity {
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         webView = findViewById(R.id.webview_alist);
+        //初始化菜单栏弹框
+        popupMenuWindow = new PopupMenuWindow();
+        popupMenuWindow.setOnDismissListener(() -> {
+            backgroundAlpha(1.0f);
+        });
         //初始化 webView 设定
         initWebview();
         //获取当前APP版本号
@@ -323,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                        openExternalUrl(url);
                     } catch (Exception ignored) {
                     }
                     return true;
@@ -346,9 +338,6 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.system_info, null);
-        //设定APP版本号
-        TextView appVersionTextView = dialogView.findViewById(R.id.tv_app_version);
-        appVersionTextView.setText(String.format("v%s ", currentAppVersion));
         systemInfoDialog.setView(dialogView);
         systemInfoDialog.show();
         int width = getResources().getDisplayMetrics().widthPixels;
@@ -486,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
                 //捕捉HTTP请求异常
                 String releaseInfo = null;
                 try {
-                    releaseInfo = MyHttpUtil.request(Constants.UPDATE_CHECK_URL, Method.GET);
+                    releaseInfo = MyHttpUtil.request(Constants.URL_RELEASE_LATEST, Method.GET);
                 } catch (Throwable t) {
                     Looper.prepare();
                     showToast("无法获取更新: " + t.getLocalizedMessage());
@@ -527,13 +516,11 @@ public class MainActivity extends AppCompatActivity {
                     dialog.setCancelable(true);
                     dialog.setPositiveButton("镜像加速下载", (dialog1, which) -> {
                         //跳转到浏览器下载
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkFast));
-                        startActivity(intent);
+                        openExternalUrl(downloadLinkFast);
                     });
                     dialog.setNeutralButton("GitHub官网下载", (dialog2, which) -> {
                         //跳转到浏览器下载
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadLinkGitHub));
-                        startActivity(intent);
+                        openExternalUrl(downloadLinkGitHub);
                     });
                     dialog.setNegativeButton("取消", (dialog3, which) -> {
                     });
@@ -634,5 +621,106 @@ public class MainActivity extends AppCompatActivity {
         if (broadcastScheduler != null) {
             broadcastScheduler.shutdownNow();
         }
+    }
+
+    /**
+     * 打开权限检查配置页面
+     */
+    public void startPermissionCheckActivity(View view) {
+
+    }
+
+    /**
+     * 显示软件更新日志
+     */
+    public void showReleaseLog(View view) {
+        new Thread(() -> {
+            try {
+                //拉取最近更新记录
+                int recentRecordSize = Constants.RECENT_RELEASE_RECORD_SIZE;
+                StringBuilder releaseLogs = new StringBuilder();
+                //捕捉HTTP请求异常
+                String releaseInfo = null;
+                try {
+                    releaseInfo = MyHttpUtil.request(Constants.URL_RELEASES, Method.GET);
+                } catch (Throwable t) {
+                    Looper.prepare();
+                    showToast("无法获取发布信息: " + t.getLocalizedMessage());
+                    Log.e(TAG, "getReleases: " + t.getLocalizedMessage());
+                    Looper.loop();
+                }
+                //转为 JSON 数组
+                JSONArray releases = JSONUtil.parseArray(releaseInfo);
+                for (int i = 0; i < recentRecordSize; i++) {
+                    JSONObject release = (JSONObject) releases.get(i);
+                    //发布时间
+                    String releaseTime = release.getStr("published_at").substring(0, 10);
+                    //APP 版本号
+                    String appVersion = release.getStr("tag_name").substring(1);
+                    //版本发布日志
+                    String releaseLog = String.format("【%s】\uD83C\uDF89 AListLite %s 已发布\r\n\r\n%s", releaseTime, appVersion, release.getStr("body"));
+                    releaseLogs.append(releaseLog).append("\r\n\r\n");
+                }
+                Looper.prepare();
+                //显示弹框
+                AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+                dialog.setTitle("更新日志");
+                dialog.setMessage(releaseLogs);
+                dialog.setCancelable(true);
+                dialog.setPositiveButton("确认", (dialog1, which) -> {
+                });
+                dialog.show();
+                Looper.loop();
+            } catch (Exception e) {
+                Looper.prepare();
+                showToast("发布记录获取失败");
+                Log.e(TAG, "getReleases: " + e.getLocalizedMessage());
+                Looper.loop();
+            }
+        }).start();
+    }
+
+    /**
+     * 显示菜单弹窗
+     */
+    public void showPopupMenu(View view) {
+        popupMenuWindow.showAsDropDown(view, -170, 50);
+        backgroundAlpha(0.6f);
+    }
+
+    /**
+     * 发起 issue
+     */
+    public void openIssue(View view) {
+        openExternalUrl(Constants.URL_OPEN_ISSUE);
+    }
+
+    /**
+     * 发起讨论
+     */
+    public void openDiscussion(View view) {
+        openExternalUrl(Constants.URL_OPEN_DISCUSSION);
+    }
+
+    /**
+     * 修改背景透明度，实现变暗效果
+     */
+    private void backgroundAlpha(float bgAlpha) {
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.alpha = bgAlpha;
+        getWindow().setAttributes(lp);
+        // 此方法用来设置浮动层，防止部分手机变暗无效
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+    }
+
+    /**
+     * 打开外部链接
+     *
+     * @param url URL 链接
+     */
+    private void openExternalUrl(String url) {
+        //跳转到浏览器下载
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(intent);
     }
 }
