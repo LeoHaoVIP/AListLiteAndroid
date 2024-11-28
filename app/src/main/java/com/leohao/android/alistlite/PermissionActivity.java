@@ -87,7 +87,6 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
                 }
             });
         } catch (Exception e) {
-            e.printStackTrace();
             Log.e(TAG, "fail to request permission: " + item.getPermissionName());
         }
     }
