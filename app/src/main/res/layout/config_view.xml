@@ -11,10 +11,12 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:textSize="20sp"
+            android:padding="10dp"
             android:textStyle="bold"
             android:text="@string/current_alist_config"
     />
     <HorizontalScrollView
+            android:layout_below="@id/tv_config_view_title"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="10dp"
@@ -23,7 +25,6 @@
 
         <com.yuyh.jsonviewer.library.JsonRecyclerView
                 android:id="@+id/json_view_config"
-                android:layout_below="@id/tv_config_view_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
     </HorizontalScrollView>
