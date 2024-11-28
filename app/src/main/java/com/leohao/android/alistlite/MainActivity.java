@@ -664,7 +664,7 @@ public class MainActivity extends AppCompatActivity {
                     //APP 版本号
                     String appVersion = release.getStr("tag_name").substring(1);
                     //版本发布日志
-                    String releaseLog = String.format("**\uD83C\uDF89【 %s · AListLite %s 已发布】**\r\n%s", releaseTime, appVersion, release.getStr("body"));
+                    String releaseLog = String.format("**\uD83C\uDF89 %s · AListLite %s 已发布**\r\n%s", releaseTime, appVersion, release.getStr("body"));
                     releaseLogs.append(releaseLog).append("\r\n\r\n");
                 }
                 Looper.prepare();
