@@ -343,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
     public void showSystemInfo(View view) {
         AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
         LayoutInflater inflater = LayoutInflater.from(this);
-        View dialogView = inflater.inflate(R.layout.system_info, null);
+        View dialogView = inflater.inflate(R.layout.system_info_view, null);
         systemInfoDialog.setView(dialogView);
         systemInfoDialog.show();
         int width = getResources().getDisplayMetrics().widthPixels;
@@ -633,7 +633,8 @@ public class MainActivity extends AppCompatActivity {
      * 打开权限检查配置页面
      */
     public void startPermissionCheckActivity(View view) {
-
+        Intent intent = new Intent(MainActivity.this, PermissionActivity.class);
+        startActivity(intent);
     }
 
     /**
@@ -664,7 +665,7 @@ public class MainActivity extends AppCompatActivity {
                     //APP 版本号
                     String appVersion = release.getStr("tag_name").substring(1);
                     //版本发布日志
-                    String releaseLog = String.format("【%s】\uD83C\uDF89 AListLite %s 已发布\r\n\r\n%s", releaseTime, appVersion, release.getStr("body"));
+                    String releaseLog = String.format("\uD83C\uDF89【 %s · AListLite %s 已发布】\r\n\r\n%s", releaseTime, appVersion, release.getStr("body"));
                     releaseLogs.append(releaseLog).append("\r\n\r\n");
                 }
                 Looper.prepare();

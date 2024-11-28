@@ -15,6 +15,7 @@
     <string name="popup_menu_item_release_log">更新日志</string>
     <string name="popup_menu_item_advanced_config">高级配置</string>
     <string name="popup_menu_item_about">关于 AListLite</string>
+    <string name="activity_title_permission_check">AListlite 权限配置</string>
     <string name="config_view">|&#160;高级配置&#160;</string>
     <string name="check_updates">|&#160;检查更新</string>
     <string name="current_alist_config">AList 配置文件</string>
