@@ -11,7 +11,7 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:textSize="20sp"
-            android:padding="10dp"
+            android:padding="5dp"
             android:textStyle="bold"
             android:text="@string/current_alist_config"
     />
@@ -30,6 +30,7 @@
     </HorizontalScrollView>
     <EditText
             android:id="@+id/edit_text_config"
+            android:layout_below="@id/tv_config_view_title"
             android:visibility="invisible"
             android:textSize="15sp"
             android:layout_width="match_parent"
