@@ -675,7 +675,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             startActivity(intent);
         } catch (Exception e) {
-            showToast("无法打开外部链接，请检查浏览器是否正常");
+            showToast("无法打开此外部链接");
         }
     }
 }

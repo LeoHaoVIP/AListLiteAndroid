@@ -41,7 +41,7 @@
         <img src="https://img.shields.io/badge/项目捐助-33ffff.svg"/>
     </a>
 </p>
-<div align="center" id="releases"></div>
+<div align="center" id="releases">☻ 加载中...</div>
 </body>
 <style>
     div {
@@ -51,16 +51,20 @@
     }
 </style>
 <script>
+    const RECENT_RELEASE_ITEM_NUM = 10;
     document.addEventListener('DOMContentLoaded', function () {
         const owner = 'LeoHaoVIP';
         const repo = 'AListLiteAndroid';
+        const releasesDiv = document.getElementById('releases');
         fetch(`https://api.github.com/repos/${owner}/${repo}/releases`)
             .then(response => response.json())
             .then(releases => {
-                const releasesDiv = document.getElementById('releases');
-                releases.forEach(release => {
+                let i = 0;
+                releasesDiv.innerText = '';
+                for (let j = 0; j < releases.length; j++) {
+                    const release = releases[j];
                     //发布时间
-                    const releaseTime = new Date(release.published_at)
+                    const releaseTime = new Date(release.published_at);
                     // 获取年、月、日、小时、分钟和秒
                     const year = releaseTime.getFullYear();
                     const month = String(releaseTime.getMonth() + 1).padStart(2, '0');
@@ -97,9 +101,15 @@
                     releaseDiv.appendChild(bodyDiv);
                     releaseDiv.style.textAlign = 'left';
                     releasesDiv.appendChild(releaseDiv);
-                });
-            })
-            .catch(error => console.error('Error fetching releases:', error));
+                    i++;
+                    if (i === RECENT_RELEASE_ITEM_NUM) {
+                        break;
+                    }
+                }
+            }).catch(error => {
+            releasesDiv.innerText = '😢 发布日志加载失败';
+            console.error('Error fetching releases:', error);
+        });
     });
 </script>
 </html>

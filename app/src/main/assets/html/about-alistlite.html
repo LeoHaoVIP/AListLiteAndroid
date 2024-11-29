@@ -66,18 +66,18 @@
     </a>
 </p>
 <p align="center"><strong>项目贡献者</strong></p>
-<div align="center" id="contributors"></div>
+<div align="center" id="contributors">☻ 加载中...</div>
 <p align="center">🔥“您的技能和经验对我们来说非常宝贵。加入我们的开源项目，一起创造有意义的影响吧！”</p>
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const owner = 'LeoHaoVIP';
         const repo = 'AListLiteAndroid';
-
+        const contributorsDiv = document.getElementById('contributors');
         fetch(`https://api.github.com/repos/${owner}/${repo}/contributors`)
             .then(response => response.json())
             .then(contributors => {
-                const contributorsDiv = document.getElementById('contributors');
+                contributorsDiv.innerText = '';
                 contributors.forEach(contributor => {
                     const contributorDiv = document.createElement('div');
                     contributorDiv.className = 'contributor';
@@ -92,8 +92,10 @@
                     contributorDiv.appendChild(a);
                     contributorsDiv.appendChild(contributorDiv);
                 });
-            })
-            .catch(error => console.error('Error fetching contributors:', error));
+            }).catch(error => {
+            contributorsDiv.innerText = '😢 贡献者列表加载失败';
+            console.error('Error fetching contributors:', error);
+        });
     });
 </script>
 </html>
