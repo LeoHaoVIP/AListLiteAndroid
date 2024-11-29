@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Release Logs</title>
+</head>
+<body>
+<p align="center">
+    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer"><img
+            width="80px" src="../images/alistlite.png"/>
+    </a>
+</p>
+<h3 align="center">AListLite | 更新日志</h3>
+<p align="center">
+    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/releases" style="color: white" target="_blank"
+       rel="noopener noreferrer">
+        <img alt="release" src="https://img.shields.io/github/v/release/LeoHaoVIP/AListLiteAndroid"/>
+    </a>
+    <img alt="platform" src="https://img.shields.io/badge/platform-android-f079f4.svg"/>
+    <img alt="language" src="https://img.shields.io/badge/language-java|go-green.svg"/>
+</p>
+<p align="center">
+    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/issues" style="color: white" target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://img.shields.io/badge/问题反馈-00ccff.svg"/>
+    </a>
+    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/discussions" style="color: white" target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://img.shields.io/badge/讨论专区-green.svg"/>
+    </a>
+    <a href="https://www.bilibili.com/video/BV1PA4m1G7Ui" style="color: white" target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://img.shields.io/badge/视频教程-ffcc99.svg"/>
+    </a>
+    <a href="mailto:zhaowenhao2867@outlook.com" style="color: white" target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://img.shields.io/badge/联系开发者-339966.svg"/>
+    </a>
+    <a href="reward.html" style="color: white" target="_blank"
+       rel="noopener noreferrer">
+        <img src="https://img.shields.io/badge/项目捐助-33ffff.svg"/>
+    </a>
+</p>
+<div align="center" id="releases"></div>
+</body>
+<style>
+    div {
+        font-size: 13px;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const owner = 'LeoHaoVIP';
+        const repo = 'AListLiteAndroid';
+        fetch(`https://api.github.com/repos/${owner}/${repo}/releases`)
+            .then(response => response.json())
+            .then(releases => {
+                const releasesDiv = document.getElementById('releases');
+                releases.forEach(release => {
+                    //发布时间
+                    const releaseTime = new Date(release.published_at)
+                    // 获取年、月、日、小时、分钟和秒
+                    const year = releaseTime.getFullYear();
+                    const month = String(releaseTime.getMonth() + 1).padStart(2, '0');
+                    const day = String(releaseTime.getDate()).padStart(2, '0');
+                    const formattedDate = `发布于 ${year}.${month}.${day}`;
+                    //APP 版本号
+                    const appVersion = release.tag_name.replaceAll('-', ' ');
+                    //基于的 AList 版本号
+                    const alistVersion = `基于 ${release.name.substring(5)} 构建`;
+                    let releaseBody = release.body.replaceAll('**', '');
+                    if (releaseBody.length === 0) {
+                        releaseBody = '-';
+                    }
+                    const releaseDiv = document.createElement('div');
+                    const bodyDiv = document.createElement('div');
+                    const titleP = document.createElement('p');
+                    const dateImg = document.createElement('img');
+                    dateImg.src = "https://img.shields.io/badge/" + formattedDate + "-green.svg";
+                    dateImg.alt = releaseTime;
+                    dateImg.style.marginLeft = '10px';
+                    const versionImg = document.createElement('img');
+                    versionImg.src = "https://img.shields.io/badge/" + appVersion + "-cc9933.svg";
+                    versionImg.alt = appVersion;
+                    const alistImg = document.createElement('img');
+                    alistImg.src = "https://img.shields.io/badge/" + alistVersion + "-33cccc.svg";
+                    alistImg.alt = alistVersion;
+                    alistImg.style.marginLeft = '10px';
+                    titleP.appendChild(versionImg);
+                    titleP.appendChild(dateImg);
+                    titleP.appendChild(alistImg);
+                    titleP.style.height = '10px';
+                    bodyDiv.innerText = releaseBody;
+                    releaseDiv.appendChild(titleP)
+                    releaseDiv.appendChild(bodyDiv);
+                    releaseDiv.style.textAlign = 'left';
+                    releasesDiv.appendChild(releaseDiv);
+                });
+            })
+            .catch(error => console.error('Error fetching releases:', error));
+    });
+</script>
+</html>

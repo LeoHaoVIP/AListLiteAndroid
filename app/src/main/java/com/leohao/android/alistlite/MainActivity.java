@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.service.quicksettings.TileService;
-import android.text.Spanned;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -31,7 +30,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.hjq.permissions.OnPermissionCallback;
@@ -41,7 +39,10 @@ import com.kyleduo.switchbutton.SwitchButton;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.service.AlistTileService;
-import com.leohao.android.alistlite.util.*;
+import com.leohao.android.alistlite.util.AppUtil;
+import com.leohao.android.alistlite.util.ClipBoardHelper;
+import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.MyHttpUtil;
 import com.leohao.android.alistlite.window.PopupMenuWindow;
 import com.yuyh.jsonviewer.library.JsonRecyclerView;
 import org.apache.commons.io.FileUtils;
@@ -84,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private PopupMenuWindow popupMenuWindow;
     private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
-    private final TextStyleHelper textStyleHelper = TextStyleHelper.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -340,19 +340,7 @@ public class MainActivity extends AppCompatActivity {
      * 显示系统信息
      */
     public void showSystemInfo(View view) {
-        AlertDialog systemInfoDialog = new AlertDialog.Builder(this).create();
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View dialogView = inflater.inflate(R.layout.system_info_view, null);
-        systemInfoDialog.setView(dialogView);
-        systemInfoDialog.show();
-        int width = getResources().getDisplayMetrics().widthPixels;
-        int height = getResources().getDisplayMetrics().heightPixels;
-        //窗口大小设置必须在show()之后
-        if (width < height) {
-            systemInfoDialog.getWindow().setLayout(width - 100, height * 2 / 5);
-        } else {
-            systemInfoDialog.getWindow().setLayout(width * 2 / 5, height - 200);
-        }
+        webView.loadUrl("file:///android_asset/html/about-alistlite.html");
     }
 
     /**
@@ -640,52 +628,7 @@ public class MainActivity extends AppCompatActivity {
      * 显示软件更新日志
      */
     public void showReleaseLog(View view) {
-        new Thread(() -> {
-            try {
-                //拉取最近更新记录
-                int recentRecordSize = Constants.RECENT_RELEASE_RECORD_SIZE;
-                StringBuilder releaseLogs = new StringBuilder();
-                //捕捉HTTP请求异常
-                String releaseInfo = null;
-                try {
-                    releaseInfo = MyHttpUtil.request(Constants.URL_RELEASES, Method.GET);
-                } catch (Throwable t) {
-                    Looper.prepare();
-                    showToast("无法获取发布信息: " + t.getLocalizedMessage());
-                    Log.e(TAG, "getReleases: " + t.getLocalizedMessage());
-                    Looper.loop();
-                }
-                //转为 JSON 数组
-                JSONArray releases = JSONUtil.parseArray(releaseInfo);
-                for (int i = 0; i < recentRecordSize; i++) {
-                    JSONObject release = (JSONObject) releases.get(i);
-                    //发布时间
-                    String releaseTime = release.getStr("published_at").substring(0, 10);
-                    //APP 版本号
-                    String appVersion = release.getStr("tag_name").substring(1);
-                    //版本发布日志
-                    String releaseLog = String.format("**\uD83C\uDF89 %s · AListLite %s 已发布**\r\n%s", releaseTime, appVersion, release.getStr("body"));
-                    releaseLogs.append(releaseLog).append("\r\n\r\n");
-                }
-                Looper.prepare();
-                //解析 Markdown 语法
-                Spanned dialogMsg = textStyleHelper.parseMarkdownToSpanned(releaseLogs.toString());
-                //显示弹框
-                AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
-                dialog.setTitle("更新日志");
-                dialog.setMessage(dialogMsg);
-                dialog.setCancelable(true);
-                dialog.setPositiveButton("确认", (dialog1, which) -> {
-                });
-                dialog.show();
-                Looper.loop();
-            } catch (Exception e) {
-                Looper.prepare();
-                showToast("发布记录获取失败");
-                Log.e(TAG, "getReleases: " + e.getLocalizedMessage());
-                Looper.loop();
-            }
-        }).start();
+        webView.loadUrl("file:///android_asset/html/release-log.html");
     }
 
     /**
