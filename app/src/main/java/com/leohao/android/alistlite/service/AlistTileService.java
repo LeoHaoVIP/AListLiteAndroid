@@ -14,6 +14,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
+ * AList 状态栏磁贴服务
+ *
  * @author LeoHao
  */
 @RequiresApi(api = Build.VERSION_CODES.N)

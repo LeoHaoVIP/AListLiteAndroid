@@ -12,6 +12,8 @@ import com.leohao.android.alistlite.model.PermissionItem;
 import java.util.List;
 
 /**
+ * 权限列表 UI 适配器
+ *
  * @author LeoHao
  */
 public class PermissionListAdapter extends BaseAdapter {

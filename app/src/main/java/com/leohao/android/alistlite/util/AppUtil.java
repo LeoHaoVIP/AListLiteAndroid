@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 系统工具类
+ *
  * @author LeoHao
  */
 public class AppUtil {

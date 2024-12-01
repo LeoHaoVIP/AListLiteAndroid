@@ -25,6 +25,8 @@ import com.leohao.android.alistlite.util.Constants;
 import java.util.Locale;
 
 /**
+ * AList 服务
+ *
  * @author LeoHao
  */
 public class AlistService extends Service {

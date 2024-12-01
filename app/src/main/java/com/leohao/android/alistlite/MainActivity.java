@@ -640,20 +640,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 发起 issue
-     */
-    public void openIssue(View view) {
-        openExternalUrl(Constants.URL_OPEN_ISSUE);
-    }
-
-    /**
-     * 发起讨论
-     */
-    public void openDiscussion(View view) {
-        openExternalUrl(Constants.URL_OPEN_DISCUSSION);
-    }
-
-    /**
      * 修改背景透明度，实现变暗效果
      */
     private void backgroundAlpha(float bgAlpha) {

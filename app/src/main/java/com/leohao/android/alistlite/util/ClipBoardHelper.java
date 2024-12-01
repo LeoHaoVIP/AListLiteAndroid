@@ -9,6 +9,8 @@ import android.net.Uri;
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
+ * 剪切板工具类
+ *
  * @author LeoHao
  */
 public class ClipBoardHelper {

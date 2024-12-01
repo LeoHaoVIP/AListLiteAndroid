@@ -25,7 +25,7 @@ import java.util.List;
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
- * 所有轨迹list展示activity
+ * 权限配置 Activity
  *
  * @author LeoHao
  */

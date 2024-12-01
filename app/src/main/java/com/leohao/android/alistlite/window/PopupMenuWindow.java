@@ -10,6 +10,8 @@ import com.leohao.android.alistlite.R;
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
+ * 菜单栏弹窗窗口
+ *
  * @author LeoHao
  */
 public class PopupMenuWindow extends PopupWindow {

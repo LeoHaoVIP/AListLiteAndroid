@@ -11,6 +11,8 @@ import com.leohao.android.alistlite.service.AlistService;
 import static com.leohao.android.alistlite.AlistLiteApplication.context;
 
 /**
+ * 系统启动广播消息接收
+ *
  * @author LeoHao
  */
 public class BootCompleteReceiver extends BroadcastReceiver {
