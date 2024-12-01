@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 //请求监听状态
                 TileService.requestListeningState(this, new ComponentName(this, AlistTileService.class));
                 //根据 AList 服务开启状态选择广播消息类型
-                String actionName = alistServer.hasRunning() ? AlistTileService.ACTION_TILE_ON : AlistTileService.ACTION_TILE_OFF;
+                String actionName = (alistServer != null && alistServer.hasRunning()) ? AlistTileService.ACTION_TILE_ON : AlistTileService.ACTION_TILE_OFF;
                 //更新磁贴开关状态
                 Intent tileServiceIntent = new Intent(this, AlistTileService.class).setAction(actionName);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(tileServiceIntent);
@@ -571,7 +571,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         //自定义返回键功能，实现webView的后退以及退出时保持后台运行而不是关闭app
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (webView.canGoBack() && alistServer.hasRunning()) {
+            if (webView.canGoBack() && alistServer != null && alistServer.hasRunning()) {
                 webView.goBack();
             } else {
                 moveTaskToBack(true);
@@ -601,7 +601,7 @@ public class MainActivity extends AppCompatActivity {
      * 复制 AList 服务地址到剪切板
      */
     public void copyAddressToClipboard(View view) {
-        if (alistServer.hasRunning()) {
+        if (alistServer != null && alistServer.hasRunning()) {
             clipBoardHelper.copyText(this.serverAddress);
             showToast("AList 服务地址已复制");
         }
