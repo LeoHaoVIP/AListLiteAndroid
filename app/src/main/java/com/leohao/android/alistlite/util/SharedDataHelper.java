@@ -3,7 +3,7 @@ package com.leohao.android.alistlite.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
+import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
 /**
  * 持久化存储工具类
@@ -20,7 +20,7 @@ public class SharedDataHelper {
 
     public synchronized static SharedDataHelper getInstance() {
         if (instance == null) {
-            instance = new SharedDataHelper(context);
+            instance = new SharedDataHelper(applicationContext);
         }
         return instance;
     }

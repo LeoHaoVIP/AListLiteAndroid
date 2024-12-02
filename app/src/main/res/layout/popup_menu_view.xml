@@ -18,6 +18,7 @@
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
                 android:clickable="true"
                 android:text="@string/popup_menu_item_permission"/>
         <TextView
@@ -27,6 +28,7 @@
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
                 android:clickable="true"
                 android:text="@string/popup_menu_item_password"/>
         <TextView
@@ -36,6 +38,7 @@
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
                 android:clickable="true"
                 android:text="@string/popup_menu_item_release_log"/>
         <TextView
@@ -45,6 +48,7 @@
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
                 android:clickable="true"
                 android:text="@string/popup_menu_item_advanced_config"/>
         <TextView
@@ -54,6 +58,7 @@
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
                 android:clickable="true"
                 android:text="@string/popup_menu_item_about"/>
     </LinearLayout>

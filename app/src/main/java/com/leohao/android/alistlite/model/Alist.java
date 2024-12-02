@@ -2,14 +2,12 @@ package com.leohao.android.alistlite.model;
 
 import alistlib.Alistlib;
 import alistlib.Event;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.jayway.jsonpath.JsonPath;
-import com.leohao.android.alistlite.AlistLiteApplication;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
 import org.apache.commons.io.FileUtils;
@@ -18,11 +16,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
+
 /**
  * @author LeoHao
  */
 public class Alist {
-    private final Context context = AlistLiteApplication.context;
     public static String ACTION_STATUS_CHANGED = "com.leohao.android.alistlite.ACTION_STATUS_CHANGED";
     final String TYPE_HTTP = "http";
     final String TYPE_HTTPS = "https";
@@ -30,7 +29,7 @@ public class Alist {
     /**
      * 应用数据存储目录
      */
-    String dataPath = context.getExternalFilesDir("data").getAbsolutePath();
+    String dataPath = applicationContext.getExternalFilesDir("data").getAbsolutePath();
     /**
      * 配置数据存储目录
      */
@@ -110,7 +109,7 @@ public class Alist {
     }
 
     private void notifyStatusChanged() {
-        LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(ACTION_STATUS_CHANGED));
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(new Intent(ACTION_STATUS_CHANGED));
     }
 
     public void shutdown(Long timeout) {
@@ -139,6 +138,6 @@ public class Alist {
     }
 
     private void showToast(String msg) {
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(applicationContext, msg, Toast.LENGTH_SHORT).show();
     }
 }

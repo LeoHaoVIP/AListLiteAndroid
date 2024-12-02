@@ -22,8 +22,6 @@ import com.leohao.android.alistlite.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
-
 /**
  * 权限配置 Activity
  *
@@ -50,7 +48,7 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
         //初始化刷新权限列表
         refreshPermissionList();
         //初始化列表视图适配器
-        permissionListAdapter = new PermissionListAdapter(context, permissionList);
+        permissionListAdapter = new PermissionListAdapter(this, permissionList);
         permissionListView.setAdapter(permissionListAdapter);
         permissionListView.setOnItemClickListener(this);
     }
@@ -120,7 +118,7 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
                     continue;
                 }
                 //获取权限状态
-                boolean isGranted = XXPermissions.isGranted(context, permission);
+                boolean isGranted = XXPermissions.isGranted(this, permission);
                 PermissionItem permissionItem = new PermissionItem(permission, permission.replaceAll(Constants.androidPermissionPrefix, ""), Constants.permissionDescriptionMap.get(permission), isGranted);
                 permissionList.add(permissionItem);
             }
@@ -129,6 +127,6 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
     }
 
     private void showToast(String msg) {
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }

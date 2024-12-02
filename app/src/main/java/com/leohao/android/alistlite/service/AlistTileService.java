@@ -11,7 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
+import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
 /**
  * AList 状态栏磁贴服务
@@ -70,7 +70,7 @@ public class AlistTileService extends TileService {
             case Tile.STATE_INACTIVE:
                 //Service启动Intent
                 String actionName = Tile.STATE_INACTIVE == tileState ? AlistService.ACTION_STARTUP : AlistService.ACTION_SHUTDOWN;
-                Intent intent = new Intent(context, AlistService.class).setAction(actionName);
+                Intent intent = new Intent(applicationContext, AlistService.class).setAction(actionName);
                 //调用服务
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(intent);

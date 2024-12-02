@@ -8,7 +8,7 @@ import android.os.Build;
 import android.widget.Toast;
 import com.leohao.android.alistlite.service.AlistService;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
+import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
 /**
  * 系统启动广播消息接收
@@ -33,6 +33,6 @@ public class BootCompleteReceiver extends BroadcastReceiver {
     }
 
     private void showToast(String msg) {
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(applicationContext, msg, Toast.LENGTH_SHORT).show();
     }
 }

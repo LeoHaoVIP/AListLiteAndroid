@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite.window;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,15 +8,13 @@ import android.widget.PopupWindow;
 import com.leohao.android.alistlite.MainActivity;
 import com.leohao.android.alistlite.R;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
-
 /**
  * 菜单栏弹窗窗口
  *
  * @author LeoHao
  */
 public class PopupMenuWindow extends PopupWindow {
-    public PopupMenuWindow() {
+    public PopupMenuWindow(Context context) {
         super(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         //再次点击菜单时隐藏菜单
         setOutsideTouchable(true);

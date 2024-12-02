@@ -57,8 +57,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
-
 /**
  * @author LeoHao
  */
@@ -218,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         webView = findViewById(R.id.webview_alist);
         //初始化菜单栏弹框
-        popupMenuWindow = new PopupMenuWindow();
+        popupMenuWindow = new PopupMenuWindow(this);
         popupMenuWindow.setOnDismissListener(() -> {
             backgroundAlpha(1.0f);
         });
@@ -392,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
         EditText jsonEditText = dialogView.findViewById(R.id.edit_text_config);
         jsonView.setTextSize(14);
         //读取 AList 配置
-        String dataPath = context.getExternalFilesDir("data").getAbsolutePath();
+        String dataPath = this.getExternalFilesDir("data").getAbsolutePath();
         String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
         String configJsonData;
         File configFile = new File(configPath);
@@ -635,8 +633,10 @@ public class MainActivity extends AppCompatActivity {
      * 显示菜单弹窗
      */
     public void showPopupMenu(View view) {
-        popupMenuWindow.showAsDropDown(view, -170, 50);
-        backgroundAlpha(0.6f);
+        if (isActivityRunning()) {
+            popupMenuWindow.showAsDropDown(view, -170, 50);
+            backgroundAlpha(0.6f);
+        }
     }
 
     /**
@@ -663,5 +663,12 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             showToast("无法打开此外部链接");
         }
+    }
+
+    /**
+     * 检查 Activity 是否正在运行
+     */
+    private boolean isActivityRunning() {
+        return !isFinishing() && !isDestroyed();
     }
 }

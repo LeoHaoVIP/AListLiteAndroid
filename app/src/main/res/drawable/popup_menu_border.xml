@@ -2,6 +2,5 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 圆角半径 -->
     <corners android:radius="15dp"/>
-    <!-- 背景颜色 -->
-    <solid android:color="#eeeeee"/>
+    <solid android:color="@color/menu_background_color"/>
 </shape>

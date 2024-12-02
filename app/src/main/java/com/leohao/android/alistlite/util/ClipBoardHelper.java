@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
-import static com.leohao.android.alistlite.AlistLiteApplication.context;
+import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
 /**
  * 剪切板工具类
@@ -24,7 +24,7 @@ public class ClipBoardHelper {
 
     public synchronized static ClipBoardHelper getInstance() {
         if (instance == null) {
-            instance = new ClipBoardHelper(context);
+            instance = new ClipBoardHelper(applicationContext);
         }
         return instance;
     }
