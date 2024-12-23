@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"golang.org/x/crypto/ssh"
 	"net/url"
 	"regexp"
 )
@@ -32,3 +33,5 @@ var (
 	ManageHtml   string
 	IndexHtml    string
 )
+
+var SSHSigners []ssh.Signer

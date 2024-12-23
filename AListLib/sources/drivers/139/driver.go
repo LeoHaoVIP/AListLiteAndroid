@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -14,15 +15,16 @@ import (
 	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/errs"
 	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/alist-org/alist/v3/pkg/cron"
+	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/alist-org/alist/v3/pkg/utils/random"
 	log "github.com/sirupsen/logrus"
 )
 
 type Yun139 struct {
 	model.Storage
 	Addition
-	cron   *cron.Cron
+	cron    *cron.Cron
 	Account string
 }
 
@@ -54,6 +56,11 @@ func (d *Yun139) Init(ctx context.Context) error {
 	case MetaPersonal:
 		if len(d.Addition.RootFolderID) == 0 {
 			d.RootFolderID = "root"
+		}
+		fallthrough
+	case MetaGroup:
+		if len(d.Addition.RootFolderID) == 0 {
+			d.RootFolderID = d.CloudID
 		}
 		fallthrough
 	case MetaFamily:
@@ -96,6 +103,8 @@ func (d *Yun139) List(ctx context.Context, dir model.Obj, args model.ListArgs) (
 		return d.getFiles(dir.GetID())
 	case MetaFamily:
 		return d.familyGetFiles(dir.GetID())
+	case MetaGroup:
+		return d.groupGetFiles(dir.GetID())
 	default:
 		return nil, errs.NotImplement
 	}
@@ -108,9 +117,11 @@ func (d *Yun139) Link(ctx context.Context, file model.Obj, args model.LinkArgs) 
 	case MetaPersonalNew:
 		url, err = d.personalGetLink(file.GetID())
 	case MetaPersonal:
-		fallthrough
-	case MetaFamily:
 		url, err = d.getLink(file.GetID())
+	case MetaFamily:
+		url, err = d.familyGetLink(file.GetID(), file.GetPath())
+	case MetaGroup:
+		url, err = d.groupGetLink(file.GetID(), file.GetPath())
 	default:
 		return nil, errs.NotImplement
 	}
@@ -154,8 +165,22 @@ func (d *Yun139) MakeDir(ctx context.Context, parentDir model.Obj, dirName strin
 				"accountType": 1,
 			},
 			"docLibName": dirName,
+			"path":       path.Join(parentDir.GetPath(), parentDir.GetID()),
 		}
-		pathname := "/orchestration/familyCloud/cloudCatalog/v1.0/createCloudDoc"
+		pathname := "/orchestration/familyCloud-rebuild/cloudCatalog/v1.0/createCloudDoc"
+		_, err = d.post(pathname, data, nil)
+	case MetaGroup:
+		data := base.Json{
+			"catalogName": dirName,
+			"commonAccountInfo": base.Json{
+				"account":     d.Account,
+				"accountType": 1,
+			},
+			"groupID":      d.CloudID,
+			"parentFileId": parentDir.GetID(),
+			"path":         path.Join(parentDir.GetPath(), parentDir.GetID()),
+		}
+		pathname := "/orchestration/group-rebuild/catalog/v1.0/createGroupCatalog"
 		_, err = d.post(pathname, data, nil)
 	default:
 		err = errs.NotImplement
@@ -172,6 +197,34 @@ func (d *Yun139) Move(ctx context.Context, srcObj, dstDir model.Obj) (model.Obj,
 		}
 		pathname := "/hcy/file/batchMove"
 		_, err := d.personalPost(pathname, data, nil)
+		if err != nil {
+			return nil, err
+		}
+		return srcObj, nil
+	case MetaGroup:
+		var contentList []string
+		var catalogList []string
+		if srcObj.IsDir() {
+			catalogList = append(catalogList, srcObj.GetID())
+		} else {
+			contentList = append(contentList, srcObj.GetID())
+		}
+		data := base.Json{
+			"taskType":    3,
+			"srcType":     2,
+			"srcGroupID":  d.CloudID,
+			"destType":    2,
+			"destGroupID": d.CloudID,
+			"destPath":    dstDir.GetPath(),
+			"contentList": contentList,
+			"catalogList": catalogList,
+			"commonAccountInfo": base.Json{
+				"account":     d.Account,
+				"accountType": 1,
+			},
+		}
+		pathname := "/orchestration/group-rebuild/task/v1.0/createBatchOprTask"
+		_, err := d.post(pathname, data, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -246,6 +299,65 @@ func (d *Yun139) Rename(ctx context.Context, srcObj model.Obj, newName string) e
 			pathname = "/orchestration/personalCloud/content/v1.0/updateContentInfo"
 		}
 		_, err = d.post(pathname, data, nil)
+	case MetaGroup:
+		var data base.Json
+		var pathname string
+		if srcObj.IsDir() {
+			data = base.Json{
+				"groupID":           d.CloudID,
+				"modifyCatalogID":   srcObj.GetID(),
+				"modifyCatalogName": newName,
+				"path":              srcObj.GetPath(),
+				"commonAccountInfo": base.Json{
+					"account":     d.Account,
+					"accountType": 1,
+				},
+			}
+			pathname = "/orchestration/group-rebuild/catalog/v1.0/modifyGroupCatalog"
+		} else {
+			data = base.Json{
+				"groupID":     d.CloudID,
+				"contentID":   srcObj.GetID(),
+				"contentName": newName,
+				"path":        srcObj.GetPath(),
+				"commonAccountInfo": base.Json{
+					"account":     d.Account,
+					"accountType": 1,
+				},
+			}
+			pathname = "/orchestration/group-rebuild/content/v1.0/modifyGroupContent"
+		}
+		_, err = d.post(pathname, data, nil)
+	case MetaFamily:
+		var data base.Json
+		var pathname string
+		if srcObj.IsDir() {
+			// 网页接口不支持重命名家庭云文件夹
+			// data = base.Json{
+			// 	"catalogType": 3,
+			// 	"catalogID":   srcObj.GetID(),
+			// 	"catalogName": newName,
+			// 	"commonAccountInfo": base.Json{
+			// 		"account":     d.Account,
+			// 		"accountType": 1,
+			// 	},
+			// 	"path": srcObj.GetPath(),
+			// }
+			// pathname = "/orchestration/familyCloud-rebuild/photoContent/v1.0/modifyCatalogInfo"
+			return errs.NotImplement
+		} else {
+			data = base.Json{
+				"contentID":   srcObj.GetID(),
+				"contentName": newName,
+				"commonAccountInfo": base.Json{
+					"account":     d.Account,
+					"accountType": 1,
+				},
+				"path": srcObj.GetPath(),
+			}
+			pathname = "/orchestration/familyCloud-rebuild/photoContent/v1.0/modifyContentInfo"
+		}
+		_, err = d.post(pathname, data, nil)
 	default:
 		err = errs.NotImplement
 	}
@@ -303,6 +415,28 @@ func (d *Yun139) Remove(ctx context.Context, obj model.Obj) error {
 		pathname := "/hcy/recyclebin/batchTrash"
 		_, err := d.personalPost(pathname, data, nil)
 		return err
+	case MetaGroup:
+		var contentList []string
+		var catalogList []string
+		// 必须使用完整路径删除
+		if obj.IsDir() {
+			catalogList = append(catalogList, obj.GetPath())
+		} else {
+			contentList = append(contentList, path.Join(obj.GetPath(), obj.GetID()))
+		}
+		data := base.Json{
+			"taskType":    2,
+			"srcGroupID":  d.CloudID,
+			"contentList": contentList,
+			"catalogList": catalogList,
+			"commonAccountInfo": base.Json{
+				"account":     d.Account,
+				"accountType": 1,
+			},
+		}
+		pathname := "/orchestration/group-rebuild/task/v1.0/createBatchOprTask"
+		_, err := d.post(pathname, data, nil)
+		return err
 	case MetaPersonal:
 		fallthrough
 	case MetaFamily:
@@ -337,10 +471,12 @@ func (d *Yun139) Remove(ctx context.Context, obj model.Obj) error {
 					"account":     d.Account,
 					"accountType": 1,
 				},
+				"sourceCloudID":     d.CloudID,
 				"sourceCatalogType": 1002,
 				"taskType":          2,
+				"path":              obj.GetPath(),
 			}
-			pathname = "/orchestration/familyCloud/batchOprTask/v1.0/createBatchOprTask"
+			pathname = "/orchestration/familyCloud-rebuild/batchOprTask/v1.0/createBatchOprTask"
 		}
 		_, err := d.post(pathname, data, nil)
 		return err
@@ -357,7 +493,10 @@ const (
 	TB
 )
 
-func getPartSize(size int64) int64 {
+func (d *Yun139) getPartSize(size int64) int64 {
+	if d.CustomUploadPartSize != 0 {
+		return d.CustomUploadPartSize
+	}
 	// 网盘对于分片数量存在上限
 	if size/GB > 30 {
 		return 512 * MB
@@ -380,24 +519,51 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 				return err
 			}
 		}
-		// return errs.NotImplement
+
+		partInfos := []PartInfo{}
+		var partSize = d.getPartSize(stream.GetSize())
+		part := (stream.GetSize() + partSize - 1) / partSize
+		if part == 0 {
+			part = 1
+		}
+		for i := int64(0); i < part; i++ {
+			if utils.IsCanceled(ctx) {
+				return ctx.Err()
+			}
+			start := i * partSize
+			byteSize := stream.GetSize() - start
+			if byteSize > partSize {
+				byteSize = partSize
+			}
+			partNumber := i + 1
+			partInfo := PartInfo{
+				PartNumber: partNumber,
+				PartSize:   byteSize,
+				ParallelHashCtx: ParallelHashCtx{
+					PartOffset: start,
+				},
+			}
+			partInfos = append(partInfos, partInfo)
+		}
+
+		// 筛选出前 100 个 partInfos
+		firstPartInfos := partInfos
+		if len(firstPartInfos) > 100 {
+			firstPartInfos = firstPartInfos[:100]
+		}
+
+		// 获取上传信息和前100个分片的上传地址
 		data := base.Json{
 			"contentHash":          fullHash,
 			"contentHashAlgorithm": "SHA256",
 			"contentType":          "application/octet-stream",
 			"parallelUpload":       false,
-			"partInfos": []base.Json{{
-				"parallelHashCtx": base.Json{
-					"partOffset": 0,
-				},
-				"partNumber": 1,
-				"partSize":   stream.GetSize(),
-			}},
-			"size":           stream.GetSize(),
-			"parentFileId":   dstDir.GetID(),
-			"name":           stream.GetName(),
-			"type":           "file",
-			"fileRenameMode": "auto_rename",
+			"partInfos":            firstPartInfos,
+			"size":                 stream.GetSize(),
+			"parentFileId":         dstDir.GetID(),
+			"name":                 stream.GetName(),
+			"type":                 "file",
+			"fileRenameMode":       "auto_rename",
 		}
 		pathname := "/hcy/file/create"
 		var resp PersonalUploadResp
@@ -410,32 +576,67 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 			return nil
 		}
 
+		uploadPartInfos := resp.Data.PartInfos
+
+		// 获取后续分片的上传地址
+		for i := 101; i < len(partInfos); i += 100 {
+			end := i + 100
+			if end > len(partInfos) {
+				end = len(partInfos)
+			}
+			batchPartInfos := partInfos[i:end]
+
+			moredata := base.Json{
+				"fileId":    resp.Data.FileId,
+				"uploadId":  resp.Data.UploadId,
+				"partInfos": batchPartInfos,
+				"commonAccountInfo": base.Json{
+					"account":     d.Account,
+					"accountType": 1,
+				},
+			}
+			pathname := "/hcy/file/getUploadUrl"
+			var moreresp PersonalUploadUrlResp
+			_, err = d.personalPost(pathname, moredata, &moreresp)
+			if err != nil {
+				return err
+			}
+			uploadPartInfos = append(uploadPartInfos, moreresp.Data.PartInfos...)
+		}
+
 		// Progress
 		p := driver.NewProgress(stream.GetSize(), up)
 
-		// Update Progress
-		r := io.TeeReader(stream, p)
+		// 上传所有分片
+		for _, uploadPartInfo := range uploadPartInfos {
+			index := uploadPartInfo.PartNumber - 1
+			partSize := partInfos[index].PartSize
+			log.Debugf("[139] uploading part %+v/%+v", index, len(uploadPartInfos))
+			limitReader := io.LimitReader(stream, partSize)
 
-		req, err := http.NewRequest("PUT", resp.Data.PartInfos[0].UploadUrl, r)
-		if err != nil {
-			return err
-		}
-		req = req.WithContext(ctx)
-		req.Header.Set("Content-Type", "application/octet-stream")
-		req.Header.Set("Content-Length", fmt.Sprint(stream.GetSize()))
-		req.Header.Set("Origin", "https://yun.139.com")
-		req.Header.Set("Referer", "https://yun.139.com/")
-		req.ContentLength = stream.GetSize()
+			// Update Progress
+			r := io.TeeReader(limitReader, p)
 
-		res, err := base.HttpClient.Do(req)
-		if err != nil {
-			return err
-		}
+			req, err := http.NewRequest("PUT", uploadPartInfo.UploadUrl, r)
+			if err != nil {
+				return err
+			}
+			req = req.WithContext(ctx)
+			req.Header.Set("Content-Type", "application/octet-stream")
+			req.Header.Set("Content-Length", fmt.Sprint(partSize))
+			req.Header.Set("Origin", "https://yun.139.com")
+			req.Header.Set("Referer", "https://yun.139.com/")
+			req.ContentLength = partSize
 
-		_ = res.Body.Close()
-		log.Debugf("%+v", res)
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+			res, err := base.HttpClient.Do(req)
+			if err != nil {
+				return err
+			}
+			_ = res.Body.Close()
+			log.Debugf("[139] uploaded: %+v", res)
+			if res.StatusCode != http.StatusOK {
+				return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+			}
 		}
 
 		data = base.Json{
@@ -471,21 +672,20 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 		}
 		pathname := "/orchestration/personalCloud/uploadAndDownload/v1.0/pcUploadFileRequest"
 		if d.isFamily() {
-			// data = d.newJson(base.Json{
-			// 	"fileCount":    1,
-			// 	"manualRename": 2,
-			// 	"operation":    0,
-			// 	"path":         "",
-			// 	"seqNo":        "",
-			// 	"totalSize":    0,
-			// 	"uploadContentList": []base.Json{{
-			// 		"contentName": stream.GetName(),
-			// 		"contentSize": 0,
-			// 		// "digest": "5a3231986ce7a6b46e408612d385bafa"
-			// 	}},
-			// })
-			// pathname = "/orchestration/familyCloud/content/v1.0/getFileUploadURL"
-			return errs.NotImplement
+			data = d.newJson(base.Json{
+				"fileCount":    1,
+				"manualRename": 2,
+				"operation":    0,
+				"path":         path.Join(dstDir.GetPath(), dstDir.GetID()),
+				"seqNo":        random.String(32), //序列号不能为空
+				"totalSize":    0,
+				"uploadContentList": []base.Json{{
+					"contentName": stream.GetName(),
+					"contentSize": 0,
+					// "digest": "5a3231986ce7a6b46e408612d385bafa"
+				}},
+			})
+			pathname = "/orchestration/familyCloud-rebuild/content/v1.0/getFileUploadURL"
 		}
 		var resp UploadResp
 		_, err := d.post(pathname, data, &resp)
@@ -496,7 +696,7 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 		// Progress
 		p := driver.NewProgress(stream.GetSize(), up)
 
-		var partSize = getPartSize(stream.GetSize())
+		var partSize = d.getPartSize(stream.GetSize())
 		part := (stream.GetSize() + partSize - 1) / partSize
 		if part == 0 {
 			part = 1

@@ -21,9 +21,11 @@ type Policy struct {
 }
 
 type UploadInfo struct {
-	SessionID string `json:"sessionID"`
-	ChunkSize int    `json:"chunkSize"`
-	Expires   int    `json:"expires"`
+	SessionID  string   `json:"sessionID"`
+	ChunkSize  int      `json:"chunkSize"`
+	Expires    int      `json:"expires"`
+	UploadURLs []string `json:"uploadURLs"`
+	Credential string   `json:"credential,omitempty"`
 }
 
 type DirectoryResp struct {

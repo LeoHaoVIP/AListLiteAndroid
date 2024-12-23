@@ -90,6 +90,31 @@ func getTargetedHandler[T task.TaskInfoWithCreator](manager *tache.Manager[T], c
 	}
 }
 
+func getBatchHandler[T task.TaskInfoWithCreator](manager *tache.Manager[T], callback func(task T)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		isAdmin, uid, ok := getUserInfo(c)
+		if !ok {
+			common.ErrorStrResp(c, "user invalid", 401)
+			return
+		}
+		var tids []string
+		if err := c.ShouldBind(&tids); err != nil {
+			common.ErrorStrResp(c, "invalid request format", 400)
+			return
+		}
+		retErrs := make(map[string]string)
+		for _, tid := range tids {
+			t, ok := manager.GetByID(tid)
+			if !ok || (!isAdmin && uid != t.GetCreator().ID) {
+				retErrs[tid] = "task not found"
+				continue
+			}
+			callback(t)
+		}
+		common.SuccessResp(c, retErrs)
+	}
+}
+
 func taskRoute[T task.TaskInfoWithCreator](g *gin.RouterGroup, manager *tache.Manager[T]) {
 	g.GET("/undone", func(c *gin.Context) {
 		isAdmin, uid, ok := getUserInfo(c)
@@ -131,6 +156,15 @@ func taskRoute[T task.TaskInfoWithCreator](g *gin.RouterGroup, manager *tache.Ma
 	g.POST("/retry", getTargetedHandler(manager, func(c *gin.Context, task T) {
 		manager.Retry(task.GetID())
 		common.SuccessResp(c)
+	}))
+	g.POST("/cancel_some", getBatchHandler(manager, func(task T) {
+		manager.Cancel(task.GetID())
+	}))
+	g.POST("/delete_some", getBatchHandler(manager, func(task T) {
+		manager.Remove(task.GetID())
+	}))
+	g.POST("/retry_some", getBatchHandler(manager, func(task T) {
+		manager.Retry(task.GetID())
 	}))
 	g.POST("/clear_done", func(c *gin.Context) {
 		isAdmin, uid, ok := getUserInfo(c)
