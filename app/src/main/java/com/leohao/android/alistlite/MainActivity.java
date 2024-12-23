@@ -494,6 +494,8 @@ public class MainActivity extends AppCompatActivity {
                 String updateJournal = String.format("\uD83D\uDD25 新版本基于 AList %s 构建\r\n\r\n%s", latestOnAlistVersion, release.getStr("body"));
                 //新版本APK下载地址（Github）
                 String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
+                //镜像加速地址
+                String downloadLinkFast = String.format("%s/v%s/AListLite-v%s-%s-release.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion, latestVersion, abiName);
                 //发现新版本
                 if (latestVersion.compareTo(currentAppVersion) > 0) {
                     Looper.prepare();
@@ -503,7 +505,11 @@ public class MainActivity extends AppCompatActivity {
                     dialog.setTitle(dialogTitle);
                     dialog.setMessage(updateJournal);
                     dialog.setCancelable(true);
-                    dialog.setPositiveButton("下载更新", (dialog1, which) -> {
+                    dialog.setPositiveButton("镜像加速下载", (dialog1, which) -> {
+                        //跳转到浏览器下载
+                        openExternalUrl(downloadLinkFast);
+                    });
+                    dialog.setNeutralButton("GitHub官网下载", (dialog2, which) -> {
                         //跳转到浏览器下载
                         openExternalUrl(downloadLinkGitHub);
                     });

@@ -24,6 +24,7 @@ public class Constants {
     public static String URL_OPEN_ISSUE = "https://github.com/LeoHaoVIP/AListLiteAndroid/issues";
     public static String URL_OPEN_DISCUSSION = "https://github.com/LeoHaoVIP/AListLiteAndroid/discussions";
     public static String URL_ABOUT_BLANK = "about:blank";
+    public static String QUICK_DOWNLOAD_ADDRESS = "https://gitee.com/leohaovip/AListLiteAndroid/releases/download";
     public static String ERROR_MSG_CONFIG_DATA_READ = "{\"info\":\"无法读取配置，请检查存储权限\",\"msg\":\"MSG\"}";
     public static String ERROR_MSG_CONFIG_DATA_WRITE = "配置更新失败";
     public static String ANDROID_SHARED_DATA_PREFERENCES_NAME = "USER_INFO";
