@@ -72,6 +72,10 @@ public class AlistService extends Service {
         }
         if (ACTION_STARTUP.equals(intent.getAction())) {
             try {
+                //创建消息以维持后台（此处必须先执行，否则可能产生由于未及时调用 startForeground 导致的 ANR 异常）
+                Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText("服务正在初始化").setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
+                startForeground(startId, notification);
+                //若服务未运行则开启
                 if (!alistServer.hasRunning()) {
                     //开启AList服务端
                     alistServer.startup();
@@ -102,8 +106,8 @@ public class AlistService extends Service {
                     MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
                     MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
                 }
-                //创建消息以维持后台
-                Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
+                //更新消息内容里的服务地址
+                notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
                 startForeground(startId, notification);
                 //更新磁贴状态
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
