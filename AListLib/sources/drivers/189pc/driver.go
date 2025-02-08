@@ -33,6 +33,7 @@ type Cloud189PC struct {
 	cleanFamilyTransferFile func()
 
 	storageConfig driver.Config
+	ref           *Cloud189PC
 }
 
 func (y *Cloud189PC) Config() driver.Config {
@@ -64,20 +65,22 @@ func (y *Cloud189PC) Init(ctx context.Context) (err error) {
 		y.uploadThread, y.UploadThread = 3, "3"
 	}
 
-	// 初始化请求客户端
-	if y.client == nil {
-		y.client = base.NewRestyClient().SetHeaders(map[string]string{
-			"Accept":  "application/json;charset=UTF-8",
-			"Referer": WEB_URL,
-		})
-	}
+	if y.ref == nil {
+		// 初始化请求客户端
+		if y.client == nil {
+			y.client = base.NewRestyClient().SetHeaders(map[string]string{
+				"Accept":  "application/json;charset=UTF-8",
+				"Referer": WEB_URL,
+			})
+		}
 
-	// 避免重复登陆
-	identity := utils.GetMD5EncodeStr(y.Username + y.Password)
-	if !y.isLogin() || y.identity != identity {
-		y.identity = identity
-		if err = y.login(); err != nil {
-			return
+		// 避免重复登陆
+		identity := utils.GetMD5EncodeStr(y.Username + y.Password)
+		if !y.isLogin() || y.identity != identity {
+			y.identity = identity
+			if err = y.login(); err != nil {
+				return
+			}
 		}
 	}
 
@@ -103,7 +106,17 @@ func (y *Cloud189PC) Init(ctx context.Context) (err error) {
 	return
 }
 
+func (d *Cloud189PC) InitReference(storage driver.Driver) error {
+	refStorage, ok := storage.(*Cloud189PC)
+	if ok {
+		d.ref = refStorage
+		return nil
+	}
+	return errs.NotSupport
+}
+
 func (y *Cloud189PC) Drop(ctx context.Context) error {
+	y.ref = nil
 	return nil
 }
 

@@ -189,6 +189,15 @@ func (d *AListV3) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	req.Header.Set("Authorization", d.Token)
 	req.Header.Set("File-Path", path.Join(dstDir.GetPath(), stream.GetName()))
 	req.Header.Set("Password", d.MetaPassword)
+	if md5 := stream.GetHash().GetHash(utils.MD5); len(md5) > 0 {
+		req.Header.Set("X-File-Md5", md5)
+	}
+	if sha1 := stream.GetHash().GetHash(utils.SHA1); len(sha1) > 0 {
+		req.Header.Set("X-File-Sha1", sha1)
+	}
+	if sha256 := stream.GetHash().GetHash(utils.SHA256); len(sha256) > 0 {
+		req.Header.Set("X-File-Sha256", sha256)
+	}
 
 	req.ContentLength = stream.GetSize()
 	// client := base.NewHttpClient()

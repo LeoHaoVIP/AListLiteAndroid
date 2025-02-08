@@ -32,11 +32,10 @@ var config = driver.Config{
 	DefaultRoot:       "root",
 	NoOverwriteUpload: true,
 }
+var API_URL = "https://openapi.alipan.com"
 
 func init() {
 	op.RegisterDriver(func() driver.Driver {
-		return &AliyundriveOpen{
-			base: "https://openapi.alipan.com",
-		}
+		return &AliyundriveOpen{}
 	})
 }

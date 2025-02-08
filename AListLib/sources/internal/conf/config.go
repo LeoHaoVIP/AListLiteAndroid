@@ -53,10 +53,13 @@ type TaskConfig struct {
 }
 
 type TasksConfig struct {
-	Download TaskConfig `json:"download" envPrefix:"DOWNLOAD_"`
-	Transfer TaskConfig `json:"transfer" envPrefix:"TRANSFER_"`
-	Upload   TaskConfig `json:"upload" envPrefix:"UPLOAD_"`
-	Copy     TaskConfig `json:"copy" envPrefix:"COPY_"`
+	Download           TaskConfig `json:"download" envPrefix:"DOWNLOAD_"`
+	Transfer           TaskConfig `json:"transfer" envPrefix:"TRANSFER_"`
+	Upload             TaskConfig `json:"upload" envPrefix:"UPLOAD_"`
+	Copy               TaskConfig `json:"copy" envPrefix:"COPY_"`
+	Decompress         TaskConfig `json:"decompress" envPrefix:"DECOMPRESS_"`
+	DecompressUpload   TaskConfig `json:"decompress_upload" envPrefix:"DECOMPRESS_UPLOAD_"`
+	AllowRetryCanceled bool       `json:"allow_retry_canceled" env:"ALLOW_RETRY_CANCELED"`
 }
 
 type Cors struct {
@@ -104,12 +107,14 @@ type Config struct {
 	Log                   LogConfig   `json:"log"`
 	DelayedStart          int         `json:"delayed_start" env:"DELAYED_START"`
 	MaxConnections        int         `json:"max_connections" env:"MAX_CONNECTIONS"`
+	MaxConcurrency        int         `json:"max_concurrency" env:"MAX_CONCURRENCY"`
 	TlsInsecureSkipVerify bool        `json:"tls_insecure_skip_verify" env:"TLS_INSECURE_SKIP_VERIFY"`
 	Tasks                 TasksConfig `json:"tasks" envPrefix:"TASKS_"`
 	Cors                  Cors        `json:"cors" envPrefix:"CORS_"`
 	S3                    S3          `json:"s3" envPrefix:"S3_"`
 	FTP                   FTP         `json:"ftp" envPrefix:"FTP_"`
 	SFTP                  SFTP        `json:"sftp" envPrefix:"SFTP_"`
+	LastLaunchedVersion   string      `json:"last_launched_version"`
 }
 
 func DefaultConfig() *Config {
@@ -148,6 +153,7 @@ func DefaultConfig() *Config {
 			MaxAge:     28,
 		},
 		MaxConnections:        0,
+		MaxConcurrency:        64,
 		TlsInsecureSkipVerify: true,
 		Tasks: TasksConfig{
 			Download: TaskConfig{
@@ -168,6 +174,16 @@ func DefaultConfig() *Config {
 				MaxRetry: 2,
 				// TaskPersistant: true,
 			},
+			Decompress: TaskConfig{
+				Workers:  5,
+				MaxRetry: 2,
+				// TaskPersistant: true,
+			},
+			DecompressUpload: TaskConfig{
+				Workers:  5,
+				MaxRetry: 2,
+			},
+			AllowRetryCanceled: false,
 		},
 		Cors: Cors{
 			AllowOrigins: []string{"*"},
@@ -195,5 +211,6 @@ func DefaultConfig() *Config {
 			Enable: false,
 			Listen: ":5222",
 		},
+		LastLaunchedVersion: "",
 	}
 }

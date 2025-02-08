@@ -29,10 +29,6 @@ type FileUploadProxy struct {
 
 func uploadAuth(ctx context.Context, path string) error {
 	user := ctx.Value("user").(*model.User)
-	path, err := user.JoinPath(path)
-	if err != nil {
-		return err
-	}
 	meta, err := op.GetNearestMeta(stdpath.Dir(path))
 	if err != nil {
 		if !errors.Is(errors.Cause(err), errs.MetaNotFound) {
@@ -67,7 +63,7 @@ func (f *FileUploadProxy) Write(p []byte) (n int, err error) {
 }
 
 func (f *FileUploadProxy) Seek(offset int64, whence int) (int64, error) {
-	return 0, errs.NotSupport
+	return f.buffer.Seek(offset, whence)
 }
 
 func (f *FileUploadProxy) Close() error {

@@ -79,6 +79,28 @@ func (d *Local) Init(ctx context.Context) error {
 	} else {
 		d.thumbTokenBucket = NewStaticTokenBucketWithMigration(d.thumbTokenBucket, d.thumbConcurrency)
 	}
+	// Check the VideoThumbPos value
+	if d.VideoThumbPos == "" {
+		d.VideoThumbPos = "20%"
+	}
+	if strings.HasSuffix(d.VideoThumbPos, "%") {
+		percentage := strings.TrimSuffix(d.VideoThumbPos, "%")
+		val, err := strconv.ParseFloat(percentage, 64)
+		if err != nil {
+			return fmt.Errorf("invalid video_thumb_pos value: %s, err: %s", d.VideoThumbPos, err)
+		}
+		if val < 0 || val > 100 {
+			return fmt.Errorf("invalid video_thumb_pos value: %s, the precentage must be a number between 0 and 100", d.VideoThumbPos)
+		}
+	} else {
+		val, err := strconv.ParseFloat(d.VideoThumbPos, 64)
+		if err != nil {
+			return fmt.Errorf("invalid video_thumb_pos value: %s, err: %s", d.VideoThumbPos, err)
+		}
+		if val < 0 {
+			return fmt.Errorf("invalid video_thumb_pos value: %s, the time must be a positive number", d.VideoThumbPos)
+		}
+	}
 	return nil
 }
 
@@ -101,17 +123,17 @@ func (d *Local) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([
 		if !d.ShowHidden && strings.HasPrefix(f.Name(), ".") {
 			continue
 		}
-		file := d.FileInfoToObj(f, args.ReqPath, fullPath)
+		file := d.FileInfoToObj(ctx, f, args.ReqPath, fullPath)
 		files = append(files, file)
 	}
 	return files, nil
 }
-func (d *Local) FileInfoToObj(f fs.FileInfo, reqPath string, fullPath string) model.Obj {
+func (d *Local) FileInfoToObj(ctx context.Context, f fs.FileInfo, reqPath string, fullPath string) model.Obj {
 	thumb := ""
 	if d.Thumbnail {
 		typeName := utils.GetFileType(f.Name())
 		if typeName == conf.IMAGE || typeName == conf.VIDEO {
-			thumb = common.GetApiUrl(nil) + stdpath.Join("/d", reqPath, f.Name())
+			thumb = common.GetApiUrl(common.GetHttpReq(ctx)) + stdpath.Join("/d", reqPath, f.Name())
 			thumb = utils.EncodePath(thumb, true)
 			thumb += "?type=thumb&sign=" + sign.Sign(stdpath.Join(reqPath, f.Name()))
 		}
@@ -149,7 +171,7 @@ func (d *Local) GetMeta(ctx context.Context, path string) (model.Obj, error) {
 	if err != nil {
 		return nil, err
 	}
-	file := d.FileInfoToObj(f, path, path)
+	file := d.FileInfoToObj(ctx, f, path, path)
 	//h := "123123"
 	//if s, ok := f.(model.SetHash); ok && file.GetHash() == ("","")  {
 	//	s.SetHash(h,"SHA1")

@@ -241,7 +241,7 @@ func (d *Pan115) OfflineList(ctx context.Context) ([]*driver115.OfflineTask, err
 }
 
 func (d *Pan115) OfflineDownload(ctx context.Context, uris []string, dstDir model.Obj) ([]string, error) {
-	return d.client.AddOfflineTaskURIs(uris, dstDir.GetID())
+	return d.client.AddOfflineTaskURIs(uris, dstDir.GetID(), driver115.WithAppVer(appVer))
 }
 
 func (d *Pan115) DeleteOfflineTasks(ctx context.Context, hashes []string, deleteFiles bool) error {

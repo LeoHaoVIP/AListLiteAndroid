@@ -300,9 +300,7 @@ func (d *Quqi) linkFromCDN(id string) (*model.Link, error) {
 		bufferReader := bufio.NewReader(decryptReader)
 		bufferReader.Discard(int(decryptedOffset))
 
-		return utils.NewReadCloser(bufferReader, func() error {
-			return nil
-		}), nil
+		return io.NopCloser(bufferReader), nil
 	}
 
 	return &model.Link{

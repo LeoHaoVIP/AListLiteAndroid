@@ -9,8 +9,10 @@ type Addition struct {
 	// Usually one of two
 	// driver.RootPath
 	// define other
-	Paths           string `json:"paths" required:"true" type:"text"`
-	ProtectSameName bool   `json:"protect_same_name" default:"true" required:"false" help:"Protects same-name files from Delete or Rename"`
+	Paths               string `json:"paths" required:"true" type:"text"`
+	ProtectSameName     bool   `json:"protect_same_name" default:"true" required:"false" help:"Protects same-name files from Delete or Rename"`
+	DownloadConcurrency int    `json:"download_concurrency" default:"0" required:"false" type:"number" help:"Need to enable proxy"`
+	DownloadPartSize    int    `json:"download_part_size" default:"0" type:"number" required:"false" help:"Need to enable proxy. Unit: KB"`
 }
 
 var config = driver.Config{

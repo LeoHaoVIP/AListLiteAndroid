@@ -9,6 +9,7 @@ import (
 	"github.com/alist-org/alist/v3/internal/errs"
 	"github.com/alist-org/alist/v3/internal/fs"
 	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/internal/sign"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/alist-org/alist/v3/server/common"
@@ -94,9 +95,14 @@ func (d *Alias) list(ctx context.Context, dst, sub string, args *fs.ListArgs) ([
 
 func (d *Alias) link(ctx context.Context, dst, sub string, args model.LinkArgs) (*model.Link, error) {
 	reqPath := stdpath.Join(dst, sub)
-	storage, err := fs.GetStorage(reqPath, &fs.GetStoragesArgs{})
+	// 参考 crypt 驱动
+	storage, reqActualPath, err := op.GetStorageAndActualPath(reqPath)
 	if err != nil {
 		return nil, err
+	}
+	if _, ok := storage.(*Alias); !ok && !args.Redirect {
+		link, _, err := op.Link(ctx, storage, reqActualPath, args)
+		return link, err
 	}
 	_, err = fs.Get(ctx, reqPath, &fs.GetArgs{NoLog: true})
 	if err != nil {
@@ -114,7 +120,7 @@ func (d *Alias) link(ctx context.Context, dst, sub string, args model.LinkArgs) 
 		}
 		return link, nil
 	}
-	link, _, err := fs.Link(ctx, reqPath, args)
+	link, _, err := op.Link(ctx, storage, reqActualPath, args)
 	return link, err
 }
 

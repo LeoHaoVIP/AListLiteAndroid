@@ -6,6 +6,7 @@ import (
 	"fmt"
 	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
 	"github.com/KirCute/sftpd-alist"
+	"github.com/alist-org/alist/v3/internal/fs"
 	"net"
 	"net/http"
 	"os"
@@ -159,6 +160,7 @@ the address is defined in config file`,
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
 		utils.Log.Println("Shutdown server...")
+		fs.ArchiveContentUploadTaskManager.RemoveAll()
 		Release()
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()

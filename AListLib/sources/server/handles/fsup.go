@@ -2,6 +2,7 @@ package handles
 
 import (
 	"github.com/alist-org/alist/v3/internal/task"
+	"github.com/alist-org/alist/v3/pkg/utils"
 	"io"
 	"net/url"
 	stdpath "path"
@@ -34,11 +35,19 @@ func FsStream(c *gin.Context) {
 		return
 	}
 	asTask := c.GetHeader("As-Task") == "true"
+	overwrite := c.GetHeader("Overwrite") != "false"
 	user := c.MustGet("user").(*model.User)
 	path, err = user.JoinPath(path)
 	if err != nil {
 		common.ErrorResp(c, err, 403)
 		return
+	}
+	if !overwrite {
+		if res, _ := fs.Get(c, path, &fs.GetArgs{NoLog: true}); res != nil {
+			_, _ = io.Copy(io.Discard, c.Request.Body)
+			common.ErrorStrResp(c, "file exists", 403)
+			return
+		}
 	}
 	dir, name := stdpath.Split(path)
 	sizeStr := c.GetHeader("Content-Length")
@@ -47,17 +56,28 @@ func FsStream(c *gin.Context) {
 		common.ErrorResp(c, err, 400)
 		return
 	}
+	h := make(map[*utils.HashType]string)
+	if md5 := c.GetHeader("X-File-Md5"); md5 != "" {
+		h[utils.MD5] = md5
+	}
+	if sha1 := c.GetHeader("X-File-Sha1"); sha1 != "" {
+		h[utils.SHA1] = sha1
+	}
+	if sha256 := c.GetHeader("X-File-Sha256"); sha256 != "" {
+		h[utils.SHA256] = sha256
+	}
 	s := &stream.FileStream{
 		Obj: &model.Object{
 			Name:     name,
 			Size:     size,
 			Modified: getLastModified(c),
+			HashInfo: utils.NewHashInfoByMap(h),
 		},
 		Reader:       c.Request.Body,
 		Mimetype:     c.GetHeader("Content-Type"),
 		WebPutAsTask: asTask,
 	}
-	var t task.TaskInfoWithCreator
+	var t task.TaskExtensionInfo
 	if asTask {
 		t, err = fs.PutAsTask(c, dir, s)
 	} else {
@@ -85,11 +105,19 @@ func FsForm(c *gin.Context) {
 		return
 	}
 	asTask := c.GetHeader("As-Task") == "true"
+	overwrite := c.GetHeader("Overwrite") != "false"
 	user := c.MustGet("user").(*model.User)
 	path, err = user.JoinPath(path)
 	if err != nil {
 		common.ErrorResp(c, err, 403)
 		return
+	}
+	if !overwrite {
+		if res, _ := fs.Get(c, path, &fs.GetArgs{NoLog: true}); res != nil {
+			_, _ = io.Copy(io.Discard, c.Request.Body)
+			common.ErrorStrResp(c, "file exists", 403)
+			return
+		}
 	}
 	storage, err := fs.GetStorage(path, &fs.GetStoragesArgs{})
 	if err != nil {
@@ -112,17 +140,28 @@ func FsForm(c *gin.Context) {
 	}
 	defer f.Close()
 	dir, name := stdpath.Split(path)
+	h := make(map[*utils.HashType]string)
+	if md5 := c.GetHeader("X-File-Md5"); md5 != "" {
+		h[utils.MD5] = md5
+	}
+	if sha1 := c.GetHeader("X-File-Sha1"); sha1 != "" {
+		h[utils.SHA1] = sha1
+	}
+	if sha256 := c.GetHeader("X-File-Sha256"); sha256 != "" {
+		h[utils.SHA256] = sha256
+	}
 	s := stream.FileStream{
 		Obj: &model.Object{
 			Name:     name,
 			Size:     file.Size,
 			Modified: getLastModified(c),
+			HashInfo: utils.NewHashInfoByMap(h),
 		},
 		Reader:       f,
 		Mimetype:     file.Header.Get("Content-Type"),
 		WebPutAsTask: asTask,
 	}
-	var t task.TaskInfoWithCreator
+	var t task.TaskExtensionInfo
 	if asTask {
 		s.Reader = struct {
 			io.Reader

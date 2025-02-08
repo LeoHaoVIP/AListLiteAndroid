@@ -120,9 +120,9 @@ var findKVReg = regexp.MustCompile(`'(.+?)':('?([^' },]*)'?)`) // 拆分kv
 func findJSVarFunc(key, data string) string {
 	var values []string
 	if key != "sasign" {
-		values = regexp.MustCompile(`var ` + key + ` = '(.+?)';`).FindStringSubmatch(data)
+		values = regexp.MustCompile(`var ` + key + `\s*=\s*['"]?(.+?)['"]?;`).FindStringSubmatch(data)
 	} else {
-		matches := regexp.MustCompile(`var `+key+` = '(.+?)';`).FindAllStringSubmatch(data, -1)
+		matches := regexp.MustCompile(`var `+key+`\s*=\s*['"]?(.+?)['"]?;`).FindAllStringSubmatch(data, -1)
 		if len(matches) == 3 {
 			values = matches[1]
 		} else {

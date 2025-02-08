@@ -261,6 +261,7 @@ type PersonalUploadResp struct {
 	BaseResp
 	Data struct {
 		FileId      string             `json:"fileId"`
+		FileName    string             `json:"fileName"`
 		PartInfos   []PersonalPartInfo `json:"partInfos"`
 		Exist       bool               `json:"exist"`
 		RapidUpload bool               `json:"rapidUpload"`

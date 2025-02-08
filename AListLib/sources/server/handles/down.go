@@ -31,37 +31,17 @@ func Down(c *gin.Context) {
 		return
 	} else {
 		link, _, err := fs.Link(c, rawPath, model.LinkArgs{
-			IP:      c.ClientIP(),
-			Header:  c.Request.Header,
-			Type:    c.Query("type"),
-			HttpReq: c.Request,
+			IP:       c.ClientIP(),
+			Header:   c.Request.Header,
+			Type:     c.Query("type"),
+			HttpReq:  c.Request,
+			Redirect: true,
 		})
 		if err != nil {
 			common.ErrorResp(c, err, 500)
 			return
 		}
-		if link.MFile != nil {
-			defer func(ReadSeekCloser io.ReadCloser) {
-				err := ReadSeekCloser.Close()
-				if err != nil {
-					log.Errorf("close data error: %s", err)
-				}
-			}(link.MFile)
-		}
-		c.Header("Referrer-Policy", "no-referrer")
-		c.Header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
-		if setting.GetBool(conf.ForwardDirectLinkParams) {
-			query := c.Request.URL.Query()
-			for _, v := range conf.SlicesMap[conf.IgnoreDirectLinkParams] {
-				query.Del(v)
-			}
-			link.URL, err = utils.InjectQuery(link.URL, query)
-			if err != nil {
-				common.ErrorResp(c, err, 500)
-				return
-			}
-		}
-		c.Redirect(302, link.URL)
+		down(c, link)
 	}
 }
 
@@ -95,27 +75,58 @@ func Proxy(c *gin.Context) {
 			common.ErrorResp(c, err, 500)
 			return
 		}
-		if link.URL != "" && setting.GetBool(conf.ForwardDirectLinkParams) {
-			query := c.Request.URL.Query()
-			for _, v := range conf.SlicesMap[conf.IgnoreDirectLinkParams] {
-				query.Del(v)
-			}
-			link.URL, err = utils.InjectQuery(link.URL, query)
-			if err != nil {
-				common.ErrorResp(c, err, 500)
-				return
-			}
-		}
-		if storage.GetStorage().ProxyRange {
-			common.ProxyRange(link, file.GetSize())
-		}
-		err = common.Proxy(c.Writer, c.Request, link, file)
-		if err != nil {
-			common.ErrorResp(c, err, 500, true)
-			return
-		}
+		localProxy(c, link, file, storage.GetStorage().ProxyRange)
 	} else {
 		common.ErrorStrResp(c, "proxy not allowed", 403)
+		return
+	}
+}
+
+func down(c *gin.Context, link *model.Link) {
+	var err error
+	if link.MFile != nil {
+		defer func(ReadSeekCloser io.ReadCloser) {
+			err := ReadSeekCloser.Close()
+			if err != nil {
+				log.Errorf("close data error: %s", err)
+			}
+		}(link.MFile)
+	}
+	c.Header("Referrer-Policy", "no-referrer")
+	c.Header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
+	if setting.GetBool(conf.ForwardDirectLinkParams) {
+		query := c.Request.URL.Query()
+		for _, v := range conf.SlicesMap[conf.IgnoreDirectLinkParams] {
+			query.Del(v)
+		}
+		link.URL, err = utils.InjectQuery(link.URL, query)
+		if err != nil {
+			common.ErrorResp(c, err, 500)
+			return
+		}
+	}
+	c.Redirect(302, link.URL)
+}
+
+func localProxy(c *gin.Context, link *model.Link, file model.Obj, proxyRange bool) {
+	var err error
+	if link.URL != "" && setting.GetBool(conf.ForwardDirectLinkParams) {
+		query := c.Request.URL.Query()
+		for _, v := range conf.SlicesMap[conf.IgnoreDirectLinkParams] {
+			query.Del(v)
+		}
+		link.URL, err = utils.InjectQuery(link.URL, query)
+		if err != nil {
+			common.ErrorResp(c, err, 500)
+			return
+		}
+	}
+	if proxyRange {
+		common.ProxyRange(link, file.GetSize())
+	}
+	err = common.Proxy(c.Writer, c.Request, link, file)
+	if err != nil {
+		common.ErrorResp(c, err, 500, true)
 		return
 	}
 }

@@ -25,7 +25,7 @@ func (d *Pan123) getS3PreSignedUrls(ctx context.Context, upReq *UploadResp, star
 		"StorageNode":     upReq.Data.StorageNode,
 	}
 	var s3PreSignedUrls S3PreSignedURLs
-	_, err := d.request(S3PreSignedUrls, http.MethodPost, func(req *resty.Request) {
+	_, err := d.Request(S3PreSignedUrls, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data).SetContext(ctx)
 	}, &s3PreSignedUrls)
 	if err != nil {
@@ -44,7 +44,7 @@ func (d *Pan123) getS3Auth(ctx context.Context, upReq *UploadResp, start, end in
 		"uploadId":        upReq.Data.UploadId,
 	}
 	var s3PreSignedUrls S3PreSignedURLs
-	_, err := d.request(S3Auth, http.MethodPost, func(req *resty.Request) {
+	_, err := d.Request(S3Auth, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data).SetContext(ctx)
 	}, &s3PreSignedUrls)
 	if err != nil {
@@ -63,7 +63,7 @@ func (d *Pan123) completeS3(ctx context.Context, upReq *UploadResp, file model.F
 		"key":         upReq.Data.Key,
 		"uploadId":    upReq.Data.UploadId,
 	}
-	_, err := d.request(UploadCompleteV2, http.MethodPost, func(req *resty.Request) {
+	_, err := d.Request(UploadCompleteV2, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data).SetContext(ctx)
 	}, nil)
 	return err

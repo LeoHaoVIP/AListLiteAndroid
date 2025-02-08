@@ -204,3 +204,50 @@ type UploadTaskResponse struct {
 
 	File Files `json:"file"`
 }
+
+// 添加离线下载响应
+type OfflineDownloadResp struct {
+	File       *string     `json:"file"`
+	Task       OfflineTask `json:"task"`
+	UploadType string      `json:"upload_type"`
+	URL        struct {
+		Kind string `json:"kind"`
+	} `json:"url"`
+}
+
+// 离线下载列表
+type OfflineListResp struct {
+	ExpiresIn     int64         `json:"expires_in"`
+	NextPageToken string        `json:"next_page_token"`
+	Tasks         []OfflineTask `json:"tasks"`
+}
+
+// offlineTask
+type OfflineTask struct {
+	Callback    string   `json:"callback"`
+	CreatedTime string   `json:"created_time"`
+	FileID      string   `json:"file_id"`
+	FileName    string   `json:"file_name"`
+	FileSize    string   `json:"file_size"`
+	IconLink    string   `json:"icon_link"`
+	ID          string   `json:"id"`
+	Kind        string   `json:"kind"`
+	Message     string   `json:"message"`
+	Name        string   `json:"name"`
+	Params      Params   `json:"params"`
+	Phase       string   `json:"phase"` // PHASE_TYPE_RUNNING, PHASE_TYPE_ERROR, PHASE_TYPE_COMPLETE, PHASE_TYPE_PENDING
+	Progress    int64    `json:"progress"`
+	Space       string   `json:"space"`
+	StatusSize  int64    `json:"status_size"`
+	Statuses    []string `json:"statuses"`
+	ThirdTaskID string   `json:"third_task_id"`
+	Type        string   `json:"type"`
+	UpdatedTime string   `json:"updated_time"`
+	UserID      string   `json:"user_id"`
+}
+
+type Params struct {
+	FolderType   string `json:"folder_type"`
+	PredictSpeed string `json:"predict_speed"`
+	PredictType  string `json:"predict_type"`
+}

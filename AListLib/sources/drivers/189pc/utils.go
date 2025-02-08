@@ -57,11 +57,11 @@ const (
 
 func (y *Cloud189PC) SignatureHeader(url, method, params string, isFamily bool) map[string]string {
 	dateOfGmt := getHttpDateStr()
-	sessionKey := y.tokenInfo.SessionKey
-	sessionSecret := y.tokenInfo.SessionSecret
+	sessionKey := y.getTokenInfo().SessionKey
+	sessionSecret := y.getTokenInfo().SessionSecret
 	if isFamily {
-		sessionKey = y.tokenInfo.FamilySessionKey
-		sessionSecret = y.tokenInfo.FamilySessionSecret
+		sessionKey = y.getTokenInfo().FamilySessionKey
+		sessionSecret = y.getTokenInfo().FamilySessionSecret
 	}
 
 	header := map[string]string{
@@ -74,9 +74,9 @@ func (y *Cloud189PC) SignatureHeader(url, method, params string, isFamily bool) 
 }
 
 func (y *Cloud189PC) EncryptParams(params Params, isFamily bool) string {
-	sessionSecret := y.tokenInfo.SessionSecret
+	sessionSecret := y.getTokenInfo().SessionSecret
 	if isFamily {
-		sessionSecret = y.tokenInfo.FamilySessionSecret
+		sessionSecret = y.getTokenInfo().FamilySessionSecret
 	}
 	if params != nil {
 		return AesECBEncrypt(params.Encode(), sessionSecret[:16])
@@ -85,7 +85,7 @@ func (y *Cloud189PC) EncryptParams(params Params, isFamily bool) string {
 }
 
 func (y *Cloud189PC) request(url, method string, callback base.ReqCallback, params Params, resp interface{}, isFamily ...bool) ([]byte, error) {
-	req := y.client.R().SetQueryParams(clientSuffix())
+	req := y.getClient().R().SetQueryParams(clientSuffix())
 
 	// 设置params
 	paramsData := y.EncryptParams(params, isBool(isFamily...))
@@ -403,6 +403,9 @@ func (y *Cloud189PC) initLoginParam() error {
 
 // 刷新会话
 func (y *Cloud189PC) refreshSession() (err error) {
+	if y.ref != nil {
+		return y.ref.refreshSession()
+	}
 	var erron RespErr
 	var userSessionResp UserSessionResp
 	_, err = y.client.R().
@@ -620,7 +623,7 @@ func (y *Cloud189PC) FastUpload(ctx context.Context, dstDir model.Obj, file mode
 	}
 
 	// 尝试恢复进度
-	uploadProgress, ok := base.GetUploadProgress[*UploadProgress](y, y.tokenInfo.SessionKey, fileMd5Hex)
+	uploadProgress, ok := base.GetUploadProgress[*UploadProgress](y, y.getTokenInfo().SessionKey, fileMd5Hex)
 	if !ok {
 		//step.2 预上传
 		params := Params{
@@ -687,7 +690,7 @@ func (y *Cloud189PC) FastUpload(ctx context.Context, dstDir model.Obj, file mode
 		if err = threadG.Wait(); err != nil {
 			if errors.Is(err, context.Canceled) {
 				uploadProgress.UploadParts = utils.SliceFilter(uploadProgress.UploadParts, func(s string) bool { return s != "" })
-				base.SaveUploadProgress(y, uploadProgress, y.tokenInfo.SessionKey, fileMd5Hex)
+				base.SaveUploadProgress(y, uploadProgress, y.getTokenInfo().SessionKey, fileMd5Hex)
 			}
 			return nil, err
 		}
@@ -1008,7 +1011,7 @@ func (y *Cloud189PC) getFamilyID() (string, error) {
 		return "", fmt.Errorf("cannot get automatically,please input family_id")
 	}
 	for _, info := range infos {
-		if strings.Contains(y.tokenInfo.LoginName, info.RemarkName) {
+		if strings.Contains(y.getTokenInfo().LoginName, info.RemarkName) {
 			return fmt.Sprint(info.FamilyID), nil
 		}
 	}
@@ -1141,4 +1144,18 @@ func (y *Cloud189PC) WaitBatchTask(aType string, taskID string, t time.Duration)
 		}
 		time.Sleep(t)
 	}
+}
+
+func (y *Cloud189PC) getTokenInfo() *AppSessionResp {
+	if y.ref != nil {
+		return y.ref.getTokenInfo()
+	}
+	return y.tokenInfo
+}
+
+func (y *Cloud189PC) getClient() *resty.Client {
+	if y.ref != nil {
+		return y.ref.getClient()
+	}
+	return y.client
 }

@@ -21,9 +21,9 @@ import (
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 
+	cipher "github.com/SheltonZhu/115driver/pkg/crypto/ec115"
+	crypto "github.com/SheltonZhu/115driver/pkg/crypto/m115"
 	driver115 "github.com/SheltonZhu/115driver/pkg/driver"
-	crypto "github.com/gaoyb7/115drive-webdav/115"
-	"github.com/orzogc/fake115uploader/cipher"
 	"github.com/pkg/errors"
 )
 
@@ -63,7 +63,7 @@ func (d *Pan115) getFiles(fileId string) ([]FileObj, error) {
 	if d.PageSize <= 0 {
 		d.PageSize = driver115.FileListLimit
 	}
-	files, err := d.client.ListWithLimit(fileId, d.PageSize)
+	files, err := d.client.ListWithLimit(fileId, d.PageSize, driver115.WithMultiUrls())
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (d *Pan115) getUA() string {
 func (d *Pan115) DownloadWithUA(pickCode, ua string) (*driver115.DownloadInfo, error) {
 	key := crypto.GenerateKey()
 	result := driver115.DownloadResp{}
-	params, err := utils.Json.Marshal(map[string]string{"pickcode": pickCode})
+	params, err := utils.Json.Marshal(map[string]string{"pick_code": pickCode})
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (d *Pan115) DownloadWithUA(pickCode, ua string) (*driver115.DownloadInfo, e
 	data := crypto.Encode(params, key)
 
 	bodyReader := strings.NewReader(url.Values{"data": []string{data}}.Encode())
-	reqUrl := fmt.Sprintf("%s?t=%s", driver115.ApiDownloadGetUrl, driver115.Now().String())
+	reqUrl := fmt.Sprintf("%s?t=%s", driver115.AndroidApiDownloadGetUrl, driver115.Now().String())
 	req, _ := http.NewRequest(http.MethodPost, reqUrl, bodyReader)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Cookie", d.Cookie)
@@ -145,19 +145,18 @@ func (d *Pan115) DownloadWithUA(pickCode, ua string) (*driver115.DownloadInfo, e
 		return nil, err
 	}
 
-	downloadInfo := driver115.DownloadData{}
+	downloadInfo := struct {
+		Url string `json:"url"`
+	}{}
 	if err := utils.Json.Unmarshal(bytes, &downloadInfo); err != nil {
 		return nil, err
 	}
 
-	for _, info := range downloadInfo {
-		if info.FileSize < 0 {
-			return nil, driver115.ErrDownloadEmpty
-		}
-		info.Header = resp.Request.Header
-		return info, nil
-	}
-	return nil, driver115.ErrUnexpected
+	info := &driver115.DownloadInfo{}
+	info.PickCode = pickCode
+	info.Header = resp.Request.Header
+	info.Url.Url = downloadInfo.Url
+	return info, nil
 }
 
 func (c *Pan115) GenerateToken(fileID, preID, timeStamp, fileSize, signKey, signVal string) string {

@@ -126,7 +126,7 @@ func getProofRange(input string, size int64) (*ProofRange, error) {
 }
 
 func (d *AliyundriveOpen) calProofCode(stream model.FileStreamer) (string, error) {
-	proofRange, err := getProofRange(d.AccessToken, stream.GetSize())
+	proofRange, err := getProofRange(d.getAccessToken(), stream.GetSize())
 	if err != nil {
 		return "", err
 	}

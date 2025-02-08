@@ -64,7 +64,6 @@ func (lrc *LyricObj) getLyricLink() *model.Link {
 				sr := io.NewSectionReader(reader, httpRange.Start, httpRange.Length)
 				return io.NopCloser(sr), nil
 			},
-			Closers: utils.EmptyClosers(),
 		},
 	}
 }

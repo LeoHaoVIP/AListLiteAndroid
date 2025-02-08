@@ -110,6 +110,16 @@ func (d *Alias) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 	for _, dst := range dsts {
 		link, err := d.link(ctx, dst, sub, args)
 		if err == nil {
+			if !args.Redirect && len(link.URL) > 0 {
+				// 正常情况下 多并发 仅支持返回URL的驱动
+				// alias套娃alias 可以让crypt、mega等驱动(不返回URL的) 支持并发
+				if d.DownloadConcurrency > 0 {
+					link.Concurrency = d.DownloadConcurrency
+				}
+				if d.DownloadPartSize > 0 {
+					link.PartSize = d.DownloadPartSize * utils.KB
+				}
+			}
 			return link, nil
 		}
 	}

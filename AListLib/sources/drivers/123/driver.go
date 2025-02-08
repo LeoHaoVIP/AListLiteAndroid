@@ -6,12 +6,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/time/rate"
 	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/driver"
@@ -41,12 +42,12 @@ func (d *Pan123) GetAddition() driver.Additional {
 }
 
 func (d *Pan123) Init(ctx context.Context) error {
-	_, err := d.request(UserInfo, http.MethodGet, nil, nil)
+	_, err := d.Request(UserInfo, http.MethodGet, nil, nil)
 	return err
 }
 
 func (d *Pan123) Drop(ctx context.Context) error {
-	_, _ = d.request(Logout, http.MethodPost, func(req *resty.Request) {
+	_, _ = d.Request(Logout, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(base.Json{})
 	}, nil)
 	return nil
@@ -81,8 +82,8 @@ func (d *Pan123) Link(ctx context.Context, file model.Obj, args model.LinkArgs) 
 			"size":      f.Size,
 			"type":      f.Type,
 		}
-		resp, err := d.request(DownloadInfo, http.MethodPost, func(req *resty.Request) {
-			
+		resp, err := d.Request(DownloadInfo, http.MethodPost, func(req *resty.Request) {
+
 			req.SetBody(data).SetHeaders(headers)
 		}, nil)
 		if err != nil {
@@ -135,7 +136,7 @@ func (d *Pan123) MakeDir(ctx context.Context, parentDir model.Obj, dirName strin
 		"size":         0,
 		"type":         1,
 	}
-	_, err := d.request(Mkdir, http.MethodPost, func(req *resty.Request) {
+	_, err := d.Request(Mkdir, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data)
 	}, nil)
 	return err
@@ -146,7 +147,7 @@ func (d *Pan123) Move(ctx context.Context, srcObj, dstDir model.Obj) error {
 		"fileIdList":   []base.Json{{"FileId": srcObj.GetID()}},
 		"parentFileId": dstDir.GetID(),
 	}
-	_, err := d.request(Move, http.MethodPost, func(req *resty.Request) {
+	_, err := d.Request(Move, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data)
 	}, nil)
 	return err
@@ -158,7 +159,7 @@ func (d *Pan123) Rename(ctx context.Context, srcObj model.Obj, newName string) e
 		"fileId":   srcObj.GetID(),
 		"fileName": newName,
 	}
-	_, err := d.request(Rename, http.MethodPost, func(req *resty.Request) {
+	_, err := d.Request(Rename, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data)
 	}, nil)
 	return err
@@ -175,7 +176,7 @@ func (d *Pan123) Remove(ctx context.Context, obj model.Obj) error {
 			"operation":         true,
 			"fileTrashInfoList": []File{f},
 		}
-		_, err := d.request(Trash, http.MethodPost, func(req *resty.Request) {
+		_, err := d.Request(Trash, http.MethodPost, func(req *resty.Request) {
 			req.SetBody(data)
 		}, nil)
 		return err
@@ -213,7 +214,7 @@ func (d *Pan123) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 		"type":         0,
 	}
 	var resp UploadResp
-	res, err := d.request(UploadRequest, http.MethodPost, func(req *resty.Request) {
+	res, err := d.Request(UploadRequest, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(data).SetContext(ctx)
 	}, &resp)
 	if err != nil {
@@ -248,7 +249,7 @@ func (d *Pan123) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 		}
 		_, err = uploader.UploadWithContext(ctx, input)
 	}
-	_, err = d.request(UploadComplete, http.MethodPost, func(req *resty.Request) {
+	_, err = d.Request(UploadComplete, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(base.Json{
 			"fileId": resp.Data.FileId,
 		}).SetContext(ctx)

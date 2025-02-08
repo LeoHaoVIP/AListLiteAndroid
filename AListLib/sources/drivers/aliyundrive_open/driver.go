@@ -19,12 +19,12 @@ import (
 type AliyundriveOpen struct {
 	model.Storage
 	Addition
-	base string
 
 	DriveId string
 
 	limitList func(ctx context.Context, data base.Json) (*Files, error)
 	limitLink func(ctx context.Context, file model.Obj) (*model.Link, error)
+	ref       *AliyundriveOpen
 }
 
 func (d *AliyundriveOpen) Config() driver.Config {
@@ -58,7 +58,17 @@ func (d *AliyundriveOpen) Init(ctx context.Context) error {
 	return nil
 }
 
+func (d *AliyundriveOpen) InitReference(storage driver.Driver) error {
+	refStorage, ok := storage.(*AliyundriveOpen)
+	if ok {
+		d.ref = refStorage
+		return nil
+	}
+	return errs.NotSupport
+}
+
 func (d *AliyundriveOpen) Drop(ctx context.Context) error {
+	d.ref = nil
 	return nil
 }
 

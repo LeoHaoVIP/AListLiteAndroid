@@ -80,6 +80,13 @@ type Put interface {
 	Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up UpdateProgress) error
 }
 
+type PutURL interface {
+	// PutURL directly put a URL into the storage
+	// Applicable to index-based drivers like URL-Tree or drivers that support uploading files as URLs
+	// Called when using SimpleHttp for offline downloading, skipping creating a download task
+	PutURL(ctx context.Context, dstDir model.Obj, name, url string) error
+}
+
 //type WriteResult interface {
 //	MkdirResult
 //	MoveResult
@@ -109,7 +116,50 @@ type PutResult interface {
 	Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up UpdateProgress) (model.Obj, error)
 }
 
-type UpdateProgress func(percentage float64)
+type PutURLResult interface {
+	// PutURL directly put a URL into the storage
+	// Applicable to index-based drivers like URL-Tree or drivers that support uploading files as URLs
+	// Called when using SimpleHttp for offline downloading, skipping creating a download task
+	PutURL(ctx context.Context, dstDir model.Obj, name, url string) (model.Obj, error)
+}
+
+type ArchiveReader interface {
+	// GetArchiveMeta get the meta-info of an archive
+	// return errs.WrongArchivePassword if the meta-info is also encrypted but provided password is wrong or empty
+	// return errs.NotImplement to use internal archive tools to get the meta-info, such as the following cases:
+	// 1. the driver do not support the format of the archive but there may be an internal tool do
+	// 2. handling archives is a VIP feature, but the driver does not have VIP access
+	GetArchiveMeta(ctx context.Context, obj model.Obj, args model.ArchiveArgs) (model.ArchiveMeta, error)
+	// ListArchive list the children of model.ArchiveArgs.InnerPath in the archive
+	// return errs.NotImplement to use internal archive tools to list the children
+	// return errs.NotSupport if the folder structure should be acquired from model.ArchiveMeta.GetTree
+	ListArchive(ctx context.Context, obj model.Obj, args model.ArchiveInnerArgs) ([]model.Obj, error)
+	// Extract get url/filepath/reader of a file in the archive
+	// return errs.NotImplement to use internal archive tools to extract
+	Extract(ctx context.Context, obj model.Obj, args model.ArchiveInnerArgs) (*model.Link, error)
+}
+
+type ArchiveGetter interface {
+	// ArchiveGet get file by inner path
+	// return errs.NotImplement to use internal archive tools to get the children
+	// return errs.NotSupport if the folder structure should be acquired from model.ArchiveMeta.GetTree
+	ArchiveGet(ctx context.Context, obj model.Obj, args model.ArchiveInnerArgs) (model.Obj, error)
+}
+
+type ArchiveDecompress interface {
+	ArchiveDecompress(ctx context.Context, srcObj, dstDir model.Obj, args model.ArchiveDecompressArgs) error
+}
+
+type ArchiveDecompressResult interface {
+	// ArchiveDecompress decompress an archive
+	// when args.PutIntoNewDir, the new sub-folder should be named the same to the archive but without the extension
+	// return each decompressed obj from the root path of the archive when args.PutIntoNewDir is false
+	// return only the newly created folder when args.PutIntoNewDir is true
+	// return errs.NotImplement to use internal archive tools to decompress
+	ArchiveDecompress(ctx context.Context, srcObj, dstDir model.Obj, args model.ArchiveDecompressArgs) ([]model.Obj, error)
+}
+
+type UpdateProgress model.UpdateProgress
 
 type Progress struct {
 	Total int64
@@ -129,4 +179,8 @@ func NewProgress(total int64, up UpdateProgress) *Progress {
 		Total: total,
 		up:    up,
 	}
+}
+
+type Reference interface {
+	InitReference(storage Driver) error
 }

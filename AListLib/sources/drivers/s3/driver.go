@@ -99,8 +99,12 @@ func (d *S3) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*mo
 	var link model.Link
 	var err error
 	if d.CustomHost != "" {
-		err = req.Build()
-		link.URL = req.HTTPRequest.URL.String()
+		if d.EnableCustomHostPresign {
+			link.URL, err = req.Presign(time.Hour * time.Duration(d.SignURLExpire))
+		} else {
+			err = req.Build()
+			link.URL = req.HTTPRequest.URL.String()
+		}
 		if d.RemoveBucket {
 			link.URL = strings.Replace(link.URL, "/"+d.Bucket, "", 1)
 		}

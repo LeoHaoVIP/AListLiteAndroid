@@ -9,7 +9,7 @@ type Addition struct {
 	//Account       string `json:"account" required:"true"`
 	Authorization string `json:"authorization" type:"text" required:"true"`
 	driver.RootID
-	Type                 string `json:"type" type:"select" options:"personal,family,personal_new" default:"personal"`
+	Type                 string `json:"type" type:"select" options:"personal_new,family,group,personal" default:"personal_new"`
 	CloudID              string `json:"cloud_id"`
 	CustomUploadPartSize int64  `json:"custom_upload_part_size" type:"number" default:"0" help:"0 for auto"`
 }

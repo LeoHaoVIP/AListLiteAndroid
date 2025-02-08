@@ -11,7 +11,6 @@ import (
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/alist-org/alist/v3/server/webdav"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -99,12 +98,27 @@ func WebDAVAuth(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	if !user.CanWebdavManage() && utils.SliceContains([]string{"PUT", "DELETE", "PROPPATCH", "MKCOL", "COPY", "MOVE"}, c.Request.Method) {
-		if c.Request.Method == "OPTIONS" {
-			c.Set("user", guest)
-			c.Next()
-			return
-		}
+	if (c.Request.Method == "PUT" || c.Request.Method == "MKCOL") && (!user.CanWebdavManage() || !user.CanWrite()) {
+		c.Status(http.StatusForbidden)
+		c.Abort()
+		return
+	}
+	if c.Request.Method == "MOVE" && (!user.CanWebdavManage() || (!user.CanMove() && !user.CanRename())) {
+		c.Status(http.StatusForbidden)
+		c.Abort()
+		return
+	}
+	if c.Request.Method == "COPY" && (!user.CanWebdavManage() || !user.CanCopy()) {
+		c.Status(http.StatusForbidden)
+		c.Abort()
+		return
+	}
+	if c.Request.Method == "DELETE" && (!user.CanWebdavManage() || !user.CanRemove()) {
+		c.Status(http.StatusForbidden)
+		c.Abort()
+		return
+	}
+	if c.Request.Method == "PROPPATCH" && !user.CanWebdavManage() {
 		c.Status(http.StatusForbidden)
 		c.Abort()
 		return

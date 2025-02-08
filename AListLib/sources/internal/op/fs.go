@@ -586,3 +586,43 @@ func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file mod
 	}
 	return errors.WithStack(err)
 }
+
+func PutURL(ctx context.Context, storage driver.Driver, dstDirPath, dstName, url string, lazyCache ...bool) error {
+	if storage.Config().CheckStatus && storage.GetStorage().Status != WORK {
+		return errors.Errorf("storage not init: %s", storage.GetStorage().Status)
+	}
+	dstDirPath = utils.FixAndCleanPath(dstDirPath)
+	_, err := GetUnwrap(ctx, storage, stdpath.Join(dstDirPath, dstName))
+	if err == nil {
+		return errors.New("obj already exists")
+	}
+	err = MakeDir(ctx, storage, dstDirPath)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to put url")
+	}
+	dstDir, err := GetUnwrap(ctx, storage, dstDirPath)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to put url")
+	}
+	switch s := storage.(type) {
+	case driver.PutURLResult:
+		var newObj model.Obj
+		newObj, err = s.PutURL(ctx, dstDir, dstName, url)
+		if err == nil {
+			if newObj != nil {
+				addCacheObj(storage, dstDirPath, model.WrapObjName(newObj))
+			} else if !utils.IsBool(lazyCache...) {
+				ClearCache(storage, dstDirPath)
+			}
+		}
+	case driver.PutURL:
+		err = s.PutURL(ctx, dstDir, dstName, url)
+		if err == nil && !utils.IsBool(lazyCache...) {
+			ClearCache(storage, dstDirPath)
+		}
+	default:
+		return errs.NotImplement
+	}
+	log.Debugf("put url [%s](%s) done", dstName, url)
+	return errors.WithStack(err)
+}

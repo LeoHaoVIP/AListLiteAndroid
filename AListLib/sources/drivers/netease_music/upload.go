@@ -47,7 +47,7 @@ func (u *uploader) init(stream model.FileStreamer) error {
 	}
 
 	h := md5.New()
-	io.Copy(h, stream)
+	utils.CopyWithBuffer(h, stream)
 	u.md5 = hex.EncodeToString(h.Sum(nil))
 	_, err := u.file.Seek(0, io.SeekStart)
 	if err != nil {

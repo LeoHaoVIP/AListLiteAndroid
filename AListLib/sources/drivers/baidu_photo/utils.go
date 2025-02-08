@@ -476,6 +476,21 @@ func (d *BaiduPhoto) uInfo() (*UInfo, error) {
 	return &info, nil
 }
 
+func (d *BaiduPhoto) getBDStoken() (string, error) {
+	var info struct {
+		Result struct {
+			Bdstoken string `json:"bdstoken"`
+			Token    string `json:"token"`
+			Uk       int64  `json:"uk"`
+		} `json:"result"`
+	}
+	_, err := d.Get("https://pan.baidu.com/api/gettemplatevariable?fields=[%22bdstoken%22,%22token%22,%22uk%22]", nil, &info)
+	if err != nil {
+		return "", err
+	}
+	return info.Result.Bdstoken, nil
+}
+
 func DecryptMd5(encryptMd5 string) string {
 	if _, err := hex.DecodeString(encryptMd5); err == nil {
 		return encryptMd5

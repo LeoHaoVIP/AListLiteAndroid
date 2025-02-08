@@ -52,7 +52,8 @@ import (
 //
 // If the caller has set w's ETag header formatted per RFC 7232, section 2.3,
 // ServeHTTP uses it to handle requests using If-Match, If-None-Match, or If-Range.
-func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time.Time, size int64, RangeReaderFunc model.RangeReaderFunc) {
+func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time.Time, size int64, RangeReadCloser model.RangeReadCloserIF) {
+	defer RangeReadCloser.Close()
 	setLastModified(w, modTime)
 	done, rangeReq := checkPreconditions(w, r, modTime)
 	if done {
@@ -110,11 +111,19 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 		// or unknown file size, ignore the range request.
 		ranges = nil
 	}
+
+	// 使用请求的Context
+	// 不然从sendContent读不到数据，即使请求断开CopyBuffer也会一直堵塞
+	ctx := r.Context()
 	switch {
 	case len(ranges) == 0:
-		reader, err := RangeReaderFunc(context.Background(), http_range.Range{Length: -1})
+		reader, err := RangeReadCloser.RangeRead(ctx, http_range.Range{Length: -1})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			code = http.StatusRequestedRangeNotSatisfiable
+			if err == ErrExceedMaxConcurrency {
+				code = http.StatusTooManyRequests
+			}
+			http.Error(w, err.Error(), code)
 			return
 		}
 		sendContent = reader
@@ -131,9 +140,13 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 		// does not request multiple parts might not support
 		// multipart responses."
 		ra := ranges[0]
-		sendContent, err = RangeReaderFunc(context.Background(), ra)
+		sendContent, err = RangeReadCloser.RangeRead(ctx, ra)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
+			code = http.StatusRequestedRangeNotSatisfiable
+			if err == ErrExceedMaxConcurrency {
+				code = http.StatusTooManyRequests
+			}
+			http.Error(w, err.Error(), code)
 			return
 		}
 		sendSize = ra.Length
@@ -158,7 +171,7 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 					pw.CloseWithError(err)
 					return
 				}
-				reader, err := RangeReaderFunc(context.Background(), ra)
+				reader, err := RangeReadCloser.RangeRead(ctx, ra)
 				if err != nil {
 					pw.CloseWithError(err)
 					return
@@ -167,14 +180,12 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 					pw.CloseWithError(err)
 					return
 				}
-				//defer reader.Close()
 			}
 
 			mw.Close()
 			pw.Close()
 		}()
 	}
-	defer sendContent.Close()
 
 	w.Header().Set("Accept-Ranges", "bytes")
 	if w.Header().Get("Content-Encoding") == "" {
@@ -190,7 +201,11 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 			if written != sendSize {
 				log.Warnf("Maybe size incorrect or reader not giving correct/full data, or connection closed before finish. written bytes: %d ,sendSize:%d, ", written, sendSize)
 			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			code = http.StatusInternalServerError
+			if err == ErrExceedMaxConcurrency {
+				code = http.StatusTooManyRequests
+			}
+			http.Error(w, err.Error(), code)
 		}
 	}
 }
@@ -239,7 +254,7 @@ func RequestHttp(ctx context.Context, httpMethod string, headerOverride http.Hea
 		_ = res.Body.Close()
 		msg := string(all)
 		log.Debugln(msg)
-		return nil, fmt.Errorf("http request [%s] failure,status: %d response:%s", URL, res.StatusCode, msg)
+		return res, fmt.Errorf("http request [%s] failure,status: %d response:%s", URL, res.StatusCode, msg)
 	}
 	return res, nil
 }

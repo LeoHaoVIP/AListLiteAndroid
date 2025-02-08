@@ -2,6 +2,7 @@ package ftp
 
 import (
 	"context"
+	"fmt"
 	"github.com/alist-org/alist/v3/internal/errs"
 	"github.com/alist-org/alist/v3/internal/fs"
 	"github.com/alist-org/alist/v3/internal/model"
@@ -64,8 +65,14 @@ func Rename(ctx context.Context, oldPath, newPath string) error {
 		if !user.CanFTPManage() || !user.CanMove() || (srcBase != dstBase && !user.CanRename()) {
 			return errs.PermissionDenied
 		}
-		if err := fs.Move(ctx, srcPath, dstDir); err != nil {
-			return err
+		if err = fs.Move(ctx, srcPath, dstDir); err != nil {
+			if srcBase != dstBase {
+				return err
+			}
+			if _, err1 := fs.Copy(ctx, srcPath, dstDir); err1 != nil {
+				return fmt.Errorf("failed move for %+v, and failed try copying for %+v", err, err1)
+			}
+			return nil
 		}
 		if srcBase != dstBase {
 			return fs.Rename(ctx, stdpath.Join(dstDir, srcBase), dstBase)
