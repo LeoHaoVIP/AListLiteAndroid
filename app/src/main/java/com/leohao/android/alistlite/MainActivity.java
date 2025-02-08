@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
 import android.service.quicksettings.TileService;
 import android.text.method.PasswordTransformationMethod;
@@ -28,7 +27,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -80,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
     public ImageButton homepageButton;
     public ImageButton webViewGoBackButton;
     public ImageButton webViewGoForwardButton;
-    private SwipeRefreshLayout swipeRefreshLayout;
     private PopupMenuWindow popupMenuWindow;
     private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
 
@@ -213,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
         webViewGoForwardButton = findViewById(R.id.btn_webViewGoForward);
         webViewGoForwardButton.setVisibility(View.INVISIBLE);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
-        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         webView = findViewById(R.id.webview_alist);
         //初始化菜单栏弹框
         popupMenuWindow = new PopupMenuWindow(this);
@@ -243,11 +239,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, e.getLocalizedMessage());
             }
         });
-        //设置下滑刷新控件监听
-        swipeRefreshLayout.setOnRefreshListener(() -> new Handler().postDelayed(() -> {
-            //webView刷新
-            webView.reload();
-        }, 0));
     }
 
     private void initWebview() {
@@ -307,10 +298,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                if (webView.getProgress() == 100) {
-                    //停止下拉刷新动画
-                    swipeRefreshLayout.setRefreshing(false);
-                }
             }
 
             @SuppressWarnings("deprecation")
