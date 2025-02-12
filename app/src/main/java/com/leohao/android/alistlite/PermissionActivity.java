@@ -119,7 +119,7 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
                 }
                 //获取权限状态
                 boolean isGranted = XXPermissions.isGranted(this, permission);
-                PermissionItem permissionItem = new PermissionItem(permission, permission.replaceAll(Constants.androidPermissionPrefix, ""), Constants.permissionDescriptionMap.get(permission), isGranted);
+                PermissionItem permissionItem = new PermissionItem(permission, permission.replaceAll(Constants.ANDROID_PERMISSION_PREFIX, ""), Constants.permissionDescriptionMap.get(permission), isGranted);
                 permissionList.add(permissionItem);
             }
         } catch (PackageManager.NameNotFoundException ignored) {

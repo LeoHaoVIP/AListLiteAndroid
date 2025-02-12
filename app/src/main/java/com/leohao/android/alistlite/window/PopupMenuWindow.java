@@ -35,15 +35,15 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             MainActivity.getInstance().setAdminPassword(view);
         });
-        //更新日志
-        popupView.findViewById(R.id.btn_showReleaseLog).setOnClickListener((view) -> {
-            dismiss();
-            MainActivity.getInstance().showReleaseLog(view);
-        });
         //高级配置
         popupView.findViewById(R.id.btn_manageConfigData).setOnClickListener((view) -> {
             dismiss();
             MainActivity.getInstance().manageConfigData(view);
+        });
+        //检查更新
+        popupView.findViewById(R.id.btn_checkUpdates).setOnClickListener((view) -> {
+            dismiss();
+            MainActivity.getInstance().checkUpdates(view);
         });
         //关于 AList
         popupView.findViewById(R.id.btn_showSystemInfo).setOnClickListener((view) -> {

@@ -70,8 +70,6 @@ public class MainActivity extends AppCompatActivity {
     public ActionBar actionBar = null;
     public WebView webView = null;
     public TextView runningInfoTextView = null;
-    public TextView appInfoTextView = null;
-    public TextView alistVersionTextView = null;
     public SwitchButton serviceSwitch = null;
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
@@ -201,8 +199,6 @@ public class MainActivity extends AppCompatActivity {
         actionBar = getSupportActionBar();
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         serviceSwitch = findViewById(R.id.switchButton);
-        appInfoTextView = findViewById(R.id.tv_app_info);
-        alistVersionTextView = findViewById(R.id.tv_alist_version);
         homepageButton = findViewById(R.id.btn_homepage);
         homepageButton.setVisibility(View.INVISIBLE);
         webViewGoBackButton = findViewById(R.id.btn_webViewGoBack);
@@ -222,9 +218,6 @@ public class MainActivity extends AppCompatActivity {
         currentAppVersion = getCurrentAppVersion();
         //获取基于的AList版本
         currentAlistVersion = getCurrentAlistVersion();
-        //更新AppName显示版本信息
-        appInfoTextView.setText(String.format("%s %s", appInfoTextView.getText(), currentAppVersion));
-        alistVersionTextView.setText(String.format("Powered by AList v%s", currentAlistVersion));
         //设置服务开关监听
         serviceSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
@@ -298,6 +291,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                //JS 注入，更新版本信息
+                if (url.equals(Constants.URL_LOCAL_ABOUT_ALIST_LITE) || url.equals(Constants.URL_LOCAL_RELEASE_LOG)) {
+                    String versionInfo = String.format(Constants.VERSION_INFO, currentAppVersion, currentAlistVersion);
+                    String jsCode = "document.getElementById('text_version').innerHTML='" + versionInfo + "';";
+                    webView.evaluateJavascript("javascript:(function(){" + jsCode + "})();", null);
+                }
             }
 
             @SuppressWarnings("deprecation")
@@ -325,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
      * 显示系统信息
      */
     public void showSystemInfo(View view) {
-        webView.loadUrl("file:///android_asset/html/about-alistlite.html");
+        webView.loadUrl(Constants.URL_LOCAL_ABOUT_ALIST_LITE);
     }
 
     /**
@@ -507,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     if (view != null) {
                         Looper.prepare();
-                        showToast("当前已是最新版本");
+                        showToast(String.format("当前已是最新版本（v%s）", currentAppVersion));
                         Looper.loop();
                     }
                 }
@@ -610,18 +609,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 显示软件更新日志
-     */
-    public void showReleaseLog(View view) {
-        webView.loadUrl("file:///android_asset/html/release-log.html");
-    }
-
-    /**
      * 显示菜单弹窗
      */
     public void showPopupMenu(View view) {
         if (isActivityRunning()) {
-            popupMenuWindow.showAsDropDown(view, -170, 50);
+            popupMenuWindow.showAsDropDown(view, 0, 50);
             backgroundAlpha(0.6f);
         }
     }

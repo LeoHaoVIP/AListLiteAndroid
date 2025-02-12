@@ -18,11 +18,13 @@ public class Constants {
     public static String ALIST_DEFAULT_ADMIN_USERNAME = "admin";
     public static String ALIST_DEFAULT_PASSWORD = "123456";
     public static Integer RECENT_RELEASE_RECORD_SIZE = 10;
-    public static String androidPermissionPrefix = "android.permission.";
+    public static String ANDROID_PERMISSION_PREFIX = "android.permission.";
     public static String URL_RELEASE_LATEST = "https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest";
     public static String URL_RELEASES = "https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases";
     public static String URL_OPEN_ISSUE = "https://github.com/LeoHaoVIP/AListLiteAndroid/issues";
     public static String URL_OPEN_DISCUSSION = "https://github.com/LeoHaoVIP/AListLiteAndroid/discussions";
+    public static String URL_LOCAL_ABOUT_ALIST_LITE = "file:///android_asset/html/about-alistlite.html";
+    public static String URL_LOCAL_RELEASE_LOG = "file:///android_asset/html/release-log.html";
     public static String URL_ABOUT_BLANK = "about:blank";
     public static String QUICK_DOWNLOAD_ADDRESS = "https://gitee.com/leohaovip/AListLiteAndroid/releases/download";
     public static String ERROR_MSG_CONFIG_DATA_READ = "{\"info\":\"无法读取配置，请检查存储权限\",\"msg\":\"MSG\"}";
@@ -30,6 +32,7 @@ public class Constants {
     public static String ANDROID_SHARED_DATA_PREFERENCES_NAME = "USER_INFO";
     public static String ANDROID_SHARED_DATA_KEY_ALIST_INITIALIZED = "alist_initialized";
     public static String UNIVERSAL_ABI_NAME = "universal";
+    public static String VERSION_INFO = "AListLite %s | Powered by AList %s";
     public static List<String> SUPPORTED_DOWNLOAD_ABI_NAMES = Arrays.asList("x86", "armeabi-v7a", "x86_64", "arm64-v8a");
     public static Map<String, String> permissionDescriptionMap = new HashMap<>();
 
