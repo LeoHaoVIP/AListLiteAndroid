@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">AListLite</string>
+    <string name="tooltip_refresh">刷新当前页面</string>
     <string name="tooltip_homepage">返回主页</string>
+    <string name="tooltip_go_back">后退</string>
+    <string name="tooltip_go_forward">前进</string>
+    <string name="tooltip_more">更多</string>
     <string name="btn_text_start">ON</string>
     <string name="btn_text_stop">OFF</string>
     <string name="alist_service_is_running">AList 服务运行中</string>

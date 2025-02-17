@@ -19,13 +19,13 @@
                     android:focusable="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
                     android:textSize="19sp"
                     android:clickable="true"
-                    android:onClick="checkUpdates"
-                    android:text="@string/app_name_ext"/>
+                    android:tooltipText="@string/tooltip_homepage"
+                    android:onClick="jumpToHomepage"
+                    android:text="@string/app_name_ext" android:layout_centerInParent="true"/>
             <ImageButton
-                    android:id="@+id/btn_homepage"
+                    android:id="@+id/btn_refresh"
                     android:focusable="true"
                     android:background="@null"
                     android:layout_width="25dp"
@@ -34,9 +34,9 @@
                     android:layout_centerVertical="true"
                     android:layout_alignParentStart="true"
                     android:layout_marginRight="13dp"
-                    android:tooltipText="@string/tooltip_homepage"
-                    android:onClick="jumpToHomepage"
-                    android:src="@drawable/homepage"/>
+                    android:tooltipText="@string/tooltip_refresh"
+                    android:onClick="refreshWebPage"
+                    android:src="@drawable/refresh"/>
             <ImageButton
                     android:id="@+id/btn_webViewGoBack"
                     android:focusable="true"
@@ -44,10 +44,11 @@
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:elevation="16dp"
-                    android:layout_toRightOf="@id/btn_homepage"
+                    android:layout_toRightOf="@id/btn_refresh"
                     android:scaleType="centerInside"
                     android:layout_centerVertical="true"
                     android:layout_marginRight="13dp"
+                    android:tooltipText="@string/tooltip_go_back"
                     android:onClick="webViewGoBackOrForward"
                     android:src="@drawable/go_back"
             />
@@ -61,6 +62,7 @@
                     android:scaleType="centerInside"
                     android:layout_centerVertical="true"
                     android:layout_toRightOf="@id/btn_webViewGoBack"
+                    android:tooltipText="@string/tooltip_go_forward"
                     android:onClick="webViewGoBackOrForward"
                     android:src="@drawable/go_forward"
             />
@@ -74,6 +76,7 @@
                     android:gravity="end"
                     android:scaleType="centerInside"
                     android:layout_centerVertical="true"
+                    android:tooltipText="@string/tooltip_more"
                     android:onClick="showPopupMenu"
                     android:src="@drawable/more"
             />

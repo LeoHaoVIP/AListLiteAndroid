@@ -73,9 +73,7 @@ public class MainActivity extends AppCompatActivity {
     public SwitchButton serviceSwitch = null;
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
-    public ImageButton homepageButton;
-    public ImageButton webViewGoBackButton;
-    public ImageButton webViewGoForwardButton;
+    public TextView appInfoTextView;
     private PopupMenuWindow popupMenuWindow;
     private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
 
@@ -120,10 +118,10 @@ public class MainActivity extends AppCompatActivity {
      * 初始化焦点设置
      */
     private void initFocusSettings() {
-        //初始化焦点为密码按钮，便于用户设置
-        homepageButton.postDelayed(() -> {
+        //初始化焦点为主页按钮
+        appInfoTextView.postDelayed(() -> {
             //初始时焦点设置为密码按钮
-            homepageButton.requestFocus();
+            appInfoTextView.requestFocus();
         }, 1000);
         //适配 TV 端操作，控件获取到焦点时显示边框
         List<View> views = AppUtil.getAllViews(this);
@@ -199,12 +197,7 @@ public class MainActivity extends AppCompatActivity {
         actionBar = getSupportActionBar();
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         serviceSwitch = findViewById(R.id.switchButton);
-        homepageButton = findViewById(R.id.btn_homepage);
-        homepageButton.setVisibility(View.INVISIBLE);
-        webViewGoBackButton = findViewById(R.id.btn_webViewGoBack);
-        webViewGoBackButton.setVisibility(View.INVISIBLE);
-        webViewGoForwardButton = findViewById(R.id.btn_webViewGoForward);
-        webViewGoForwardButton.setVisibility(View.INVISIBLE);
+        appInfoTextView = findViewById(R.id.tv_app_info);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         webView = findViewById(R.id.webview_alist);
         //初始化菜单栏弹框
@@ -258,9 +251,6 @@ public class MainActivity extends AppCompatActivity {
                 actionBar.hide();
                 // 隐藏状态栏
                 getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-                //隐藏前进和返回按钮
-                webViewGoBackButton.setVisibility(View.INVISIBLE);
-                webViewGoForwardButton.setVisibility(View.INVISIBLE);
                 //切换至横屏
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             }
@@ -279,9 +269,6 @@ public class MainActivity extends AppCompatActivity {
                 actionBar.show();
                 //显示状态栏
                 getWindow().getDecorView().setSystemUiVisibility(0);
-                //恢复显示前进和返回按钮
-                webViewGoBackButton.setVisibility(View.VISIBLE);
-                webViewGoForwardButton.setVisibility(View.VISIBLE);
                 //切换至竖屏
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 super.onHideCustomView();
@@ -362,7 +349,11 @@ public class MainActivity extends AppCompatActivity {
      * 跳转到AList主页面
      */
     public void jumpToHomepage(View view) {
-        webView.loadUrl(serverAddress);
+        if (alistServer.hasRunning()) {
+            webView.loadUrl(serverAddress);
+        } else {
+            showToast("AList 服务未启动");
+        }
     }
 
     /**
@@ -439,6 +430,15 @@ public class MainActivity extends AppCompatActivity {
                 editButton.setImageResource(R.drawable.save);
             }
         });
+    }
+
+    /**
+     * 页面刷新
+     *
+     * @param view view
+     */
+    public void refreshWebPage(View view) {
+        webView.reload();
     }
 
     /**
