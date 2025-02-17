@@ -344,8 +344,9 @@ public class MainActivity extends AppCompatActivity {
                 //去除前后空格后的密码
                 String pwd = editText.getText().toString().trim();
                 if (!"".equals(pwd)) {
-                    alistServer.setAdminPassword(editText.getText().toString());
-                    showToast("管理员密码已更新");
+                    alistServer.setAdminPassword(pwd);
+                    String adminUsername = alistServer.getAdminUser();
+                    showToast(String.format("管理员密码已更新：%s | %s", adminUsername, pwd), Toast.LENGTH_LONG);
                 } else {
                     showToast("管理员密码不能为空");
                 }
@@ -542,6 +543,10 @@ public class MainActivity extends AppCompatActivity {
 
     void showToast(String msg) {
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void showToast(String msg, int duration) {
+        Toast.makeText(getApplicationContext(), msg, duration).show();
     }
 
     @Override

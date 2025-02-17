@@ -95,6 +95,13 @@ public class Alist {
         Alistlib.setAdminPassword(pwd);
     }
 
+    public String getAdminUser() throws Exception {
+        if (!hasRunning()) {
+            init();
+        }
+        return Alistlib.getAdminUser();
+    }
+
     /**
      * 挂载本地存储配置
      *

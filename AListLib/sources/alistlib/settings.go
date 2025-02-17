@@ -51,6 +51,7 @@ func SetAdminPassword(pwd string) {
 		utils.Log.Errorf("failed get admin user: %+v", err)
 		return
 	}
+	//设置管理员密码
 	admin.SetPassword(pwd)
 	if err := op.UpdateUser(admin); err != nil {
 		utils.Log.Errorf("failed update admin user: %+v", err)
@@ -60,4 +61,14 @@ func SetAdminPassword(pwd string) {
 	utils.Log.Infof("username: %s", admin.Username)
 	utils.Log.Infof("password: %s", pwd)
 	cmd.DelAdminCacheOnline()
+}
+
+func GetAdminUser() string {
+	//获取管理员账户
+	admin, err := op.GetAdmin()
+	if err != nil {
+		utils.Log.Errorf("failed get admin user: %+v", err)
+		return "admin"
+	}
+	return admin.Username
 }

@@ -15,7 +15,6 @@ public class Constants {
     public static String ALIST_VERSION = "3.42.0";
     public static String ALIST_CONFIG_FILENAME = "config.json";
     public static String ALIST_STORAGE_DRIVER_MOUNT_PATH = "本地存储";
-    public static String ALIST_DEFAULT_ADMIN_USERNAME = "admin";
     public static String ALIST_DEFAULT_PASSWORD = "123456";
     public static Integer RECENT_RELEASE_RECORD_SIZE = 10;
     public static String ANDROID_PERMISSION_PREFIX = "android.permission.";

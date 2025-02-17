@@ -86,7 +86,9 @@ public class AlistService extends Service {
                         alistServer.addLocalStorageDriver(Environment.getExternalStorageDirectory().getAbsolutePath(), Constants.ALIST_STORAGE_DRIVER_MOUNT_PATH);
                         //初始化密码
                         alistServer.setAdminPassword(Constants.ALIST_DEFAULT_PASSWORD);
-                        showToast(String.format("初始登录信息：%s | %s", Constants.ALIST_DEFAULT_ADMIN_USERNAME, Constants.ALIST_DEFAULT_PASSWORD), Toast.LENGTH_LONG);
+                        //管理员用户名
+                        String adminUsername = alistServer.getAdminUser();
+                        showToast(String.format("初始登录信息：%s | %s", adminUsername, Constants.ALIST_DEFAULT_PASSWORD), Toast.LENGTH_LONG);
                     }
                 }
                 //读取AList服务运行端口
