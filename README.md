@@ -31,7 +31,7 @@
 
 [AListLite](https://github.com/LeoHaoVIP/AListLiteAndroid) 支持服务一键启动、状态栏磁贴、后台常驻、开机自启和高级配置等功能，界面简洁，上手简单。
 
-<p align="center"><img width="100" src="./README/rewardcode.png" alt="yoga logo"></p>
+<p align="center"><img width="120" src="./README/rewardcode.png" alt="yoga logo"></p>
 <h5 align="center">Buy Me a Coffee!</h5>
 
 ## Compatibility
