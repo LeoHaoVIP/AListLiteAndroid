@@ -39,7 +39,7 @@
 [AListLite](https://github.com/LeoHaoVIP/AListLiteAndroid) 集成了 Golang 实现的 [AList](https://github.com/alist-org/alist)，适配 `x86_64`、`x86`、`arm64-v8a`、`armeabi-v7a` CPU 架构，可运行在主流 Android 版本上（最低支持 Android 5.0 版本 | SDK API 21），同时适配移动设备和 TV 设备。
 
 <center class="half">
-<img src="./README/demo-devices.png" alt="多设备演示" style="zoom:70%"/>
+<img src="./README/demo-devices.png" alt="多设备演示" style="zoom:30%"/>
 </center>
 
 
@@ -63,7 +63,7 @@
 点击右上角开关，开启或停止 AList 服务。服务启动成功后将显示 AList 前端页面，同时在上方标识当前绑定的 IP 地址与端口。
 
 <center class="half">
-<img src="./README/main-page.png" alt="APP 主页面" style="zoom:50%"/>
+<img src="./README/main-page.png" alt="APP 主页面" style="zoom:30%"/>
 </center>
 
 ### 授予权限
@@ -75,7 +75,7 @@
 首次打开 APP 后，软件将申请必要的存储、通知与后台运行权限，权限授予情况可点击软件右上角 `+` 号，进入 `权限配置` 页面查看。
 
 <center class="half">
-<img src="./README/permission.png" alt="权限配置页面" style="zoom:50%"/>
+<img src="./README/permission.png" alt="权限配置页面" style="zoom:30%"/>
 </center>
 
 ### 修改管理员密码
@@ -83,7 +83,7 @@
 点击软件右上角 `+` 号，选择 `密码设置` 可修改管理员密码，默认登录信息为 `admin` + `123456`。
 
 <center class="half">
-<img src="./README/password-page.png" alt="设定管理员密码" style="zoom:50%"/>
+<img src="./README/password-page.png" alt="设定管理员密码" style="zoom:30%"/>
 </center>
 
 ### 状态栏磁贴
@@ -91,7 +91,7 @@
 Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁贴，实现无需打开软件，即可快速开启或关闭 AList 服务。
 
 <center class="half">
-<img src="./README/tile-service.png" alt="AList 服务磁贴" style="zoom:50%"/>
+<img src="./README/tile-service.png" alt="AList 服务磁贴" style="zoom:30%"/>
 </center>
 
 # Update
@@ -99,7 +99,7 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 对于已安装 APP 的用户，软件每次开启时将自动检查更新，用户也可点击软件右上角 `+` 号，选择下方 `检查更新` 手动获取新版本发布情况。
 
 <center class="half">
-<img src="./README/update-page.png" alt="版本信息页面" style="zoom:50%"/>
+<img src="./README/update-page.png" alt="版本信息页面" style="zoom:30%"/>
 </center>
 
 
@@ -110,7 +110,7 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 > 注意：错误的配置可能导致服务无法启动，请谨慎操作！
 
 <center class="half">
-<img src="./README/config-manage.png" alt="高级配置管理页面" style="zoom:50%"/>
+<img src="./README/config-manage.png" alt="高级配置管理页面" style="zoom:30%"/>
 </center>
 
 # Support
