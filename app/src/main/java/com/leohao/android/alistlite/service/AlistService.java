@@ -11,7 +11,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.service.quicksettings.TileService;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -22,6 +21,7 @@ import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.Constants;
 
+import java.io.IOException;
 import java.util.Locale;
 
 /**
@@ -91,10 +91,8 @@ public class AlistService extends Service {
                         showToast(String.format("初始登录信息：%s | %s", adminUsername, Constants.ALIST_DEFAULT_PASSWORD), Toast.LENGTH_LONG);
                     }
                 }
-                //读取AList服务运行端口
-                String serverPort = alistServer.getConfigValue("scheme.http_port");
                 //AList服务前端访问地址
-                String serverAddress = String.format(Locale.CHINA, "http://%s:%s", alistServer.getBindingIP(), serverPort);
+                String serverAddress = getAlistServerAddress();
                 if (MainActivity.getInstance() != null) {
                     //状态开关恢复到开启状态（不触发监听事件）
                     MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(true);
@@ -122,6 +120,21 @@ public class AlistService extends Service {
             }
         }
         return START_NOT_STICKY;
+    }
+
+    /**
+     * 获取 AList 服务地址
+     *
+     * @return AList 服务地址（根据当前采用的协议类型动态）
+     * @throws IOException
+     */
+    public String getAlistServerAddress() throws IOException {
+        //判断是否强制开启了 HTTPS
+        boolean isForceHttps = "true".equals(alistServer.getConfigValue("scheme.force_https"));
+        //读取 AList 服务运行端口
+        String serverPort = alistServer.getConfigValue(isForceHttps ? "scheme.https_port" : "scheme.http_port");
+        //AList 服务前端访问地址
+        return String.format(Locale.CHINA, "%s://%s:%s", isForceHttps ? "https" : "http", alistServer.getBindingIP(), serverPort);
     }
 
     @Override
