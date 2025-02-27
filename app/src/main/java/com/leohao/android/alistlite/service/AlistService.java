@@ -131,10 +131,12 @@ public class AlistService extends Service {
     public String getAlistServerAddress() throws IOException {
         //判断是否强制开启了 HTTPS
         boolean isForceHttps = "true".equals(alistServer.getConfigValue("scheme.force_https"));
+        boolean isHttpPortLegal = !"-1".equals(alistServer.getConfigValue("scheme.https_port"));
+        boolean isHttpsMode = isForceHttps && isHttpPortLegal;
         //读取 AList 服务运行端口
-        String serverPort = alistServer.getConfigValue(isForceHttps ? "scheme.https_port" : "scheme.http_port");
+        String serverPort = alistServer.getConfigValue(isHttpsMode ? "scheme.https_port" : "scheme.http_port");
         //AList 服务前端访问地址
-        return String.format(Locale.CHINA, "%s://%s:%s", isForceHttps ? "https" : "http", alistServer.getBindingIP(), serverPort);
+        return String.format(Locale.CHINA, "%s://%s:%s", isHttpsMode ? "https" : "http", alistServer.getBindingIP(), serverPort);
     }
 
     @Override
