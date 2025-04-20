@@ -2,6 +2,7 @@ package drivers
 
 import (
 	_ "github.com/alist-org/alist/v3/drivers/115"
+	_ "github.com/alist-org/alist/v3/drivers/115_open"
 	_ "github.com/alist-org/alist/v3/drivers/115_share"
 	_ "github.com/alist-org/alist/v3/drivers/123"
 	_ "github.com/alist-org/alist/v3/drivers/123_link"
@@ -21,6 +22,7 @@ import (
 	_ "github.com/alist-org/alist/v3/drivers/chaoxing"
 	_ "github.com/alist-org/alist/v3/drivers/cloudreve"
 	_ "github.com/alist-org/alist/v3/drivers/crypt"
+	_ "github.com/alist-org/alist/v3/drivers/doubao"
 	_ "github.com/alist-org/alist/v3/drivers/dropbox"
 	_ "github.com/alist-org/alist/v3/drivers/febbox"
 	_ "github.com/alist-org/alist/v3/drivers/ftp"

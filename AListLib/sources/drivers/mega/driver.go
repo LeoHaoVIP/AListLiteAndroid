@@ -156,6 +156,7 @@ func (d *Mega) Put(ctx context.Context, dstDir model.Obj, stream model.FileStrea
 			return err
 		}
 
+		reader := driver.NewLimitedUploadStream(ctx, stream)
 		for id := 0; id < u.Chunks(); id++ {
 			if utils.IsCanceled(ctx) {
 				return ctx.Err()
@@ -165,7 +166,7 @@ func (d *Mega) Put(ctx context.Context, dstDir model.Obj, stream model.FileStrea
 				return err
 			}
 			chunk := make([]byte, chkSize)
-			n, err := io.ReadFull(stream, chunk)
+			n, err := io.ReadFull(reader, chunk)
 			if err != nil && err != io.EOF {
 				return err
 			}

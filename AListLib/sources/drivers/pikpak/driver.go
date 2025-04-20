@@ -255,10 +255,10 @@ func (d *PikPak) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 	}
 
 	if stream.GetSize() <= 10*utils.MB { // 文件大小 小于10MB，改用普通模式上传
-		return d.UploadByOSS(&params, stream, up)
+		return d.UploadByOSS(ctx, &params, stream, up)
 	}
 	// 分片上传
-	return d.UploadByMultipart(&params, stream.GetSize(), stream, up)
+	return d.UploadByMultipart(ctx, &params, stream.GetSize(), stream, up)
 }
 
 // 离线下载文件

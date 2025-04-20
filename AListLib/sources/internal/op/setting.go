@@ -26,9 +26,18 @@ var settingGroupCacheF = func(key string, item []model.SettingItem) {
 	settingGroupCache.Set(key, item, cache.WithEx[[]model.SettingItem](time.Hour))
 }
 
+var settingChangingCallbacks = make([]func(), 0)
+
+func RegisterSettingChangingCallback(f func()) {
+	settingChangingCallbacks = append(settingChangingCallbacks, f)
+}
+
 func SettingCacheUpdate() {
 	settingCache.Clear()
 	settingGroupCache.Clear()
+	for _, cb := range settingChangingCallbacks {
+		cb()
+	}
 }
 
 func GetPublicSettingsMap() map[string]string {

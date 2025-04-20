@@ -185,32 +185,35 @@ func (d *Pan123) Remove(ctx context.Context, obj model.Obj) error {
 	}
 }
 
-func (d *Pan123) Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) error {
-	// const DEFAULT int64 = 10485760
-	h := md5.New()
-	// need to calculate md5 of the full content
-	tempFile, err := stream.CacheFullInTempFile()
-	if err != nil {
-		return err
+func (d *Pan123) Put(ctx context.Context, dstDir model.Obj, file model.FileStreamer, up driver.UpdateProgress) error {
+	etag := file.GetHash().GetHash(utils.MD5)
+	if len(etag) < utils.MD5.Width {
+		// const DEFAULT int64 = 10485760
+		h := md5.New()
+		// need to calculate md5 of the full content
+		tempFile, err := file.CacheFullInTempFile()
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = tempFile.Close()
+		}()
+		if _, err = utils.CopyWithBuffer(h, tempFile); err != nil {
+			return err
+		}
+		_, err = tempFile.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+		etag = hex.EncodeToString(h.Sum(nil))
 	}
-	defer func() {
-		_ = tempFile.Close()
-	}()
-	if _, err = utils.CopyWithBuffer(h, tempFile); err != nil {
-		return err
-	}
-	_, err = tempFile.Seek(0, io.SeekStart)
-	if err != nil {
-		return err
-	}
-	etag := hex.EncodeToString(h.Sum(nil))
 	data := base.Json{
 		"driveId":      0,
 		"duplicate":    2, // 2->覆盖 1->重命名 0->默认
 		"etag":         etag,
-		"fileName":     stream.GetName(),
+		"fileName":     file.GetName(),
 		"parentFileId": dstDir.GetID(),
-		"size":         stream.GetSize(),
+		"size":         file.GetSize(),
 		"type":         0,
 	}
 	var resp UploadResp
@@ -225,7 +228,7 @@ func (d *Pan123) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 		return nil
 	}
 	if resp.Data.AccessKeyId == "" || resp.Data.SecretAccessKey == "" || resp.Data.SessionToken == "" {
-		err = d.newUpload(ctx, &resp, stream, tempFile, up)
+		err = d.newUpload(ctx, &resp, file, up)
 		return err
 	} else {
 		cfg := &aws.Config{
@@ -239,15 +242,21 @@ func (d *Pan123) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 			return err
 		}
 		uploader := s3manager.NewUploader(s)
-		if stream.GetSize() > s3manager.MaxUploadParts*s3manager.DefaultUploadPartSize {
-			uploader.PartSize = stream.GetSize() / (s3manager.MaxUploadParts - 1)
+		if file.GetSize() > s3manager.MaxUploadParts*s3manager.DefaultUploadPartSize {
+			uploader.PartSize = file.GetSize() / (s3manager.MaxUploadParts - 1)
 		}
 		input := &s3manager.UploadInput{
 			Bucket: &resp.Data.Bucket,
 			Key:    &resp.Data.Key,
-			Body:   tempFile,
+			Body: driver.NewLimitedUploadStream(ctx, &driver.ReaderUpdatingProgress{
+				Reader:         file,
+				UpdateProgress: up,
+			}),
 		}
 		_, err = uploader.UploadWithContext(ctx, input)
+		if err != nil {
+			return err
+		}
 	}
 	_, err = d.Request(UploadComplete, http.MethodPost, func(req *resty.Request) {
 		req.SetBody(base.Json{

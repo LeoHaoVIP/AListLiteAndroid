@@ -2,12 +2,15 @@ package fs
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
+	"io"
+
 	"github.com/alist-org/alist/v3/internal/driver"
+	"github.com/alist-org/alist/v3/internal/errs"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/internal/task"
-	log "github.com/sirupsen/logrus"
-	"io"
+	"github.com/pkg/errors"
 )
 
 // the param named path of functions in this package is a mount path
@@ -167,4 +170,20 @@ func Other(ctx context.Context, args model.FsOtherArgs) (interface{}, error) {
 		log.Errorf("failed remove %s: %+v", args.Path, err)
 	}
 	return res, err
+}
+
+func PutURL(ctx context.Context, path, dstName, urlStr string) error {
+	storage, dstDirActualPath, err := op.GetStorageAndActualPath(path)
+	if err != nil {
+		return errors.WithMessage(err, "failed get storage")
+	}
+	if storage.Config().NoUpload {
+		return errors.WithStack(errs.UploadNotSupported)
+	}
+	_, ok := storage.(driver.PutURL)
+	_, okResult := storage.(driver.PutURLResult)
+	if !ok && !okResult {
+		return errs.NotImplement
+	}
+	return op.PutURL(ctx, storage, dstDirActualPath, dstName, urlStr)
 }

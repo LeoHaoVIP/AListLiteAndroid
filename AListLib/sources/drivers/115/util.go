@@ -2,6 +2,7 @@ package _115
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/tls"
 	"encoding/hex"
@@ -13,9 +14,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/alist-org/alist/v3/internal/conf"
+	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/pkg/http_range"
 	"github.com/alist-org/alist/v3/pkg/utils"
@@ -140,7 +143,7 @@ func (d *Pan115) DownloadWithUA(pickCode, ua string) (*driver115.DownloadInfo, e
 		return nil, err
 	}
 
-	bytes, err := crypto.Decode(string(result.EncodedData), key)
+	b, err := crypto.Decode(string(result.EncodedData), key)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +151,7 @@ func (d *Pan115) DownloadWithUA(pickCode, ua string) (*driver115.DownloadInfo, e
 	downloadInfo := struct {
 		Url string `json:"url"`
 	}{}
-	if err := utils.Json.Unmarshal(bytes, &downloadInfo); err != nil {
+	if err := utils.Json.Unmarshal(b, &downloadInfo); err != nil {
 		return nil, err
 	}
 
@@ -271,7 +274,7 @@ func UploadDigestRange(stream model.FileStreamer, rangeSpec string) (result stri
 }
 
 // UploadByOSS use aliyun sdk to upload
-func (c *Pan115) UploadByOSS(params *driver115.UploadOSSParams, r io.Reader, dirID string) (*UploadResult, error) {
+func (c *Pan115) UploadByOSS(ctx context.Context, params *driver115.UploadOSSParams, s model.FileStreamer, dirID string, up driver.UpdateProgress) (*UploadResult, error) {
 	ossToken, err := c.client.GetOSSToken()
 	if err != nil {
 		return nil, err
@@ -286,6 +289,10 @@ func (c *Pan115) UploadByOSS(params *driver115.UploadOSSParams, r io.Reader, dir
 	}
 
 	var bodyBytes []byte
+	r := driver.NewLimitedUploadStream(ctx, &driver.ReaderUpdatingProgress{
+		Reader:         s,
+		UpdateProgress: up,
+	})
 	if err = bucket.PutObject(params.Object, r, append(
 		driver115.OssOption(params, ossToken),
 		oss.CallbackResult(&bodyBytes),
@@ -301,7 +308,8 @@ func (c *Pan115) UploadByOSS(params *driver115.UploadOSSParams, r io.Reader, dir
 }
 
 // UploadByMultipart upload by mutipart blocks
-func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize int64, stream model.FileStreamer, dirID string, opts ...driver115.UploadMultipartOption) (*UploadResult, error) {
+func (d *Pan115) UploadByMultipart(ctx context.Context, params *driver115.UploadOSSParams, fileSize int64, s model.FileStreamer,
+	dirID string, up driver.UpdateProgress, opts ...driver115.UploadMultipartOption) (*UploadResult, error) {
 	var (
 		chunks    []oss.FileChunk
 		parts     []oss.UploadPart
@@ -313,7 +321,7 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 		err       error
 	)
 
-	tmpF, err := stream.CacheFullInTempFile()
+	tmpF, err := s.CacheFullInTempFile()
 	if err != nil {
 		return nil, err
 	}
@@ -372,6 +380,7 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 		quit <- struct{}{}
 	}()
 
+	completedNum := atomic.Int32{}
 	// consumers
 	for i := 0; i < options.ThreadsNum; i++ {
 		go func(threadId int) {
@@ -384,24 +393,28 @@ func (d *Pan115) UploadByMultipart(params *driver115.UploadOSSParams, fileSize i
 				var part oss.UploadPart // 出现错误就继续尝试，共尝试3次
 				for retry := 0; retry < 3; retry++ {
 					select {
+					case <-ctx.Done():
+						break
 					case <-ticker.C:
 						if ossToken, err = d.client.GetOSSToken(); err != nil { // 到时重新获取ossToken
 							errCh <- errors.Wrap(err, "刷新token时出现错误")
 						}
 					default:
 					}
-
 					buf := make([]byte, chunk.Size)
 					if _, err = tmpF.ReadAt(buf, chunk.Offset); err != nil && !errors.Is(err, io.EOF) {
 						continue
 					}
-
-					if part, err = bucket.UploadPart(imur, bytes.NewBuffer(buf), chunk.Size, chunk.Number, driver115.OssOption(params, ossToken)...); err == nil {
+					if part, err = bucket.UploadPart(imur, driver.NewLimitedUploadStream(ctx, bytes.NewBuffer(buf)),
+						chunk.Size, chunk.Number, driver115.OssOption(params, ossToken)...); err == nil {
 						break
 					}
 				}
 				if err != nil {
-					errCh <- errors.Wrap(err, fmt.Sprintf("上传 %s 的第%d个分片时出现错误：%v", stream.GetName(), chunk.Number, err))
+					errCh <- errors.Wrap(err, fmt.Sprintf("上传 %s 的第%d个分片时出现错误：%v", s.GetName(), chunk.Number, err))
+				} else {
+					num := completedNum.Add(1)
+					up(float64(num) * 100.0 / float64(len(chunks)))
 				}
 				UploadedPartsCh <- part
 			}

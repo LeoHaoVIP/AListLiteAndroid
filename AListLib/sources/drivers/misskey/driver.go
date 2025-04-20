@@ -64,7 +64,7 @@ func (d *Misskey) Remove(ctx context.Context, obj model.Obj) error {
 }
 
 func (d *Misskey) Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) (model.Obj, error) {
-	return d.put(dstDir, stream, up)
+	return d.put(ctx, dstDir, stream, up)
 }
 
 //func (d *Template) Other(ctx context.Context, args model.OtherArgs) (interface{}, error) {

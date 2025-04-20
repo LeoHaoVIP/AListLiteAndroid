@@ -120,7 +120,7 @@ func (d *ILanZou) Link(ctx context.Context, file model.Obj, args model.LinkArgs)
 	if err != nil {
 		return nil, err
 	}
-	ts, ts_str, err := getTimestamp(d.conf.secret)
+	ts, ts_str, _ := getTimestamp(d.conf.secret)
 
 	params := []string{
 		"uuid=" + url.QueryEscape(d.UUID),
@@ -149,11 +149,17 @@ func (d *ILanZou) Link(ctx context.Context, file model.Obj, args model.LinkArgs)
 	u.RawQuery = strings.Join(params, "&")
 	realURL := u.String()
 	// get the url after redirect
-	res, err := base.NoRedirectClient.R().SetHeaders(map[string]string{
-		//"Origin":  d.conf.site,
+	req := base.NoRedirectClient.R()
+
+	req.SetHeaders(map[string]string{
 		"Referer":    d.conf.site + "/",
 		"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
-	}).Get(realURL)
+	})
+	if d.Addition.Ip != "" {
+		req.SetHeader("X-Forwarded-For", d.Addition.Ip)
+	}
+
+	res, err := req.Get(realURL)
 	if err != nil {
 		return nil, err
 	}
@@ -266,10 +272,10 @@ func (d *ILanZou) Remove(ctx context.Context, obj model.Obj) error {
 
 const DefaultPartSize = 1024 * 1024 * 8
 
-func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) (model.Obj, error) {
+func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, s model.FileStreamer, up driver.UpdateProgress) (model.Obj, error) {
 	h := md5.New()
 	// need to calculate md5 of the full content
-	tempFile, err := stream.CacheFullInTempFile()
+	tempFile, err := s.CacheFullInTempFile()
 	if err != nil {
 		return nil, err
 	}
@@ -288,8 +294,8 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	res, err := d.proved("/7n/getUpToken", http.MethodPost, func(req *resty.Request) {
 		req.SetBody(base.Json{
 			"fileId":   "",
-			"fileName": stream.GetName(),
-			"fileSize": stream.GetSize()/1024 + 1,
+			"fileName": s.GetName(),
+			"fileSize": s.GetSize()/1024 + 1,
 			"folderId": dstDir.GetID(),
 			"md5":      etag,
 			"type":     1,
@@ -301,13 +307,20 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	upToken := utils.Json.Get(res, "upToken").ToString()
 	now := time.Now()
 	key := fmt.Sprintf("disk/%d/%d/%d/%s/%016d", now.Year(), now.Month(), now.Day(), d.account, now.UnixMilli())
+	reader := driver.NewLimitedUploadStream(ctx, &driver.ReaderUpdatingProgress{
+		Reader: &driver.SimpleReaderWithSize{
+			Reader: tempFile,
+			Size:   s.GetSize(),
+		},
+		UpdateProgress: up,
+	})
 	var token string
-	if stream.GetSize() <= DefaultPartSize {
-		res, err := d.upClient.R().SetMultipartFormData(map[string]string{
+	if s.GetSize() <= DefaultPartSize {
+		res, err := d.upClient.R().SetContext(ctx).SetMultipartFormData(map[string]string{
 			"token": upToken,
 			"key":   key,
-			"fname": stream.GetName(),
-		}).SetMultipartField("file", stream.GetName(), stream.GetMimetype(), tempFile).
+			"fname": s.GetName(),
+		}).SetMultipartField("file", s.GetName(), s.GetMimetype(), reader).
 			Post("https://upload.qiniup.com/")
 		if err != nil {
 			return nil, err
@@ -321,10 +334,10 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 		}
 		uploadId := utils.Json.Get(res.Body(), "uploadId").ToString()
 		parts := make([]Part, 0)
-		partNum := (stream.GetSize() + DefaultPartSize - 1) / DefaultPartSize
+		partNum := (s.GetSize() + DefaultPartSize - 1) / DefaultPartSize
 		for i := 1; i <= int(partNum); i++ {
 			u := fmt.Sprintf("https://upload.qiniup.com/buckets/%s/objects/%s/uploads/%s/%d", d.conf.bucket, keyBase64, uploadId, i)
-			res, err = d.upClient.R().SetHeader("Authorization", "UpToken "+upToken).SetBody(io.LimitReader(tempFile, DefaultPartSize)).Put(u)
+			res, err = d.upClient.R().SetContext(ctx).SetHeader("Authorization", "UpToken "+upToken).SetBody(io.LimitReader(reader, DefaultPartSize)).Put(u)
 			if err != nil {
 				return nil, err
 			}
@@ -335,7 +348,7 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 			})
 		}
 		res, err = d.upClient.R().SetHeader("Authorization", "UpToken "+upToken).SetBody(base.Json{
-			"fnmae": stream.GetName(),
+			"fnmae": s.GetName(),
 			"parts": parts,
 		}).Post(fmt.Sprintf("https://upload.qiniup.com/buckets/%s/objects/%s/uploads/%s", d.conf.bucket, keyBase64, uploadId))
 		if err != nil {
@@ -373,9 +386,9 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 		ID: strconv.FormatInt(file.FileId, 10),
 		//Path:     ,
 		Name:     file.FileName,
-		Size:     stream.GetSize(),
-		Modified: stream.ModTime(),
-		Ctime:    stream.CreateTime(),
+		Size:     s.GetSize(),
+		Modified: s.ModTime(),
+		Ctime:    s.CreateTime(),
 		IsFolder: false,
 		HashInfo: utils.NewHashInfo(utils.MD5, etag),
 	}, nil

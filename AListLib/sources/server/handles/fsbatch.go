@@ -16,9 +16,9 @@ import (
 )
 
 type RecursiveMoveReq struct {
-	SrcDir    string `json:"src_dir"`
-	DstDir    string `json:"dst_dir"`
-	Overwrite bool   `json:"overwrite"`
+	SrcDir         string `json:"src_dir"`
+	DstDir         string `json:"dst_dir"`
+	ConflictPolicy string `json:"conflict_policy"`
 }
 
 func FsRecursiveMove(c *gin.Context) {
@@ -60,7 +60,7 @@ func FsRecursiveMove(c *gin.Context) {
 	}
 
 	var existingFileNames []string
-	if !req.Overwrite {
+	if req.ConflictPolicy != OVERWRITE {
 		dstFiles, err := fs.List(c, dstDir, &fs.ListArgs{})
 		if err != nil {
 			common.ErrorResp(c, err, 500)
@@ -99,25 +99,28 @@ func FsRecursiveMove(c *gin.Context) {
 				filePathMap[subFile] = subFilePath
 			}
 		} else {
-
 			if movingFilePath == dstDir {
 				// same directory, don't move
 				continue
 			}
 
-			if !req.Overwrite {
-				if slices.Contains(existingFileNames, movingFile.GetName()) {
+			if slices.Contains(existingFileNames, movingFile.GetName()) {
+				if req.ConflictPolicy == CANCEL {
 					common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", movingFile.GetName()), 403)
 					return
+				} else if req.ConflictPolicy == SKIP {
+					continue
 				}
+			} else if req.ConflictPolicy != OVERWRITE {
 				existingFileNames = append(existingFileNames, movingFile.GetName())
 			}
-
 			movingFileNames = append(movingFileNames, movingFileName)
+
 		}
 
 	}
 
+	var count = 0
 	for i, fileName := range movingFileNames {
 		// move
 		err := fs.Move(c, fileName, dstDir, len(movingFileNames) > i+1)
@@ -125,9 +128,10 @@ func FsRecursiveMove(c *gin.Context) {
 			common.ErrorResp(c, err, 500)
 			return
 		}
+		count++
 	}
 
-	common.SuccessResp(c)
+	common.SuccessWithMsgResp(c, fmt.Sprintf("Successfully moved %d %s", count, common.Pluralize(count, "file", "files")))
 }
 
 type BatchRenameReq struct {

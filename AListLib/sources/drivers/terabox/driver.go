@@ -228,7 +228,7 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 		res, err := base.RestyClient.R().
 			SetContext(ctx).
 			SetQueryParams(params).
-			SetFileReader("file", stream.GetName(), bytes.NewReader(byteData)).
+			SetFileReader("file", stream.GetName(), driver.NewLimitedUploadStream(ctx, bytes.NewReader(byteData))).
 			SetHeader("Cookie", d.Cookie).
 			Post(u)
 		if err != nil {

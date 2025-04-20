@@ -263,12 +263,7 @@ func (d *Crypt) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 		}
 		rrc := remoteLink.RangeReadCloser
 		if len(remoteLink.URL) > 0 {
-
-			rangedRemoteLink := &model.Link{
-				URL:    remoteLink.URL,
-				Header: remoteLink.Header,
-			}
-			var converted, err = stream.GetRangeReadCloserFromLink(remoteFileSize, rangedRemoteLink)
+			var converted, err = stream.GetRangeReadCloserFromLink(remoteFileSize, remoteLink)
 			if err != nil {
 				return nil, err
 			}
@@ -287,8 +282,9 @@ func (d *Crypt) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 			if err != nil {
 				return nil, err
 			}
-			// 可以直接返回，读取完也不会调用Close，直到连接断开Close
-			return remoteLink.MFile, nil
+			//keep reuse same MFile and close at last.
+			remoteClosers.Add(remoteLink.MFile)
+			return io.NopCloser(remoteLink.MFile), nil
 		}
 
 		return nil, errs.NotSupport
@@ -304,7 +300,6 @@ func (d *Crypt) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 
 	resultRangeReadCloser := &model.RangeReadCloser{RangeReader: resultRangeReader, Closers: remoteClosers}
 	resultLink := &model.Link{
-		Header:          remoteLink.Header,
 		RangeReadCloser: resultRangeReadCloser,
 		Expiration:      remoteLink.Expiration,
 	}

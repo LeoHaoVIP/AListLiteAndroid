@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,12 +11,14 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/errs"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/go-resty/resty/v2"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,6 +34,7 @@ type Github struct {
 	moveMsgTmpl   *template.Template
 	isOnBranch    bool
 	commitMutex   sync.Mutex
+	pgpEntity     *openpgp.Entity
 }
 
 func (d *Github) Config() driver.Config {
@@ -84,10 +86,13 @@ func (d *Github) Init(ctx context.Context) error {
 	}
 	d.client = base.NewRestyClient().
 		SetHeader("Accept", "application/vnd.github.object+json").
-		SetHeader("Authorization", "Bearer "+d.Token).
 		SetHeader("X-GitHub-Api-Version", "2022-11-28").
 		SetLogger(log.StandardLogger()).
 		SetDebug(false)
+	token := strings.TrimSpace(d.Token)
+	if token != "" {
+		d.client = d.client.SetHeader("Authorization", "Bearer "+token)
+	}
 	if d.Ref == "" {
 		repo, err := d.getRepo()
 		if err != nil {
@@ -98,6 +103,26 @@ func (d *Github) Init(ctx context.Context) error {
 	} else {
 		_, err = d.getBranchHead()
 		d.isOnBranch = err == nil
+	}
+	if d.GPGPrivateKey != "" {
+		if d.CommitterName == "" || d.AuthorName == "" {
+			user, e := d.getAuthenticatedUser()
+			if e != nil {
+				return e
+			}
+			if d.CommitterName == "" {
+				d.CommitterName = user.Name
+				d.CommitterEmail = user.Email
+			}
+			if d.AuthorName == "" {
+				d.AuthorName = user.Name
+				d.AuthorEmail = user.Email
+			}
+		}
+		d.pgpEntity, err = loadPrivateKey(d.GPGPrivateKey, d.GPGKeyPassphrase)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -148,8 +173,13 @@ func (d *Github) Link(ctx context.Context, file model.Obj, args model.LinkArgs) 
 	if obj.Type == "submodule" {
 		return nil, errors.New("cannot download a submodule")
 	}
+	url := obj.DownloadURL
+	ghProxy := strings.TrimSpace(d.Addition.GitHubProxy)
+	if ghProxy != "" {
+		url = strings.Replace(url, "https://raw.githubusercontent.com", ghProxy, 1)
+	}
 	return &model.Link{
-		URL: obj.DownloadURL,
+		URL: url,
 	}, nil
 }
 
@@ -166,10 +196,39 @@ func (d *Github) MakeDir(ctx context.Context, parentDir model.Obj, dirName strin
 	if parent.Entries == nil {
 		return errs.NotFolder
 	}
-	// if parent folder contains .gitkeep only, mark it and delete .gitkeep later
-	gitKeepSha := ""
+	subDirSha, err := d.newTree("", []interface{}{
+		map[string]string{
+			"path":    ".gitkeep",
+			"mode":    "100644",
+			"type":    "blob",
+			"content": "",
+		},
+	})
+	if err != nil {
+		return err
+	}
+	newTree := make([]interface{}, 0, 2)
+	newTree = append(newTree, TreeObjReq{
+		Path: dirName,
+		Mode: "040000",
+		Type: "tree",
+		Sha:  subDirSha,
+	})
 	if len(parent.Entries) == 1 && parent.Entries[0].Name == ".gitkeep" {
-		gitKeepSha = parent.Entries[0].Sha
+		newTree = append(newTree, TreeObjReq{
+			Path: ".gitkeep",
+			Mode: "100644",
+			Type: "blob",
+			Sha:  nil,
+		})
+	}
+	newSha, err := d.newTree(parent.Sha, newTree)
+	if err != nil {
+		return err
+	}
+	rootSha, err := d.renewParentTrees(parentDir.GetPath(), parent.Sha, newSha, "/")
+	if err != nil {
+		return err
 	}
 
 	commitMessage, err := getMessage(d.mkdirMsgTmpl, &MessageTemplateVars{
@@ -182,13 +241,7 @@ func (d *Github) MakeDir(ctx context.Context, parentDir model.Obj, dirName strin
 	if err != nil {
 		return err
 	}
-	if err = d.createGitKeep(stdpath.Join(parentDir.GetPath(), dirName), commitMessage); err != nil {
-		return err
-	}
-	if gitKeepSha != "" {
-		err = d.delete(stdpath.Join(parentDir.GetPath(), ".gitkeep"), gitKeepSha, commitMessage)
-	}
-	return err
+	return d.commit(commitMessage, rootSha)
 }
 
 func (d *Github) Move(ctx context.Context, srcObj, dstDir model.Obj) error {
@@ -631,33 +684,15 @@ func (d *Github) get(path string) (*Object, error) {
 	return &resp, err
 }
 
-func (d *Github) createGitKeep(path, message string) error {
-	body := map[string]interface{}{
-		"message": message,
-		"content": "",
-		"branch":  d.Ref,
-	}
-	d.addCommitterAndAuthor(&body)
-
-	res, err := d.client.R().SetBody(body).Put(d.getContentApiUrl(stdpath.Join(path, ".gitkeep")))
-	if err != nil {
-		return err
-	}
-	if res.StatusCode() != 200 && res.StatusCode() != 201 {
-		return toErr(res)
-	}
-	return nil
-}
-
-func (d *Github) putBlob(ctx context.Context, stream model.FileStreamer, up driver.UpdateProgress) (string, error) {
+func (d *Github) putBlob(ctx context.Context, s model.FileStreamer, up driver.UpdateProgress) (string, error) {
 	beforeContent := "{\"encoding\":\"base64\",\"content\":\""
 	afterContent := "\"}"
-	length := int64(len(beforeContent)) + calculateBase64Length(stream.GetSize()) + int64(len(afterContent))
+	length := int64(len(beforeContent)) + calculateBase64Length(s.GetSize()) + int64(len(afterContent))
 	beforeContentReader := strings.NewReader(beforeContent)
 	contentReader, contentWriter := io.Pipe()
 	go func() {
 		encoder := base64.NewEncoder(base64.StdEncoding, contentWriter)
-		if _, err := utils.CopyWithBuffer(encoder, stream); err != nil {
+		if _, err := utils.CopyWithBuffer(encoder, s); err != nil {
 			_ = contentWriter.CloseWithError(err)
 			return
 		}
@@ -667,23 +702,29 @@ func (d *Github) putBlob(ctx context.Context, stream model.FileStreamer, up driv
 	afterContentReader := strings.NewReader(afterContent)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/git/blobs", d.Owner, d.Repo),
-		&ReaderWithProgress{
-			Reader:   io.MultiReader(beforeContentReader, contentReader, afterContentReader),
-			Length:   length,
-			Progress: up,
-		})
+		driver.NewLimitedUploadStream(ctx, &driver.ReaderUpdatingProgress{
+			Reader: &driver.SimpleReaderWithSize{
+				Reader: io.MultiReader(beforeContentReader, contentReader, afterContentReader),
+				Size:   length,
+			},
+			UpdateProgress: up,
+		}))
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("Authorization", "Bearer "+d.Token)
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	token := strings.TrimSpace(d.Token)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 	req.ContentLength = length
 
 	res, err := base.HttpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
+	defer res.Body.Close()
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", err
@@ -701,23 +742,6 @@ func (d *Github) putBlob(ctx context.Context, stream model.FileStreamer, up driv
 		return "", err
 	}
 	return resp.Sha, nil
-}
-
-func (d *Github) delete(path, sha, message string) error {
-	body := map[string]interface{}{
-		"message": message,
-		"sha":     sha,
-		"branch":  d.Ref,
-	}
-	d.addCommitterAndAuthor(&body)
-	res, err := d.client.R().SetBody(body).Delete(d.getContentApiUrl(path))
-	if err != nil {
-		return err
-	}
-	if res.StatusCode() != 200 {
-		return toErr(res)
-	}
-	return nil
 }
 
 func (d *Github) renewParentTrees(path, prevSha, curSha, until string) (string, error) {
@@ -781,11 +805,11 @@ func (d *Github) getTreeDirectly(path string) (*TreeResp, string, error) {
 }
 
 func (d *Github) newTree(baseSha string, tree []interface{}) (string, error) {
-	res, err := d.client.R().
-		SetBody(&TreeReq{
-			BaseTree: baseSha,
-			Trees:    tree,
-		}).
+	body := &TreeReq{Trees: tree}
+	if baseSha != "" {
+		body.BaseTree = baseSha
+	}
+	res, err := d.client.R().SetBody(body).
 		Post(fmt.Sprintf("https://api.github.com/repos/%s/%s/git/trees", d.Owner, d.Repo))
 	if err != nil {
 		return "", err
@@ -808,6 +832,13 @@ func (d *Github) commit(message, treeSha string) error {
 		"parents": []string{oldCommit},
 	}
 	d.addCommitterAndAuthor(&body)
+	if d.pgpEntity != nil {
+		signature, e := signCommit(&body, d.pgpEntity)
+		if e != nil {
+			return e
+		}
+		body["signature"] = signature
+	}
 	res, err := d.client.R().SetBody(body).Post(fmt.Sprintf("https://api.github.com/repos/%s/%s/git/commits", d.Owner, d.Repo))
 	if err != nil {
 		return err
@@ -909,6 +940,21 @@ func (d *Github) getRepo() (*RepoResp, error) {
 		return nil, err
 	}
 	return &resp, nil
+}
+
+func (d *Github) getAuthenticatedUser() (*UserResp, error) {
+	res, err := d.client.R().Get("https://api.github.com/user")
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode() != 200 {
+		return nil, toErr(res)
+	}
+	resp := &UserResp{}
+	if err = utils.Json.Unmarshal(res.Body(), resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func (d *Github) addCommitterAndAuthor(m *map[string]interface{}) {

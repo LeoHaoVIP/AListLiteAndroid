@@ -12,6 +12,7 @@ const (
 	LDAP
 	S3
 	FTP
+	TRAFFIC
 )
 
 const (

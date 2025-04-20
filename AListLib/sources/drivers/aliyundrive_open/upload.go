@@ -77,7 +77,7 @@ func (d *AliyundriveOpen) uploadPart(ctx context.Context, r io.Reader, partInfo 
 	if err != nil {
 		return err
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusConflict {
 		return fmt.Errorf("upload status: %d", res.StatusCode)
 	}
@@ -251,8 +251,9 @@ func (d *AliyundriveOpen) upload(ctx context.Context, dstDir model.Obj, stream m
 				rd = utils.NewMultiReadable(srd)
 			}
 			err = retry.Do(func() error {
-				rd.Reset()
-				return d.uploadPart(ctx, rd, createResp.PartInfoList[i])
+				_ = rd.Reset()
+				rateLimitedRd := driver.NewLimitedUploadStream(ctx, rd)
+				return d.uploadPart(ctx, rateLimitedRd, createResp.PartInfoList[i])
 			},
 				retry.Attempts(3),
 				retry.DelayType(retry.BackOffDelay),

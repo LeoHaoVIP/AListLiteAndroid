@@ -8,14 +8,16 @@ import (
 type Addition struct {
 	// Usually one of two
 	driver.RootPath
+	Mode     string `json:"mode" options:"ipfs,ipns,mfs" type:"select" required:"true"`
 	Endpoint string `json:"endpoint" default:"http://127.0.0.1:5001"`
-	Gateway  string `json:"gateway" default:"https://ipfs.io"`
+	Gateway  string `json:"gateway" default:"http://127.0.0.1:8080"`
 }
 
 var config = driver.Config{
 	Name:        "IPFS API",
 	DefaultRoot: "/",
 	LocalSort:   true,
+	OnlyProxy:   false,
 }
 
 func init() {

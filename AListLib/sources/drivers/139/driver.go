@@ -2,11 +2,13 @@ package _139
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alist-org/alist/v3/drivers/base"
@@ -69,29 +71,28 @@ func (d *Yun139) Init(ctx context.Context) error {
 	default:
 		return errs.NotImplement
 	}
-	// if d.ref != nil {
-	// 	return nil
-	// }
-	// decode, err := base64.StdEncoding.DecodeString(d.Authorization)
-	// if err != nil {
-	// 	return err
-	// }
-	// decodeStr := string(decode)
-	// splits := strings.Split(decodeStr, ":")
-	// if len(splits) < 2 {
-	// 	return fmt.Errorf("authorization is invalid, splits < 2")
-	// }
-	// d.Account = splits[1]
-	// _, err = d.post("/orchestration/personalCloud/user/v1.0/qryUserExternInfo", base.Json{
-	// 	"qryUserExternInfoReq": base.Json{
-	// 		"commonAccountInfo": base.Json{
-	// 			"account":     d.getAccount(),
-	// 			"accountType": 1,
-	// 		},
-	// 	},
-	// }, nil)
-	// return err
-	return nil
+	if d.ref != nil {
+		return nil
+	}
+	decode, err := base64.StdEncoding.DecodeString(d.Authorization)
+	if err != nil {
+		return err
+	}
+	decodeStr := string(decode)
+	splits := strings.Split(decodeStr, ":")
+	if len(splits) < 2 {
+		return fmt.Errorf("authorization is invalid, splits < 2")
+	}
+	d.Account = splits[1]
+	_, err = d.post("/orchestration/personalCloud/user/v1.0/qryUserExternInfo", base.Json{
+		"qryUserExternInfoReq": base.Json{
+			"commonAccountInfo": base.Json{
+				"account":     d.getAccount(),
+				"accountType": 1,
+			},
+		},
+	}, nil)
+	return err
 }
 
 func (d *Yun139) InitReference(storage driver.Driver) error {
@@ -630,12 +631,13 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 			// Progress
 			p := driver.NewProgress(stream.GetSize(), up)
 
+			rateLimited := driver.NewLimitedUploadStream(ctx, stream)
 			// 上传所有分片
 			for _, uploadPartInfo := range uploadPartInfos {
 				index := uploadPartInfo.PartNumber - 1
 				partSize := partInfos[index].PartSize
 				log.Debugf("[139] uploading part %+v/%+v", index, len(uploadPartInfos))
-				limitReader := io.LimitReader(stream, partSize)
+				limitReader := io.LimitReader(rateLimited, partSize)
 
 				// Update Progress
 				r := io.TeeReader(limitReader, p)
@@ -786,6 +788,7 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 		if part == 0 {
 			part = 1
 		}
+		rateLimited := driver.NewLimitedUploadStream(ctx, stream)
 		for i := int64(0); i < part; i++ {
 			if utils.IsCanceled(ctx) {
 				return ctx.Err()
@@ -797,7 +800,7 @@ func (d *Yun139) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 				byteSize = partSize
 			}
 
-			limitReader := io.LimitReader(stream, byteSize)
+			limitReader := io.LimitReader(rateLimited, byteSize)
 			// Update Progress
 			r := io.TeeReader(limitReader, p)
 			req, err := http.NewRequest("POST", resp.Data.UploadResult.RedirectionURL, r)

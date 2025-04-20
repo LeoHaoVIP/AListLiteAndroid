@@ -2,6 +2,7 @@ package pikpak
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
@@ -19,6 +20,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/alist-org/alist/v3/drivers/base"
@@ -417,7 +419,7 @@ func (d *PikPak) refreshCaptchaToken(action string, metas map[string]string) err
 	return nil
 }
 
-func (d *PikPak) UploadByOSS(params *S3Params, stream model.FileStreamer, up driver.UpdateProgress) error {
+func (d *PikPak) UploadByOSS(ctx context.Context, params *S3Params, s model.FileStreamer, up driver.UpdateProgress) error {
 	ossClient, err := oss.New(params.Endpoint, params.AccessKeyID, params.AccessKeySecret)
 	if err != nil {
 		return err
@@ -427,14 +429,17 @@ func (d *PikPak) UploadByOSS(params *S3Params, stream model.FileStreamer, up dri
 		return err
 	}
 
-	err = bucket.PutObject(params.Key, stream, OssOption(params)...)
+	err = bucket.PutObject(params.Key, driver.NewLimitedUploadStream(ctx, &driver.ReaderUpdatingProgress{
+		Reader:         s,
+		UpdateProgress: up,
+	}), OssOption(params)...)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *PikPak) UploadByMultipart(params *S3Params, fileSize int64, stream model.FileStreamer, up driver.UpdateProgress) error {
+func (d *PikPak) UploadByMultipart(ctx context.Context, params *S3Params, fileSize int64, s model.FileStreamer, up driver.UpdateProgress) error {
 	var (
 		chunks    []oss.FileChunk
 		parts     []oss.UploadPart
@@ -444,7 +449,7 @@ func (d *PikPak) UploadByMultipart(params *S3Params, fileSize int64, stream mode
 		err       error
 	)
 
-	tmpF, err := stream.CacheFullInTempFile()
+	tmpF, err := s.CacheFullInTempFile()
 	if err != nil {
 		return err
 	}
@@ -488,6 +493,7 @@ func (d *PikPak) UploadByMultipart(params *S3Params, fileSize int64, stream mode
 		quit <- struct{}{}
 	}()
 
+	completedNum := atomic.Int32{}
 	// consumers
 	for i := 0; i < ThreadsNum; i++ {
 		go func(threadId int) {
@@ -500,6 +506,8 @@ func (d *PikPak) UploadByMultipart(params *S3Params, fileSize int64, stream mode
 				var part oss.UploadPart // 出现错误就继续尝试，共尝试3次
 				for retry := 0; retry < 3; retry++ {
 					select {
+					case <-ctx.Done():
+						break
 					case <-ticker.C:
 						errCh <- errors.Wrap(err, "ossToken 过期")
 					default:
@@ -510,13 +518,16 @@ func (d *PikPak) UploadByMultipart(params *S3Params, fileSize int64, stream mode
 						continue
 					}
 
-					b := bytes.NewBuffer(buf)
+					b := driver.NewLimitedUploadStream(ctx, bytes.NewBuffer(buf))
 					if part, err = bucket.UploadPart(imur, b, chunk.Size, chunk.Number, OssOption(params)...); err == nil {
 						break
 					}
 				}
 				if err != nil {
-					errCh <- errors.Wrap(err, fmt.Sprintf("上传 %s 的第%d个分片时出现错误：%v", stream.GetName(), chunk.Number, err))
+					errCh <- errors.Wrap(err, fmt.Sprintf("上传 %s 的第%d个分片时出现错误：%v", s.GetName(), chunk.Number, err))
+				} else {
+					num := completedNum.Add(1)
+					up(float64(num) * 100.0 / float64(len(chunks)))
 				}
 				UploadedPartsCh <- part
 			}
@@ -547,7 +558,7 @@ LOOP:
 	// EOF错误是xml的Unmarshal导致的，响应其实是json格式，所以实际上上传是成功的
 	if _, err = bucket.CompleteMultipartUpload(imur, parts, OssOption(params)...); err != nil && !errors.Is(err, io.EOF) {
 		// 当文件名含有 &< 这两个字符之一时响应的xml解析会出现错误，实际上上传是成功的
-		if filename := filepath.Base(stream.GetName()); !strings.ContainsAny(filename, "&<") {
+		if filename := filepath.Base(s.GetName()); !strings.ContainsAny(filename, "&<") {
 			return err
 		}
 	}

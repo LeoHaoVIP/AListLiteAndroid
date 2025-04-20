@@ -1,6 +1,5 @@
 appName="alist"
 builtAt="$(date +'%F %T %z')"
-goVersion=$(go version | sed 's/go version //')
 gitAuthor="Xhofe <i@nn.ci>"
 gitCommit=$(git log --pretty=format:"%h" -1)
 
@@ -22,7 +21,6 @@ echo "frontend version: $webVersion"
 ldflags="\
 -w -s \
 -X 'github.com/alist-org/alist/v3/internal/conf.BuiltAt=$builtAt' \
--X 'github.com/alist-org/alist/v3/internal/conf.GoVersion=$goVersion' \
 -X 'github.com/alist-org/alist/v3/internal/conf.GitAuthor=$gitAuthor' \
 -X 'github.com/alist-org/alist/v3/internal/conf.GitCommit=$gitCommit' \
 -X 'github.com/alist-org/alist/v3/internal/conf.Version=$version' \

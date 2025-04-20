@@ -3,6 +3,7 @@ package febbox
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/go-resty/resty/v2"
@@ -134,6 +135,9 @@ func (d *FebBox) getDownloadLink(id string, ip string) (string, error) {
 
 	if err = json.Unmarshal(res, &fileDownloadResp); err != nil {
 		return "", err
+	}
+	if len(fileDownloadResp.Data) == 0 {
+		return "", fmt.Errorf("can not get download link, code:%d, msg:%s", fileDownloadResp.Code, fileDownloadResp.Msg)
 	}
 
 	return fileDownloadResp.Data[0].DownloadURL, nil

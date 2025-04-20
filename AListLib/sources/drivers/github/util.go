@@ -1,31 +1,21 @@
 package github
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"strings"
+	"text/template"
+	"time"
+
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/go-resty/resty/v2"
-	"io"
-	"math"
-	"strings"
-	"text/template"
 )
-
-type ReaderWithProgress struct {
-	Reader   io.Reader
-	Length   int64
-	Progress func(percentage float64)
-	offset   int64
-}
-
-func (r *ReaderWithProgress) Read(p []byte) (int, error) {
-	n, err := r.Reader.Read(p)
-	r.offset += int64(n)
-	r.Progress(math.Min(100.0, float64(r.offset)/float64(r.Length)*100.0))
-	return n, err
-}
 
 type MessageTemplateVars struct {
 	UserName   string
@@ -112,4 +102,66 @@ func getUsername(ctx context.Context) string {
 		return "<system>"
 	}
 	return user.Username
+}
+
+func loadPrivateKey(key, passphrase string) (*openpgp.Entity, error) {
+	entityList, err := openpgp.ReadArmoredKeyRing(strings.NewReader(key))
+	if err != nil {
+		return nil, err
+	}
+	if len(entityList) < 1 {
+		return nil, fmt.Errorf("no keys found in key ring")
+	}
+	entity := entityList[0]
+
+	pass := []byte(passphrase)
+	if entity.PrivateKey != nil && entity.PrivateKey.Encrypted {
+		if err = entity.PrivateKey.Decrypt(pass); err != nil {
+			return nil, fmt.Errorf("password incorrect: %+v", err)
+		}
+	}
+	for _, subKey := range entity.Subkeys {
+		if subKey.PrivateKey != nil && subKey.PrivateKey.Encrypted {
+			if err = subKey.PrivateKey.Decrypt(pass); err != nil {
+				return nil, fmt.Errorf("password incorrect: %+v", err)
+			}
+		}
+	}
+	return entity, nil
+}
+
+func signCommit(m *map[string]interface{}, entity *openpgp.Entity) (string, error) {
+	var commit strings.Builder
+	commit.WriteString(fmt.Sprintf("tree %s\n", (*m)["tree"].(string)))
+	parents := (*m)["parents"].([]string)
+	for _, p := range parents {
+		commit.WriteString(fmt.Sprintf("parent %s\n", p))
+	}
+	now := time.Now()
+	_, offset := now.Zone()
+	hour := offset / 3600
+	author := (*m)["author"].(map[string]string)
+	commit.WriteString(fmt.Sprintf("author %s <%s> %d %+03d00\n", author["name"], author["email"], now.Unix(), hour))
+	author["date"] = now.Format(time.RFC3339)
+	committer := (*m)["committer"].(map[string]string)
+	commit.WriteString(fmt.Sprintf("committer %s <%s> %d %+03d00\n", committer["name"], committer["email"], now.Unix(), hour))
+	committer["date"] = now.Format(time.RFC3339)
+	commit.WriteString(fmt.Sprintf("\n%s", (*m)["message"].(string)))
+	data := commit.String()
+
+	var sigBuffer bytes.Buffer
+	err := openpgp.DetachSign(&sigBuffer, entity, strings.NewReader(data), nil)
+	if err != nil {
+		return "", fmt.Errorf("signing failed: %v", err)
+	}
+	var armoredSig bytes.Buffer
+	armorWriter, err := armor.Encode(&armoredSig, "PGP SIGNATURE", nil)
+	if err != nil {
+		return "", err
+	}
+	if _, err = io.Copy(armorWriter, &sigBuffer); err != nil {
+		return "", err
+	}
+	_ = armorWriter.Close()
+	return armoredSig.String(), nil
 }

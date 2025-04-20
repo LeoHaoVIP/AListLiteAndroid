@@ -60,7 +60,12 @@ func OpenDownload(ctx context.Context, reqPath string, offset int64) (*FileDownl
 }
 
 func (f *FileDownloadProxy) Read(p []byte) (n int, err error) {
-	return f.reader.Read(p)
+	n, err = f.reader.Read(p)
+	if err != nil {
+		return
+	}
+	err = stream.ClientDownloadLimit.WaitN(f.reader.GetRawStream().Ctx, n)
+	return
 }
 
 func (f *FileDownloadProxy) Write(p []byte) (n int, err error) {

@@ -303,9 +303,10 @@ func FsGet(c *gin.Context) {
 			} else {
 				// if storage is not proxy, use raw url by fs.Link
 				link, _, err := fs.Link(c, reqPath, model.LinkArgs{
-					IP:      c.ClientIP(),
-					Header:  c.Request.Header,
-					HttpReq: c.Request,
+					IP:       c.ClientIP(),
+					Header:   c.Request.Header,
+					HttpReq:  c.Request,
+					Redirect: true,
 				})
 				if err != nil {
 					common.ErrorResp(c, err, 500)

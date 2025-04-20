@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"crypto/subtle"
+	"github.com/alist-org/alist/v3/internal/stream"
+	"github.com/alist-org/alist/v3/server/middlewares"
 	"net/http"
 	"path"
 	"strings"
@@ -27,8 +29,10 @@ func WebDav(dav *gin.RouterGroup) {
 		},
 	}
 	dav.Use(WebDAVAuth)
-	dav.Any("/*path", ServeWebDAV)
-	dav.Any("", ServeWebDAV)
+	uploadLimiter := middlewares.UploadRateLimiter(stream.ClientUploadLimit)
+	downloadLimiter := middlewares.DownloadRateLimiter(stream.ClientDownloadLimit)
+	dav.Any("/*path", uploadLimiter, downloadLimiter, ServeWebDAV)
+	dav.Any("", uploadLimiter, downloadLimiter, ServeWebDAV)
 	dav.Handle("PROPFIND", "/*path", ServeWebDAV)
 	dav.Handle("PROPFIND", "", ServeWebDAV)
 	dav.Handle("MKCOL", "/*path", ServeWebDAV)

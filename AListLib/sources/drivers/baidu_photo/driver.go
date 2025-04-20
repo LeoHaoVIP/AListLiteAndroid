@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/semaphore"
+
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/errs"
@@ -314,6 +316,7 @@ func (d *BaiduPhoto) Put(ctx context.Context, dstDir model.Obj, stream model.Fil
 			retry.Attempts(3),
 			retry.Delay(time.Second),
 			retry.DelayType(retry.BackOffDelay))
+		sem := semaphore.NewWeighted(3)
 		for i, partseq := range precreateResp.BlockList {
 			if utils.IsCanceled(upCtx) {
 				break
@@ -325,6 +328,10 @@ func (d *BaiduPhoto) Put(ctx context.Context, dstDir model.Obj, stream model.Fil
 			}
 
 			threadG.Go(func(ctx context.Context) error {
+				if err = sem.Acquire(ctx, 1); err != nil {
+					return err
+				}
+				defer sem.Release(1)
 				uploadParams := map[string]string{
 					"method":   "upload",
 					"path":     params["path"],
@@ -335,7 +342,8 @@ func (d *BaiduPhoto) Put(ctx context.Context, dstDir model.Obj, stream model.Fil
 				_, err = d.Post("https://c3.pcs.baidu.com/rest/2.0/pcs/superfile2", func(r *resty.Request) {
 					r.SetContext(ctx)
 					r.SetQueryParams(uploadParams)
-					r.SetFileReader("file", stream.GetName(), io.NewSectionReader(tempFile, offset, byteSize))
+					r.SetFileReader("file", stream.GetName(),
+						driver.NewLimitedUploadStream(ctx, io.NewSectionReader(tempFile, offset, byteSize)))
 				}, nil)
 				if err != nil {
 					return err

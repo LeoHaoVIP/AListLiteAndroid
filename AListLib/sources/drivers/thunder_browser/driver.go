@@ -508,7 +508,7 @@ func (xc *XunLeiBrowserCommon) Put(ctx context.Context, dstDir model.Obj, stream
 			Bucket:  aws.String(param.Bucket),
 			Key:     aws.String(param.Key),
 			Expires: aws.Time(param.Expiration),
-			Body:    io.TeeReader(stream, driver.NewProgress(stream.GetSize(), up)),
+			Body:    driver.NewLimitedUploadStream(ctx, io.TeeReader(stream, driver.NewProgress(stream.GetSize(), up))),
 		})
 		return err
 	}

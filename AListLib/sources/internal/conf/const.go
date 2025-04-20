@@ -22,15 +22,17 @@ const (
 	MainColor = "main_color"
 
 	// preview
-	TextTypes          = "text_types"
-	AudioTypes         = "audio_types"
-	VideoTypes         = "video_types"
-	ImageTypes         = "image_types"
-	ProxyTypes         = "proxy_types"
-	ProxyIgnoreHeaders = "proxy_ignore_headers"
-	AudioAutoplay      = "audio_autoplay"
-	VideoAutoplay      = "video_autoplay"
-
+	TextTypes                = "text_types"
+	AudioTypes               = "audio_types"
+	VideoTypes               = "video_types"
+	ImageTypes               = "image_types"
+	ProxyTypes               = "proxy_types"
+	ProxyIgnoreHeaders       = "proxy_ignore_headers"
+	AudioAutoplay            = "audio_autoplay"
+	VideoAutoplay            = "video_autoplay"
+	PreviewArchivesByDefault = "preview_archives_by_default"
+	ReadMeAutoRender         = "readme_autorender"
+	FilterReadMeScripts      = "filter_readme_scripts"
 	// global
 	HideFiles               = "hide_files"
 	CustomizeHead           = "customize_head"
@@ -115,6 +117,18 @@ const (
 	FTPImplicitTLS       = "ftp_implicit_tls"
 	FTPTLSPrivateKeyPath = "ftp_tls_private_key_path"
 	FTPTLSPublicCertPath = "ftp_tls_public_cert_path"
+
+	// traffic
+	TaskOfflineDownloadThreadsNum         = "offline_download_task_threads_num"
+	TaskOfflineDownloadTransferThreadsNum = "offline_download_transfer_task_threads_num"
+	TaskUploadThreadsNum                  = "upload_task_threads_num"
+	TaskCopyThreadsNum                    = "copy_task_threads_num"
+	TaskDecompressDownloadThreadsNum      = "decompress_download_task_threads_num"
+	TaskDecompressUploadThreadsNum        = "decompress_upload_task_threads_num"
+	StreamMaxClientDownloadSpeed          = "max_client_download_speed"
+	StreamMaxClientUploadSpeed            = "max_client_upload_speed"
+	StreamMaxServerDownloadSpeed          = "max_server_download_speed"
+	StreamMaxServerUploadSpeed            = "max_server_upload_speed"
 )
 
 const (

@@ -382,6 +382,9 @@ func (d *downloader) tryDownloadChunk(params *HttpRequestParams, ch *chunk) (int
 		if resp == nil {
 			return 0, err
 		}
+		if resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
+			return 0, err
+		}
 		if ch.id == 0 { //第1个任务 有限的重试，超过重试就会结束请求
 			switch resp.StatusCode {
 			default:
@@ -616,10 +619,9 @@ type Buf struct {
 // NewBuf is a buffer that can have 1 read & 1 write at the same time.
 // when read is faster write, immediately feed data to read after written
 func NewBuf(ctx context.Context, maxSize int) *Buf {
-	d := make([]byte, 0, maxSize)
 	return &Buf{
 		ctx:    ctx,
-		buffer: bytes.NewBuffer(d),
+		buffer: bytes.NewBuffer(make([]byte, 0, maxSize)),
 		size:   maxSize,
 	}
 }
@@ -674,5 +676,5 @@ func (br *Buf) Write(p []byte) (n int, err error) {
 }
 
 func (br *Buf) Close() {
-	br.buffer.Reset()
+	br.buffer = nil
 }

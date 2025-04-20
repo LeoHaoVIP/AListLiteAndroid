@@ -1,6 +1,7 @@
 package quark
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/sha1"
@@ -178,7 +179,7 @@ func (d *QuarkOrUC) Put(ctx context.Context, dstDir model.Obj, stream model.File
 	}
 	// part up
 	partSize := pre.Metadata.PartSize
-	var bytes []byte
+	var part []byte
 	md5s := make([]string, 0)
 	defaultBytes := make([]byte, partSize)
 	total := stream.GetSize()
@@ -189,17 +190,18 @@ func (d *QuarkOrUC) Put(ctx context.Context, dstDir model.Obj, stream model.File
 			return ctx.Err()
 		}
 		if left > int64(partSize) {
-			bytes = defaultBytes
+			part = defaultBytes
 		} else {
-			bytes = make([]byte, left)
+			part = make([]byte, left)
 		}
-		_, err := io.ReadFull(tempFile, bytes)
+		_, err := io.ReadFull(tempFile, part)
 		if err != nil {
 			return err
 		}
-		left -= int64(len(bytes))
+		left -= int64(len(part))
 		log.Debugf("left: %d", left)
-		m, err := d.upPart(ctx, pre, stream.GetMimetype(), partNumber, bytes)
+		reader := driver.NewLimitedUploadStream(ctx, bytes.NewReader(part))
+		m, err := d.upPart(ctx, pre, stream.GetMimetype(), partNumber, reader)
 		//m, err := driver.UpPart(pre, file.GetMIMEType(), partNumber, bytes, account, md5Str, sha1Str)
 		if err != nil {
 			return err

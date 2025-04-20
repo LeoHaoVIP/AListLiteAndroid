@@ -1,7 +1,6 @@
 package misskey
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -190,16 +189,16 @@ func (d *Misskey) remove(obj model.Obj) error {
 	}
 }
 
-func (d *Misskey) put(dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) (model.Obj, error) {
+func (d *Misskey) put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) (model.Obj, error) {
 	var file MFile
 
-	fileContent, err := io.ReadAll(stream)
-	if err != nil {
-		return nil, err
-	}
-
+	reader := driver.NewLimitedUploadStream(ctx, &driver.ReaderUpdatingProgress{
+		Reader:         stream,
+		UpdateProgress: up,
+	})
 	req := base.RestyClient.R().
-		SetFileReader("file", stream.GetName(), io.NopCloser(bytes.NewReader(fileContent))).
+		SetContext(ctx).
+		SetFileReader("file", stream.GetName(), reader).
 		SetFormData(map[string]string{
 			"folderId":    handleFolderId(dstDir).(string),
 			"name":        stream.GetName(),
@@ -207,7 +206,8 @@ func (d *Misskey) put(dstDir model.Obj, stream model.FileStreamer, up driver.Upd
 			"isSensitive": "false",
 			"force":       "false",
 		}).
-		SetResult(&file).SetAuthToken(d.AccessToken)
+		SetResult(&file).
+		SetAuthToken(d.AccessToken)
 
 	resp, err := req.Post(d.Endpoint + "/api/drive/files/create")
 	if err != nil {

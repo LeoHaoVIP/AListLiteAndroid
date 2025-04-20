@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/sync/semaphore"
+
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/errs"
@@ -187,7 +189,7 @@ func (d *BaiduNetdisk) Put(ctx context.Context, dstDir model.Obj, stream model.F
 	}
 
 	streamSize := stream.GetSize()
-	sliceSize := d.getSliceSize()
+	sliceSize := d.getSliceSize(streamSize)
 	count := int(math.Max(math.Ceil(float64(streamSize)/float64(sliceSize)), 1))
 	lastBlockSize := streamSize % sliceSize
 	if streamSize > 0 && lastBlockSize == 0 {
@@ -195,7 +197,7 @@ func (d *BaiduNetdisk) Put(ctx context.Context, dstDir model.Obj, stream model.F
 	}
 
 	//cal md5 for first 256k data
-	const SliceSize int64 = 256 * 1024
+	const SliceSize int64 = 256 * utils.KB
 	// cal md5
 	blockList := make([]string, 0, count)
 	byteSize := sliceSize
@@ -260,9 +262,10 @@ func (d *BaiduNetdisk) Put(ctx context.Context, dstDir model.Obj, stream model.F
 	}
 	// step.2 上传分片
 	threadG, upCtx := errgroup.NewGroupWithContext(ctx, d.uploadThread,
-		retry.Attempts(3),
+		retry.Attempts(1),
 		retry.Delay(time.Second),
 		retry.DelayType(retry.BackOffDelay))
+	sem := semaphore.NewWeighted(3)
 	for i, partseq := range precreateResp.BlockList {
 		if utils.IsCanceled(upCtx) {
 			break
@@ -273,6 +276,10 @@ func (d *BaiduNetdisk) Put(ctx context.Context, dstDir model.Obj, stream model.F
 			byteSize = lastBlockSize
 		}
 		threadG.Go(func(ctx context.Context) error {
+			if err = sem.Acquire(ctx, 1); err != nil {
+				return err
+			}
+			defer sem.Release(1)
 			params := map[string]string{
 				"method":       "upload",
 				"access_token": d.AccessToken,
@@ -281,7 +288,8 @@ func (d *BaiduNetdisk) Put(ctx context.Context, dstDir model.Obj, stream model.F
 				"uploadid":     precreateResp.Uploadid,
 				"partseq":      strconv.Itoa(partseq),
 			}
-			err := d.uploadSlice(ctx, params, stream.GetName(), io.NewSectionReader(tempFile, offset, byteSize))
+			err := d.uploadSlice(ctx, params, stream.GetName(),
+				driver.NewLimitedUploadStream(ctx, io.NewSectionReader(tempFile, offset, byteSize)))
 			if err != nil {
 				return err
 			}

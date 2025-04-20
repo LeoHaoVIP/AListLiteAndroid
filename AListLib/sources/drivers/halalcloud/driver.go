@@ -392,10 +392,11 @@ func (d *HalalCloud) put(ctx context.Context, dstDir model.Obj, fileStream model
 	if fileStream.GetSize() > s3manager.MaxUploadParts*s3manager.DefaultUploadPartSize {
 		uploader.PartSize = fileStream.GetSize() / (s3manager.MaxUploadParts - 1)
 	}
+	reader := driver.NewLimitedUploadStream(ctx, fileStream)
 	_, err = uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Bucket: aws.String(result.Bucket),
 		Key:    aws.String(result.Key),
-		Body:   io.TeeReader(fileStream, driver.NewProgress(fileStream.GetSize(), up)),
+		Body:   io.TeeReader(reader, driver.NewProgress(fileStream.GetSize(), up)),
 	})
 	return nil, err
 

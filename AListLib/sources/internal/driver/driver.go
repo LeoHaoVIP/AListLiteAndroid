@@ -77,7 +77,30 @@ type Remove interface {
 }
 
 type Put interface {
-	Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up UpdateProgress) error
+	// Put a file (provided as a FileStreamer) into the driver
+	// Besides the most basic upload functionality, the following features also need to be implemented:
+	// 1. Canceling (when `<-ctx.Done()` returns), which can be supported by the following methods:
+	//   (1) Use request methods that carry context, such as the following:
+	//      a. http.NewRequestWithContext
+	//      b. resty.Request.SetContext
+	//      c. s3manager.Uploader.UploadWithContext
+	//      d. utils.CopyWithCtx
+	//   (2) Use a `driver.ReaderWithCtx` or `driver.NewLimitedUploadStream`
+	//   (3) Use `utils.IsCanceled` to check if the upload has been canceled during the upload process,
+	//       this is typically applicable to chunked uploads.
+	// 2. Submit upload progress (via `up`) in real-time. There are three recommended ways as follows:
+	//   (1) Use `utils.CopyWithCtx`
+	//   (2) Use `driver.ReaderUpdatingProgress`
+	//   (3) Use `driver.Progress` with `io.TeeReader`
+	// 3. Slow down upload speed (via `stream.ServerUploadLimit`). It requires you to wrap the read stream
+	//    in a `driver.RateLimitReader` or a `driver.RateLimitFile` after calculating the file's hash and
+	//    before uploading the file or file chunks. Or you can directly call `driver.ServerUploadLimitWaitN`
+	//    if your file chunks are sufficiently small (less than about 50KB).
+	// NOTE that the network speed may be significantly slower than the stream's read speed. Therefore, if
+	// you use a `errgroup.Group` to upload each chunk in parallel, you should consider using a recursive
+	// mutex like `semaphore.Weighted` to limit the maximum number of upload threads, preventing excessive
+	// memory usage caused by buffering too many file chunks awaiting upload.
+	Put(ctx context.Context, dstDir model.Obj, file model.FileStreamer, up UpdateProgress) error
 }
 
 type PutURL interface {
@@ -113,7 +136,30 @@ type CopyResult interface {
 }
 
 type PutResult interface {
-	Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up UpdateProgress) (model.Obj, error)
+	// Put a file (provided as a FileStreamer) into the driver and return the put obj
+	// Besides the most basic upload functionality, the following features also need to be implemented:
+	// 1. Canceling (when `<-ctx.Done()` returns), which can be supported by the following methods:
+	//   (1) Use request methods that carry context, such as the following:
+	//      a. http.NewRequestWithContext
+	//      b. resty.Request.SetContext
+	//      c. s3manager.Uploader.UploadWithContext
+	//      d. utils.CopyWithCtx
+	//   (2) Use a `driver.ReaderWithCtx` or `driver.NewLimitedUploadStream`
+	//   (3) Use `utils.IsCanceled` to check if the upload has been canceled during the upload process,
+	//       this is typically applicable to chunked uploads.
+	// 2. Submit upload progress (via `up`) in real-time. There are three recommended ways as follows:
+	//   (1) Use `utils.CopyWithCtx`
+	//   (2) Use `driver.ReaderUpdatingProgress`
+	//   (3) Use `driver.Progress` with `io.TeeReader`
+	// 3. Slow down upload speed (via `stream.ServerUploadLimit`). It requires you to wrap the read stream
+	//    in a `driver.RateLimitReader` or a `driver.RateLimitFile` after calculating the file's hash and
+	//    before uploading the file or file chunks. Or you can directly call `driver.ServerUploadLimitWaitN`
+	//    if your file chunks are sufficiently small (less than about 50KB).
+	// NOTE that the network speed may be significantly slower than the stream's read speed. Therefore, if
+	// you use a `errgroup.Group` to upload each chunk in parallel, you should consider using a recursive
+	// mutex like `semaphore.Weighted` to limit the maximum number of upload threads, preventing excessive
+	// memory usage caused by buffering too many file chunks awaiting upload.
+	Put(ctx context.Context, dstDir model.Obj, file model.FileStreamer, up UpdateProgress) (model.Obj, error)
 }
 
 type PutURLResult interface {
@@ -157,28 +203,6 @@ type ArchiveDecompressResult interface {
 	// return only the newly created folder when args.PutIntoNewDir is true
 	// return errs.NotImplement to use internal archive tools to decompress
 	ArchiveDecompress(ctx context.Context, srcObj, dstDir model.Obj, args model.ArchiveDecompressArgs) ([]model.Obj, error)
-}
-
-type UpdateProgress model.UpdateProgress
-
-type Progress struct {
-	Total int64
-	Done  int64
-	up    UpdateProgress
-}
-
-func (p *Progress) Write(b []byte) (n int, err error) {
-	n = len(b)
-	p.Done += int64(n)
-	p.up(float64(p.Done) / float64(p.Total) * 100)
-	return
-}
-
-func NewProgress(total int64, up UpdateProgress) *Progress {
-	return &Progress{
-		Total: total,
-		up:    up,
-	}
 }
 
 type Reference interface {
