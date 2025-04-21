@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   # 每小时执行一次
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 0 * * *"
   push:
     branches:
       - "master"
@@ -15,6 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: check_alist_updated
       - run: |
+          cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
           export CURRENT_ALIST_VERSION="$(sed -n 's/.*ALIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)"
+          export LATEST_ALIST_VERSION="$(echo $(curl -s https://api.github.com/repos/alist-org/alist/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2))"
           echo "CURRENT_ALIST_VERSION: " ${CURRENT_ALIST_VERSION}
+          echo "LATEST_ALIST_VERSION: " ${LATEST_ALIST_VERSION}
+          if [ "$LATEST_ALIST_VERSION" -ge "$CURRENT_ALIST_VERSION" ]; then
+              echo "AList Need to Be Updated!"
+              gh workflow run release.yaml -R LeoHaoVIP/AListLiteAndroid
+          else
+              echo "No Need to Update."
+          fi
