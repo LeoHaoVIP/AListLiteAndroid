@@ -10,5 +10,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: release
-      - run: |
+        run: |
           echo "TO BE ADDED"
