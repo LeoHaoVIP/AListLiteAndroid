@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: check_alist_updated
       - run: |
           cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
           export CURRENT_ALIST_VERSION="$(sed -n 's/.*ALIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)"
