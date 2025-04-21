@@ -21,6 +21,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
           export CURRENT_ALIST_VERSION=$(sed -n 's/.*ALIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)
+          curl -v https://api.github.com/repos/alist-org/alist/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2
           export LATEST_ALIST_VERSION=$(curl -s https://api.github.com/repos/alist-org/alist/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "CURRENT_ALIST_VERSION: " ${CURRENT_ALIST_VERSION}
           echo "LATEST_ALIST_VERSION: " ${LATEST_ALIST_VERSION}
