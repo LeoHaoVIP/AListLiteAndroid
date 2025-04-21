@@ -1,4 +1,4 @@
-name: CheckAList
+name: sync_latest_alist
 
 on:
   # 支持手动触发
@@ -13,9 +13,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      VERSION_FILE: ${{ github.workspace }}/app/src/main/java/com/leohao/android/alistlite/util/Constants.java
     steps:
       - uses: actions/checkout@v3
+      - name: check_alist_version
       - run: |
-          cat ${{ env.VERSION_FILE }}
+          export CURRENT_ALIST_VERSION="$(sed -n 's/.*ALIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)"
+          echo "CURRENT_ALIST_VERSION: " ${CURRENT_ALIST_VERSION}
