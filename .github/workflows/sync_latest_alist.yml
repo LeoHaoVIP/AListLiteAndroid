@@ -1,0 +1,21 @@
+name: CheckAList
+
+on:
+  # 支持手动触发
+  workflow_dispatch:
+  # 每小时执行一次
+  schedule:
+    - cron: "0 * * * *"
+  push:
+    branches:
+      - "master"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_FILE: ${{ github.workspace }}/app/src/main/java/com/leohao/android/alistlite/util/Constants.java
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          cat ${{ env.VERSION_FILE }}
