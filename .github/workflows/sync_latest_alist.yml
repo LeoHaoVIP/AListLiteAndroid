@@ -24,7 +24,7 @@ jobs:
           export LATEST_ALIST_VERSION=$(curl -sL https://api.github.com/repos/alist-org/alist/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "CURRENT_ALIST_VERSION: " ${CURRENT_ALIST_VERSION}
           echo "LATEST_ALIST_VERSION: " ${LATEST_ALIST_VERSION}
-          if [ "$LATEST_ALIST_VERSION" > "$CURRENT_ALIST_VERSION" ]; then
+          if [ "$LATEST_ALIST_VERSION" \> "$CURRENT_ALIST_VERSION" ]; then
               echo "AList Need to Be Updated!"
               gh workflow run release.yaml -R LeoHaoVIP/AListLiteAndroid
           else
