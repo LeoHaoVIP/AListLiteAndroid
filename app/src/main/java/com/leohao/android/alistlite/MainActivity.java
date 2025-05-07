@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -13,10 +14,8 @@ import android.os.Looper;
 import android.service.quicksettings.TileService;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.WindowManager;
+import android.util.TypedValue;
+import android.view.*;
 import android.webkit.*;
 import android.widget.*;
 import androidx.annotation.NonNull;
@@ -25,9 +24,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import cn.hutool.extra.qrcode.QrCodeUtil;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.google.zxing.common.BitMatrix;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
@@ -308,6 +309,54 @@ public class MainActivity extends AppCompatActivity {
                 sslErrorHandler.proceed();
             }
         });
+    }
+
+    /**
+     * 显示远程访问链接二维码
+     */
+    public void showQrCode(View view) {
+        if (!alistServer.hasRunning()) {
+            showToast("AList 服务未启动");
+            return;
+        }
+        final ImageView imageView = new ImageView(MainActivity.this);
+        //生成二维码
+        imageView.setImageBitmap(bitMatrixToBitmap(QrCodeUtil.encode(serverAddress, 500, 500)));
+        imageView.setAdjustViewBounds(true);
+        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        //点击二维码图片使用浏览器打开
+        imageView.setOnClickListener(v -> {
+            openExternalUrl(serverAddress);
+        });
+        //创建布局
+        FrameLayout layout = new FrameLayout(MainActivity.this);
+        int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics());
+        layout.setPadding(padding, padding, padding, padding);
+        //添加二维码
+        layout.addView(imageView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        AlertDialog alertDialog = dialog.create();
+        alertDialog.setTitle("远程访问");
+        alertDialog.setMessage(String.format("AList 服务地址：%s\r\n\r\n提示：请确保在同一网络环境内操作", serverAddress));
+        alertDialog.setView(layout);
+        alertDialog.show();
+    }
+
+    /**
+     * 将BitMatrix对象转换为Bitmap对象
+     */
+    private Bitmap bitMatrixToBitmap(BitMatrix bitMatrix) {
+        final int width = bitMatrix.getWidth();
+        final int height = bitMatrix.getHeight();
+        final int[] pixels = new int[width * height];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                pixels[y * width + x] = bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF;
+            }
+        }
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+        return bitmap;
     }
 
     /**

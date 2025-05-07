@@ -25,6 +25,11 @@ public class PopupMenuWindow extends PopupWindow {
         setAnimationStyle(R.style.PopupMenuWindowStyle);
         //定义点击事件监听
         View popupView = getContentView();
+        //远程访问（显示二维码）
+        popupView.findViewById(R.id.btn_showQrCode).setOnClickListener((view) -> {
+            dismiss();
+            MainActivity.getInstance().showQrCode(view);
+        });
         //权限配置
         popupView.findViewById(R.id.btn_startPermissionCheckActivity).setOnClickListener((view) -> {
             dismiss();

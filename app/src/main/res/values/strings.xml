@@ -14,6 +14,7 @@
     <string name="app_version">v1.0.0&#160;</string>
     <string name="tv_text_open_issue">问题反馈&#160;|</string>
     <string name="tv_text_open_discussion">&#160;社区讨论&#160;</string>
+    <string name="popup_menu_item_qrcode">远程访问</string>
     <string name="popup_menu_item_permission">权限配置</string>
     <string name="popup_menu_item_password">密码设置</string>
     <string name="popup_menu_item_release_log">更新日志</string>

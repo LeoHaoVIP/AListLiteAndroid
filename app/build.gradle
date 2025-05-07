@@ -10,7 +10,7 @@ android {
         minSdk 21
         targetSdk 34
         versionCode 1
-        versionName "2.0.3-beta2"
+        versionName "2.0.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "AListLite-v${versionName}")
     }
@@ -53,6 +53,7 @@ dependencies {
     implementation 'com.tencent.bugly:crashreport:4.1.9.3'
     implementation 'com.github.getActivity:XXPermissions:18.6'
     implementation 'com.github.smuyyh:JsonViewer:1.0.7'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
