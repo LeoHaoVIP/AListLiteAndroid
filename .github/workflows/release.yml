@@ -1,0 +1,14 @@
+name: release
+
+on:
+  # 支持手动触发
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: release
+        run: |
+          echo "TO BE ADDED"
