@@ -93,6 +93,13 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 <center class="half">
 <img src="./README/tile-service.png" alt="AList 服务磁贴" style="zoom:30%"/>
 </center>
+### 远程访问
+
+点击软件右上角 `+` 号，选择 `远程访问` 可调出远程访问二维码，便于 TV 端用户在移动设备上完成配置操作。
+
+<center class="half">
+<img src="./README/remote-access.png" alt="远程访问二维码" style="zoom:20%"/>
+</center>
 
 # Update
 
