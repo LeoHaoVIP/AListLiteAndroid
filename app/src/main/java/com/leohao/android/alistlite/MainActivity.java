@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
@@ -694,7 +693,7 @@ public class MainActivity extends AppCompatActivity {
     private void openExternalUrl(String url) {
         try {
             //跳转到浏览器下载
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
             startActivity(intent);
         } catch (Exception e) {
             showToast("无法打开此外部链接");
