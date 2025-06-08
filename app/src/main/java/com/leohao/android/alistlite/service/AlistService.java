@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.service.quicksettings.TileService;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -99,8 +100,8 @@ public class AlistService extends Service {
                     //加载AList前端页面
                     MainActivity.getInstance().serverAddress = serverAddress;
                     MainActivity.getInstance().webView.loadUrl(serverAddress);
-                    //更新AList运行状态
-                    MainActivity.getInstance().runningInfoTextView.setText(String.format("AList 服务已启动: %s", serverAddress));
+                    //隐藏服务未开启提示
+                    MainActivity.getInstance().runningInfoTextView.setVisibility(View.GONE);
                 }
                 //更新消息内容里的服务地址
                 notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
@@ -157,8 +158,8 @@ public class AlistService extends Service {
             MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(false);
             //刷新 webview
             MainActivity.getInstance().webView.reload();
-            //更新AList运行状态
-            MainActivity.getInstance().runningInfoTextView.setText(R.string.alist_service_not_running);
+            //显示服务未开启提示
+            MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
         }
         if (wakeLock != null) {
             wakeLock.release();
