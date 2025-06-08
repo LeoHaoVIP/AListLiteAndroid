@@ -80,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         instance = this;
         setContentView(R.layout.activity_main);
+        //获取 AListServer 对象
+        alistServer = Alist.getInstance();
         //初始化控件
         initWidgets();
         //焦点设置
@@ -161,8 +163,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //默认开启服务
-        serviceSwitch.setChecked(true);
     }
 
     private void readyToStartService() {
@@ -174,7 +174,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(intent);
         }
-        alistServer = Alist.getInstance();
     }
 
     private void readyToShutdownService() {
@@ -223,6 +222,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, e.getLocalizedMessage());
             }
         });
+        //默认开启服务
+        serviceSwitch.setChecked(true);
     }
 
     private void initWebview() {
