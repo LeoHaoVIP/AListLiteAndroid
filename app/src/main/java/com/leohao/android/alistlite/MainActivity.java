@@ -485,6 +485,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * 查看服务日志
+     */
+    public void showServiceLogs(View view) {
+        AlertDialog configDataDialog = new AlertDialog.Builder(this).create();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.service_logs_view, null);
+        TextView textView = dialogView.findViewById(R.id.tv_service_logs);
+        ScrollView scrollView = dialogView.findViewById(R.id.tv_logs_scroll_view);
+        //显示服务日志
+        textView.setText(Alist.ALIST_LOGS);
+        //滚动到底部最新日志
+        scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+        //日志实时刷新
+        new Thread(() -> {
+            while (true) {
+                runOnUiThread(() -> {
+                    textView.setText(Alist.ALIST_LOGS);
+                    //日志更新时，滚动到底部最新日志
+                    if(!Alist.ALIST_LOGS.toString().equals(textView.getText().toString())){
+                        scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                    }
+                });
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Log.i(TAG, "fail to print logs: " + e.getLocalizedMessage());
+                }
+            }
+        }).start();
+        configDataDialog.setView(dialogView);
+        configDataDialog.show();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        //窗口大小设置必须在show()之后
+        if (width < height) {
+            configDataDialog.getWindow().setLayout(width - 50, height * 2 / 5);
+        } else {
+            configDataDialog.getWindow().setLayout(width * 5 / 6, height - 200);
+        }
+    }
+
+    /**
      * 页面刷新
      *
      * @param view view

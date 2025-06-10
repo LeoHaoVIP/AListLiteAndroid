@@ -45,6 +45,11 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             MainActivity.getInstance().manageConfigData(view);
         });
+        //服务日志
+        popupView.findViewById(R.id.btn_serviceLogs).setOnClickListener((view) -> {
+            dismiss();
+            MainActivity.getInstance().showServiceLogs(view);
+        });
         //检查更新
         popupView.findViewById(R.id.btn_checkUpdates).setOnClickListener((view) -> {
             dismiss();

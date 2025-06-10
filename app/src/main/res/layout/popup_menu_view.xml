@@ -52,6 +52,16 @@
                 android:clickable="true"
                 android:text="@string/popup_menu_item_advanced_config"/>
         <TextView
+                android:id="@+id/btn_serviceLogs"
+                android:focusable="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
+                android:clickable="true"
+                android:text="@string/popup_menu_item_service_logs"/>
+        <TextView
                 android:id="@+id/btn_checkUpdates"
                 android:focusable="true"
                 android:layout_width="wrap_content"

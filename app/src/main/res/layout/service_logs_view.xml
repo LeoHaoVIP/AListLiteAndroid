@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+    />
+    <TextView
+            android:id="@+id/tv_config_view_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:textSize="20sp"
+            android:padding="5dp"
+            android:textStyle="bold"
+            android:text="@string/popup_menu_item_service_logs"
+    />
+    <ScrollView
+            android:id="@+id/tv_logs_scroll_view"
+            android:layout_below="@id/tv_config_view_title"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="10dp"
+            android:fillViewport="true"
+            android:orientation="vertical">
+        <TextView
+                android:id="@+id/tv_service_logs"
+                android:layout_centerHorizontal="true"
+                android:maxLines="10000"
+                android:textSize="14sp"
+                android:padding="5dp"
+                android:text="@string/popup_menu_item_service_logs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+    </ScrollView>
+</RelativeLayout>

@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import cn.hutool.core.date.DateUtil;
 import com.jayway.jsonpath.JsonPath;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
@@ -15,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
@@ -23,6 +25,7 @@ import static com.leohao.android.alistlite.AlistLiteApplication.applicationConte
  */
 public class Alist {
     public static String ACTION_STATUS_CHANGED = "com.leohao.android.alistlite.ACTION_STATUS_CHANGED";
+    public static StringBuilder ALIST_LOGS = new StringBuilder();
     final String TYPE_HTTP = "http";
     final String TYPE_HTTPS = "https";
     final String TYPE_UNIX = "unix";
@@ -73,7 +76,26 @@ public class Alist {
             }
         }, (level, msg) -> {
             //日志捕捉
-            Log.i(AlistService.TAG, String.format("level : %s | msg : %s", level, msg));
+            String levelName = "INFO";
+            switch (level) {
+                case 1:
+                    levelName = "ERROR";
+                    break;
+                case 2:
+                    levelName = "DEBUG";
+                    break;
+                case 3:
+                    levelName = "WARN";
+                    break;
+                case 4:
+                    levelName = "INFO";
+                    break;
+                default:
+                    break;
+            }
+            String log = String.format("%s[%s] %s\r\n\r\n", levelName, DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"), msg);
+            ALIST_LOGS.append(log);
+            Log.i(AlistService.TAG, log);
         });
     }
 
@@ -122,8 +144,10 @@ public class Alist {
     public void shutdown(Long timeout) {
         try {
             Alistlib.shutdown(timeout);
+            ALIST_LOGS.append("------ 服务已关闭 ------\r\n\r\n");
         } catch (Exception e) {
             showToast("Alist服务关闭失败");
+            ALIST_LOGS.append("------ 服务关闭失败 ------\r\n\r\n");
         }
     }
 
