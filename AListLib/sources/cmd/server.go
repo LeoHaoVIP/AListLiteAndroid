@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
-	"github.com/KirCute/sftpd-alist"
-	"github.com/alist-org/alist/v3/internal/fs"
 	"net"
 	"net/http"
 	"os"
@@ -16,14 +13,19 @@ import (
 	"syscall"
 	"time"
 
+	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
+	"github.com/KirCute/sftpd-alist"
 	"github.com/alist-org/alist/v3/cmd/flags"
 	"github.com/alist-org/alist/v3/internal/bootstrap"
 	"github.com/alist-org/alist/v3/internal/conf"
+	"github.com/alist-org/alist/v3/internal/fs"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/alist-org/alist/v3/server"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 // ServerCmd represents the server command
@@ -47,11 +49,15 @@ the address is defined in config file`,
 		r := gin.New()
 		r.Use(gin.LoggerWithWriter(log.StandardLogger().Out), gin.RecoveryWithWriter(log.StandardLogger().Out))
 		server.Init(r)
+		var httpHandler http.Handler = r
+		if conf.Conf.Scheme.EnableH2c {
+			httpHandler = h2c.NewHandler(r, &http2.Server{})
+		}
 		var httpSrv, httpsSrv, unixSrv *http.Server
 		if conf.Conf.Scheme.HttpPort != -1 {
 			httpBase := fmt.Sprintf("%s:%d", conf.Conf.Scheme.Address, conf.Conf.Scheme.HttpPort)
 			utils.Log.Infof("start HTTP server @ %s", httpBase)
-			httpSrv = &http.Server{Addr: httpBase, Handler: r}
+			httpSrv = &http.Server{Addr: httpBase, Handler: httpHandler}
 			go func() {
 				err := httpSrv.ListenAndServe()
 				if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -72,7 +78,7 @@ the address is defined in config file`,
 		}
 		if conf.Conf.Scheme.UnixFile != "" {
 			utils.Log.Infof("start unix server @ %s", conf.Conf.Scheme.UnixFile)
-			unixSrv = &http.Server{Handler: r}
+			unixSrv = &http.Server{Handler: httpHandler}
 			go func() {
 				listener, err := net.Listen("unix", conf.Conf.Scheme.UnixFile)
 				if err != nil {

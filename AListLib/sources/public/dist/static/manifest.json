@@ -1,0 +1,13 @@
+{
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "name": "AList",
+  "icons": [
+    {
+      "src": "https://jsd.nn.ci/gh/alist-org/logo@main/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

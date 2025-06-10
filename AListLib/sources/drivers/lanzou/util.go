@@ -348,6 +348,10 @@ func (d *LanZou) getFilesByShareUrl(shareID, pwd string, sharePageData string) (
 		file        FileOrFolderByShareUrl
 	)
 
+	// 删除注释
+	sharePageData = RemoveNotes(sharePageData)
+	sharePageData = RemoveJSComment(sharePageData)
+
 	// 需要密码
 	if strings.Contains(sharePageData, "pwdload") || strings.Contains(sharePageData, "passwddiv") {
 		sharePageData, err := getJSFunctionByName(sharePageData, "down_p")

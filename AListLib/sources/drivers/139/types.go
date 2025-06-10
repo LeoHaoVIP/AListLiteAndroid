@@ -143,6 +143,13 @@ type UploadResp struct {
 	} `json:"data"`
 }
 
+type InterLayerUploadResult struct {
+	XMLName    xml.Name `xml:"result"`
+	Text       string   `xml:",chardata"`
+	ResultCode int      `xml:"resultCode"`
+	Msg        string   `xml:"msg"`
+}
+
 type CloudContent struct {
 	ContentID string `json:"contentID"`
 	//Modifier         string      `json:"modifier"`
@@ -278,11 +285,30 @@ type PersonalUploadUrlResp struct {
 	}
 }
 
+type QueryRoutePolicyResp struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		RoutePolicyList []struct {
+			SiteID      string `json:"siteID"`
+			SiteCode    string `json:"siteCode"`
+			ModName     string `json:"modName"`
+			HttpUrl     string `json:"httpUrl"`
+			HttpsUrl    string `json:"httpsUrl"`
+			EnvID       string `json:"envID"`
+			ExtInfo     string `json:"extInfo"`
+			HashName    string `json:"hashName"`
+			ModAddrType int    `json:"modAddrType"`
+		} `json:"routePolicyList"`
+	} `json:"data"`
+}
+
 type RefreshTokenResp struct {
-	XMLName     xml.Name   `xml:"root"`
-	Return      string     `xml:"return"`
-	Token       string     `xml:"token"`
-	Expiretime  int32      `xml:"expiretime"`
-	AccessToken string     `xml:"accessToken"`
-	Desc        string     `xml:"desc"`
+	XMLName     xml.Name `xml:"root"`
+	Return      string   `xml:"return"`
+	Token       string   `xml:"token"`
+	Expiretime  int32    `xml:"expiretime"`
+	AccessToken string   `xml:"accessToken"`
+	Desc        string   `xml:"desc"`
 }

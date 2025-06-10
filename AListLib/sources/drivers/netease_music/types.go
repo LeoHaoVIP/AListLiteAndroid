@@ -2,13 +2,13 @@ package netease_music
 
 import (
 	"context"
-	"github.com/alist-org/alist/v3/internal/driver"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/alist-org/alist/v3/internal/driver"
 	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/sign"
 	"github.com/alist-org/alist/v3/pkg/http_range"
@@ -28,8 +28,8 @@ type SongResp struct {
 }
 
 type ListResp struct {
-	Size    string `json:"size"`
-	MaxSize string `json:"maxSize"`
+	Size    int64 `json:"size"`
+	MaxSize int64 `json:"maxSize"`
 	Data    []struct {
 		AddTime    int64  `json:"addTime"`
 		FileName   string `json:"fileName"`

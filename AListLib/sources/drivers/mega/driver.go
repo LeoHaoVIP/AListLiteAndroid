@@ -56,12 +56,21 @@ func (d *Mega) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([]
 		if err != nil {
 			return nil, err
 		}
-		res := make([]model.Obj, 0)
+		fn := make(map[string]model.Obj)
 		for i := range nodes {
 			n := nodes[i]
-			if n.GetType() == mega.FILE || n.GetType() == mega.FOLDER {
-				res = append(res, &MegaNode{n})
+			if n.GetType() != mega.FILE && n.GetType() != mega.FOLDER {
+				continue
 			}
+			if _, ok := fn[n.GetName()]; !ok {
+				fn[n.GetName()] = &MegaNode{n}
+			} else if sameNameObj := fn[n.GetName()]; (&MegaNode{n}).ModTime().After(sameNameObj.ModTime()) {
+				fn[n.GetName()] = &MegaNode{n}
+			}
+		}
+		res := make([]model.Obj, 0)
+		for _, v := range fn {
+			res = append(res, v)
 		}
 		return res, nil
 	}

@@ -32,10 +32,9 @@ RUN apk update && \
         /opt/aria2/.aria2/tracker.sh ; \
     rm -rf /var/cache/apk/*
 
-COPY --from=builder /app/bin/alist ./
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /opt/alist/alist && \
-    chmod +x /entrypoint.sh && /entrypoint.sh version
+COPY --chmod=755 --from=builder /app/bin/alist ./
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
+RUN /entrypoint.sh version
 
 ENV PUID=0 PGID=0 UMASK=022 RUN_ARIA2=${INSTALL_ARIA2}
 VOLUME /opt/alist/data/

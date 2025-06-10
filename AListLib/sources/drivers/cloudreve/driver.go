@@ -18,6 +18,7 @@ import (
 type Cloudreve struct {
 	model.Storage
 	Addition
+	ref *Cloudreve
 }
 
 func (d *Cloudreve) Config() driver.Config {
@@ -37,8 +38,18 @@ func (d *Cloudreve) Init(ctx context.Context) error {
 	return d.login()
 }
 
+func (d *Cloudreve) InitReference(storage driver.Driver) error {
+	refStorage, ok := storage.(*Cloudreve)
+	if ok {
+		d.ref = refStorage
+		return nil
+	}
+	return errs.NotSupport
+}
+
 func (d *Cloudreve) Drop(ctx context.Context) error {
 	d.Cookie = ""
+	d.ref = nil
 	return nil
 }
 
@@ -162,6 +173,8 @@ func (d *Cloudreve) Put(ctx context.Context, dstDir model.Obj, stream model.File
 	switch r.Policy.Type {
 	case "onedrive":
 		err = d.upOneDrive(ctx, stream, u, up)
+	case "s3":
+		err = d.upS3(ctx, stream, u, up)
 	case "remote": // 从机存储
 		err = d.upRemote(ctx, stream, u, up)
 	case "local": // 本机存储

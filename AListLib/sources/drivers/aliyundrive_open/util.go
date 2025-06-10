@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alist-org/alist/v3/drivers/base"
+	"github.com/alist-org/alist/v3/internal/model"
 	"github.com/alist-org/alist/v3/internal/op"
 	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/go-resty/resty/v2"
@@ -185,4 +186,37 @@ func (d *AliyundriveOpen) getAccessToken() string {
 		return d.ref.getAccessToken()
 	}
 	return d.AccessToken
+}
+
+// Remove duplicate files with the same name in the given directory path,
+// preserving the file with the given skipID if provided
+func (d *AliyundriveOpen) removeDuplicateFiles(ctx context.Context, parentPath string, fileName string, skipID string) error {
+	// Handle empty path (root directory) case
+	if parentPath == "" {
+		parentPath = "/"
+	}
+
+	// List all files in the parent directory
+	files, err := op.List(ctx, d, parentPath, model.ListArgs{})
+	if err != nil {
+		return err
+	}
+
+	// Find all files with the same name
+	var duplicates []model.Obj
+	for _, file := range files {
+		if file.GetName() == fileName && file.GetID() != skipID {
+			duplicates = append(duplicates, file)
+		}
+	}
+
+	// Remove all duplicates files, except the file with the given ID
+	for _, file := range duplicates {
+		err := d.Remove(ctx, file)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
