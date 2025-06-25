@@ -1,6 +1,6 @@
 package azure_blob
 
-import "github.com/alist-org/alist/v3/internal/driver"
+import "github.com/OpenListTeam/OpenList/internal/driver"
 
 // progressTracker is used to track upload progress
 type progressTracker struct {

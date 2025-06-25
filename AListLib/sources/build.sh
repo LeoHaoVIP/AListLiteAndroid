@@ -1,7 +1,15 @@
-appName="alist"
+set -e
+appName="openlist"
 builtAt="$(date +'%F %T %z')"
-gitAuthor="Xhofe <i@nn.ci>"
+gitAuthor="The OpenList Projects Contributors <noreply@openlist.team>"
 gitCommit=$(git log --pretty=format:"%h" -1)
+
+githubAuthHeader=""
+githubAuthValue=""
+if [ -n "$GITHUB_TOKEN" ]; then
+  githubAuthHeader="--header"
+  githubAuthValue="Authorization: Bearer $GITHUB_TOKEN"
+fi
 
 if [ "$1" = "dev" ]; then
   version="dev"
@@ -10,9 +18,10 @@ elif [ "$1" = "beta" ]; then
   version="beta"
   webVersion="dev"
 else
-  git tag -d beta
-  version=$(git describe --abbrev=0 --tags)
-  webVersion=$(wget -qO- -t1 -T2 "https://api.github.com/repos/alist-org/alist-web/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+  git tag -d beta || true
+  # Always true if there's no tag
+  version=$(git describe --abbrev=0 --tags 2>/dev/null || echo "v0.0.0")
+  webVersion=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
 fi
 
 echo "backend version: $version"
@@ -20,26 +29,36 @@ echo "frontend version: $webVersion"
 
 ldflags="\
 -w -s \
--X 'github.com/alist-org/alist/v3/internal/conf.BuiltAt=$builtAt' \
--X 'github.com/alist-org/alist/v3/internal/conf.GitAuthor=$gitAuthor' \
--X 'github.com/alist-org/alist/v3/internal/conf.GitCommit=$gitCommit' \
--X 'github.com/alist-org/alist/v3/internal/conf.Version=$version' \
--X 'github.com/alist-org/alist/v3/internal/conf.WebVersion=$webVersion' \
+-X 'github.com/OpenListTeam/OpenList/internal/conf.BuiltAt=$builtAt' \
+-X 'github.com/OpenListTeam/OpenList/internal/conf.GitAuthor=$gitAuthor' \
+-X 'github.com/OpenListTeam/OpenList/internal/conf.GitCommit=$gitCommit' \
+-X 'github.com/OpenListTeam/OpenList/internal/conf.Version=$version' \
+-X 'github.com/OpenListTeam/OpenList/internal/conf.WebVersion=$webVersion' \
 "
 
 FetchWebDev() {
-  curl -L https://codeload.github.com/alist-org/web-dist/tar.gz/refs/heads/dev -o web-dist-dev.tar.gz
-  tar -zxvf web-dist-dev.tar.gz
-  rm -rf public/dist
-  mv -f web-dist-dev/dist public
-  rm -rf web-dist-dev web-dist-dev.tar.gz
+  pre_release_tag=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases | jq -r 'map(select(.prerelease)) | first | .tag_name')
+  if [ -z "$pre_release_tag" ] || [ "$pre_release_tag" == "null" ]; then
+    # fall back to latest release
+    pre_release_json=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest")
+  else
+    pre_release_json=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/tags/$pre_release_tag")
+  fi
+  pre_release_assets=$(echo "$pre_release_json" | jq -r '.assets[].browser_download_url')
+  pre_release_tar_url=$(echo "$pre_release_assets" | grep "openlist-frontend-dist" | grep "\.tar\.gz$")
+  curl -fsSL "$pre_release_tar_url" -o web-dist-dev.tar.gz
+  rm -rf public/dist && mkdir -p public/dist
+  tar -zxvf web-dist-dev.tar.gz -C public/dist
+  rm -rf web-dist-dev.tar.gz
 }
 
 FetchWebRelease() {
-  curl -L https://github.com/alist-org/alist-web/releases/latest/download/dist.tar.gz -o dist.tar.gz
-  tar -zxvf dist.tar.gz
-  rm -rf public/dist
-  mv -f dist public
+  release_json=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest")
+  release_assets=$(echo "$release_json" | jq -r '.assets[].browser_download_url')
+  release_tar_url=$(echo "$release_assets" | grep "openlist-frontend-dist" | grep "\.tar\.gz$")
+  curl -fsSL "$release_tar_url" -o dist.tar.gz
+  rm -rf public/dist && mkdir -p public/dist
+  tar -zxvf dist.tar.gz -C public/dist
   rm -rf dist.tar.gz
 }
 
@@ -59,11 +78,11 @@ BuildDev() {
   rm -rf .git/
   mkdir -p "dist"
   muslflags="--extldflags '-static -fpic' $ldflags"
-  BASE="https://musl.nn.ci/"
+  BASE="https://github.com/OpenListTeam/musl-compilers/releases/latest/download/"
   FILES=(x86_64-linux-musl-cross aarch64-linux-musl-cross)
   for i in "${FILES[@]}"; do
     url="${BASE}${i}.tgz"
-    curl -L -o "${i}.tgz" "${url}"
+    curl -fsSL -o "${i}.tgz" "${url}"
     sudo tar xf "${i}.tgz" --strip-components 1 -C /usr/local
   done
   OS_ARCHES=(linux-musl-amd64 linux-musl-arm64)
@@ -79,26 +98,26 @@ BuildDev() {
     go build -o ./dist/$appName-$os_arch -ldflags="$muslflags" -tags=jsoniter .
   done
   xgo -targets=windows/amd64,darwin/amd64,darwin/arm64 -out "$appName" -ldflags="$ldflags" -tags=jsoniter .
-  mv alist-* dist
+  mv "$appName"-* dist
   cd dist
-  cp ./alist-windows-amd64.exe ./alist-windows-amd64-upx.exe
-  upx -9 ./alist-windows-amd64-upx.exe
+  cp ./"$appName"-windows-amd64.exe ./"$appName"-windows-amd64-upx.exe
+  upx -9 ./"$appName"-windows-amd64-upx.exe
   find . -type f -print0 | xargs -0 md5sum >md5.txt
   cat md5.txt
 }
 
 BuildDocker() {
-  go build -o ./bin/alist -ldflags="$ldflags" -tags=jsoniter .
+  go build -o ./bin/"$appName" -ldflags="$ldflags" -tags=jsoniter .
 }
 
 PrepareBuildDockerMusl() {
   mkdir -p build/musl-libs
-  BASE="https://musl.cc/"
+  BASE="https://github.com/OpenListTeam/musl-compilers/releases/latest/download/"
   FILES=(x86_64-linux-musl-cross aarch64-linux-musl-cross i486-linux-musl-cross s390x-linux-musl-cross armv6-linux-musleabihf-cross armv7l-linux-musleabihf-cross riscv64-linux-musl-cross powerpc64le-linux-musl-cross)
   for i in "${FILES[@]}"; do
     url="${BASE}${i}.tgz"
     lib_tgz="build/${i}.tgz"
-    curl -L -o "${lib_tgz}" "${url}"
+    curl -fsSL -o "${lib_tgz}" "${url}"
     tar xf "${lib_tgz}" --strip-components 1 -C build/musl-libs
     rm -f "${lib_tgz}"
   done
@@ -124,7 +143,7 @@ BuildDockerMultiplatform() {
     export GOARCH=$arch
     export CC=${cgo_cc}
     echo "building for $os_arch"
-    go build -o build/$os/$arch/alist -ldflags="$docker_lflags" -tags=jsoniter .
+    go build -o build/$os/$arch/"$appName" -ldflags="$docker_lflags" -tags=jsoniter .
   done
 
   DOCKER_ARM_ARCHES=(linux-arm/v6 linux-arm/v7)
@@ -138,36 +157,36 @@ BuildDockerMultiplatform() {
     export GOARM=${GO_ARM[$i]}
     export CC=${cgo_cc}
     echo "building for $docker_arch"
-    go build -o build/${docker_arch%%-*}/${docker_arch##*-}/alist -ldflags="$docker_lflags" -tags=jsoniter .
+    go build -o build/${docker_arch%%-*}/${docker_arch##*-}/"$appName" -ldflags="$docker_lflags" -tags=jsoniter .
   done
 }
 
 BuildRelease() {
   rm -rf .git/
   mkdir -p "build"
-  BuildWinArm64 ./build/alist-windows-arm64.exe
+  BuildWinArm64 ./build/"$appName"-windows-arm64.exe
   xgo -out "$appName" -ldflags="$ldflags" -tags=jsoniter .
   # why? Because some target platforms seem to have issues with upx compression
-  upx -9 ./alist-linux-amd64
-  cp ./alist-windows-amd64.exe ./alist-windows-amd64-upx.exe
-  upx -9 ./alist-windows-amd64-upx.exe
-  mv alist-* build
+  upx -9 ./"$appName"-linux-amd64
+  cp ./"$appName"-windows-amd64.exe ./"$appName"-windows-amd64-upx.exe
+  upx -9 ./"$appName"-windows-amd64-upx.exe
+  mv "$appName"-* build
 }
 
 BuildReleaseLinuxMusl() {
   rm -rf .git/
   mkdir -p "build"
   muslflags="--extldflags '-static -fpic' $ldflags"
-  BASE="https://musl.nn.ci/"
-  FILES=(x86_64-linux-musl-cross aarch64-linux-musl-cross mips-linux-musl-cross mips64-linux-musl-cross mips64el-linux-musl-cross mipsel-linux-musl-cross powerpc64le-linux-musl-cross s390x-linux-musl-cross)
+  BASE="https://github.com/OpenListTeam/musl-compilers/releases/latest/download/"
+  FILES=(x86_64-linux-musl-cross aarch64-linux-musl-cross mips-linux-musl-cross mips64-linux-musl-cross mips64el-linux-musl-cross mipsel-linux-musl-cross powerpc64le-linux-musl-cross s390x-linux-musl-cross loongarch64-linux-musl-cross)
   for i in "${FILES[@]}"; do
     url="${BASE}${i}.tgz"
-    curl -L -o "${i}.tgz" "${url}"
+    curl -fsSL -o "${i}.tgz" "${url}"
     sudo tar xf "${i}.tgz" --strip-components 1 -C /usr/local
     rm -f "${i}.tgz"
   done
-  OS_ARCHES=(linux-musl-amd64 linux-musl-arm64 linux-musl-mips linux-musl-mips64 linux-musl-mips64le linux-musl-mipsle linux-musl-ppc64le linux-musl-s390x)
-  CGO_ARGS=(x86_64-linux-musl-gcc aarch64-linux-musl-gcc mips-linux-musl-gcc mips64-linux-musl-gcc mips64el-linux-musl-gcc mipsel-linux-musl-gcc powerpc64le-linux-musl-gcc s390x-linux-musl-gcc)
+  OS_ARCHES=(linux-musl-amd64 linux-musl-arm64 linux-musl-mips linux-musl-mips64 linux-musl-mips64le linux-musl-mipsle linux-musl-ppc64le linux-musl-s390x linux-musl-loong64)
+  CGO_ARGS=(x86_64-linux-musl-gcc aarch64-linux-musl-gcc mips-linux-musl-gcc mips64-linux-musl-gcc mips64el-linux-musl-gcc mipsel-linux-musl-gcc powerpc64le-linux-musl-gcc s390x-linux-musl-gcc loongarch64-linux-musl-gcc)
   for i in "${!OS_ARCHES[@]}"; do
     os_arch=${OS_ARCHES[$i]}
     cgo_cc=${CGO_ARGS[$i]}
@@ -184,18 +203,14 @@ BuildReleaseLinuxMuslArm() {
   rm -rf .git/
   mkdir -p "build"
   muslflags="--extldflags '-static -fpic' $ldflags"
-  BASE="https://musl.nn.ci/"
-#  FILES=(arm-linux-musleabi-cross arm-linux-musleabihf-cross armeb-linux-musleabi-cross armeb-linux-musleabihf-cross armel-linux-musleabi-cross armel-linux-musleabihf-cross armv5l-linux-musleabi-cross armv5l-linux-musleabihf-cross armv6-linux-musleabi-cross armv6-linux-musleabihf-cross armv7l-linux-musleabihf-cross armv7m-linux-musleabi-cross armv7r-linux-musleabihf-cross)
+  BASE="https://github.com/OpenListTeam/musl-compilers/releases/latest/download/"
   FILES=(arm-linux-musleabi-cross arm-linux-musleabihf-cross armel-linux-musleabi-cross armel-linux-musleabihf-cross armv5l-linux-musleabi-cross armv5l-linux-musleabihf-cross armv6-linux-musleabi-cross armv6-linux-musleabihf-cross armv7l-linux-musleabihf-cross armv7m-linux-musleabi-cross armv7r-linux-musleabihf-cross)
   for i in "${FILES[@]}"; do
     url="${BASE}${i}.tgz"
-    curl -L -o "${i}.tgz" "${url}"
+    curl -fsSL -o "${i}.tgz" "${url}"
     sudo tar xf "${i}.tgz" --strip-components 1 -C /usr/local
     rm -f "${i}.tgz"
   done
-#  OS_ARCHES=(linux-musleabi-arm linux-musleabihf-arm linux-musleabi-armeb linux-musleabihf-armeb linux-musleabi-armel linux-musleabihf-armel linux-musleabi-armv5l linux-musleabihf-armv5l linux-musleabi-armv6 linux-musleabihf-armv6 linux-musleabihf-armv7l linux-musleabi-armv7m linux-musleabihf-armv7r)
-#  CGO_ARGS=(arm-linux-musleabi-gcc arm-linux-musleabihf-gcc armeb-linux-musleabi-gcc armeb-linux-musleabihf-gcc armel-linux-musleabi-gcc armel-linux-musleabihf-gcc armv5l-linux-musleabi-gcc armv5l-linux-musleabihf-gcc armv6-linux-musleabi-gcc armv6-linux-musleabihf-gcc armv7l-linux-musleabihf-gcc armv7m-linux-musleabi-gcc armv7r-linux-musleabihf-gcc)
-#  GOARMS=('' '' '' '' '' '' '5' '5' '6' '6' '7' '7' '7')
   OS_ARCHES=(linux-musleabi-arm linux-musleabihf-arm linux-musleabi-armel linux-musleabihf-armel linux-musleabi-armv5l linux-musleabihf-armv5l linux-musleabi-armv6 linux-musleabihf-armv6 linux-musleabihf-armv7l linux-musleabi-armv7m linux-musleabihf-armv7r)
   CGO_ARGS=(arm-linux-musleabi-gcc arm-linux-musleabihf-gcc armel-linux-musleabi-gcc armel-linux-musleabihf-gcc armv5l-linux-musleabi-gcc armv5l-linux-musleabihf-gcc armv6-linux-musleabi-gcc armv6-linux-musleabihf-gcc armv7l-linux-musleabihf-gcc armv7m-linux-musleabi-gcc armv7r-linux-musleabihf-gcc)
   GOARMS=('' '' '' '' '5' '5' '6' '6' '7' '7' '7')
@@ -237,15 +252,32 @@ BuildReleaseAndroid() {
 BuildReleaseFreeBSD() {
   rm -rf .git/
   mkdir -p "build/freebsd"
+  
+  # Get latest FreeBSD 14.x release version from GitHub 
+  freebsd_version=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue "https://api.github.com/repos/freebsd/freebsd-src/tags" | \
+    jq -r '.[].name' | \
+    grep '^release/14\.' | \
+    sort -V | \
+    tail -1 | \
+    sed 's/release\///' | \
+    sed 's/\.0$//')
+  
+  if [ -z "$freebsd_version" ]; then
+    echo "Failed to get FreeBSD version, falling back to 14.3"
+    freebsd_version="14.3"
+  fi
+
+  echo "Using FreeBSD version: $freebsd_version"
+  
   OS_ARCHES=(amd64 arm64 i386)
   GO_ARCHES=(amd64 arm64 386)
-  CGO_ARGS=(x86_64-unknown-freebsd14.1 aarch64-unknown-freebsd14.1 i386-unknown-freebsd14.1)
+  CGO_ARGS=(x86_64-unknown-freebsd${freebsd_version} aarch64-unknown-freebsd${freebsd_version} i386-unknown-freebsd${freebsd_version})
   for i in "${!OS_ARCHES[@]}"; do
     os_arch=${OS_ARCHES[$i]}
     cgo_cc="clang --target=${CGO_ARGS[$i]} --sysroot=/opt/freebsd/${os_arch}"
     echo building for freebsd-${os_arch}
     sudo mkdir -p "/opt/freebsd/${os_arch}"
-    wget -q https://download.freebsd.org/releases/${os_arch}/14.1-RELEASE/base.txz
+    wget -q https://download.freebsd.org/releases/${os_arch}/${freebsd_version}-RELEASE/base.txz
     sudo tar -xf ./base.txz -C /opt/freebsd/${os_arch}
     rm base.txz
     export GOOS=freebsd
@@ -259,31 +291,34 @@ BuildReleaseFreeBSD() {
 
 MakeRelease() {
   cd build
+  if [ -d compress ]; then
+    rm -rv compress
+  fi
   mkdir compress
   for i in $(find . -type f -name "$appName-linux-*"); do
-    cp "$i" alist
-    tar -czvf compress/"$i".tar.gz alist
-    rm -f alist
+    cp "$i" "$appName"
+    tar -czvf compress/"$i".tar.gz "$appName"
+    rm -f "$appName"
   done
     for i in $(find . -type f -name "$appName-android-*"); do
-    cp "$i" alist
-    tar -czvf compress/"$i".tar.gz alist
-    rm -f alist
+    cp "$i" "$appName"
+    tar -czvf compress/"$i".tar.gz "$appName"
+    rm -f "$appName"
   done
   for i in $(find . -type f -name "$appName-darwin-*"); do
-    cp "$i" alist
-    tar -czvf compress/"$i".tar.gz alist
-    rm -f alist
+    cp "$i" "$appName"
+    tar -czvf compress/"$i".tar.gz "$appName"
+    rm -f "$appName"
   done
   for i in $(find . -type f -name "$appName-freebsd-*"); do
-    cp "$i" alist
-    tar -czvf compress/"$i".tar.gz alist
-    rm -f alist
+    cp "$i" "$appName"
+    tar -czvf compress/"$i".tar.gz "$appName"
+    rm -f "$appName"
   done
   for i in $(find . -type f -name "$appName-windows-*"); do
-    cp "$i" alist.exe
-    zip compress/$(echo $i | sed 's/\.[^.]*$//').zip alist.exe
-    rm -f alist.exe
+    cp "$i" "$appName".exe
+    zip compress/$(echo $i | sed 's/\.[^.]*$//').zip "$appName".exe
+    rm -f "$appName".exe
   done
   cd compress
   find . -type f -print0 | xargs -0 md5sum >"$1"

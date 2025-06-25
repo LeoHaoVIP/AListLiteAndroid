@@ -9,15 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/archive/tool"
-	"github.com/alist-org/alist/v3/internal/stream"
+	"github.com/OpenListTeam/OpenList/internal/archive/tool"
+	"github.com/OpenListTeam/OpenList/internal/stream"
 
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/pkg/singleflight"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/Xhofe/go-cache"
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/singleflight"
-	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

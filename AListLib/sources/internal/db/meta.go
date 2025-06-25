@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/model"
 	"github.com/pkg/errors"
 )
 

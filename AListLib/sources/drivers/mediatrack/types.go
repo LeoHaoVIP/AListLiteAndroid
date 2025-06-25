@@ -3,7 +3,7 @@ package mediatrack
 import (
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/model"
 )
 
 type BaseResp struct {

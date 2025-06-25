@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alist-org/alist/v3/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/op"
 )
 
 // will give the best guessing based on the path

@@ -14,14 +14,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/sign"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/server/common"
-	"github.com/alist-org/times"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/sign"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/times"
 	cp "github.com/otiai10/copy"
 	log "github.com/sirupsen/logrus"
 	_ "golang.org/x/image/webp"
@@ -128,11 +128,9 @@ func (d *Local) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([
 	}
 	var files []model.Obj
 	for _, f := range rawFiles {
-		if !d.ShowHidden && strings.HasPrefix(f.Name(), ".") {
-			continue
+		if d.ShowHidden || !isHidden(f, fullPath) {
+			files = append(files, d.FileInfoToObj(ctx, f, args.ReqPath, fullPath))
 		}
-		file := d.FileInfoToObj(ctx, f, args.ReqPath, fullPath)
-		files = append(files, file)
 	}
 	return files, nil
 }

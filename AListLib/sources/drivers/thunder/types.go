@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	hash_extend "github.com/alist-org/alist/v3/pkg/utils/hash"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	hash_extend "github.com/OpenListTeam/OpenList/pkg/utils/hash"
 )
 
 type ErrResp struct {

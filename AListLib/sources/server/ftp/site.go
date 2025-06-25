@@ -2,8 +2,9 @@ package ftp
 
 import (
 	"fmt"
-	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
 	"strconv"
+
+	ftpserver "github.com/fclairamb/ftpserverlib"
 )
 
 func HandleSIZE(param string, client ftpserver.ClientDriver) (int, string) {

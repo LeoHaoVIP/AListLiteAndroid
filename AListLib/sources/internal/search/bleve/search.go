@@ -6,11 +6,11 @@ import (
 
 	query2 "github.com/blevesearch/bleve/v2/search/query"
 
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/search/searcher"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/search/searcher"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/blevesearch/bleve/v2"
 	search2 "github.com/blevesearch/bleve/v2/search"
 	"github.com/google/uuid"

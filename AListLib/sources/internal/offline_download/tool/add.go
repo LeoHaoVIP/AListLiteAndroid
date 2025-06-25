@@ -2,20 +2,22 @@ package tool
 
 import (
 	"context"
+
 	"net/url"
 	stdpath "path"
 	"path/filepath"
 
-	_115 "github.com/alist-org/alist/v3/drivers/115"
-	"github.com/alist-org/alist/v3/drivers/pikpak"
-	"github.com/alist-org/alist/v3/drivers/thunder"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/fs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/internal/task"
+	_115 "github.com/OpenListTeam/OpenList/drivers/115"
+	"github.com/OpenListTeam/OpenList/drivers/pikpak"
+	"github.com/OpenListTeam/OpenList/drivers/thunder"
+	"github.com/OpenListTeam/OpenList/drivers/thunder_browser"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/fs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/internal/task"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
@@ -102,6 +104,13 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 			tempDir = args.DstDirPath
 		} else {
 			tempDir = filepath.Join(setting.GetStr(conf.ThunderTempDir), uid)
+		}
+	case "ThunderBrowser":
+		switch storage.(type) {
+		case *thunder_browser.ThunderBrowser, *thunder_browser.ThunderBrowserExpert:
+			tempDir = args.DstDirPath
+		default:
+			tempDir = filepath.Join(setting.GetStr(conf.ThunderBrowserTempDir), uid)
 		}
 	}
 

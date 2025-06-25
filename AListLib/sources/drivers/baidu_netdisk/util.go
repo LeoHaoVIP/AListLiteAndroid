@@ -10,11 +10,11 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
@@ -31,15 +31,54 @@ func (d *BaiduNetdisk) refreshToken() error {
 }
 
 func (d *BaiduNetdisk) _refreshToken() error {
+	// 使用在线API刷新Token，无需ClientID和ClientSecret
+	if d.UseOnlineAPI && len(d.APIAddress) > 0 {
+		u := d.APIAddress
+		var resp struct {
+			RefreshToken string `json:"refresh_token"`
+			AccessToken  string `json:"access_token"`
+			ErrorMessage string `json:"text"`
+		}
+		_, err := base.RestyClient.R().
+			SetResult(&resp).
+			SetQueryParams(map[string]string{
+				"refresh_ui": d.RefreshToken,
+				"server_use": "true",
+				"driver_txt": "baiduyun_go",
+			}).
+			Get(u)
+		if err != nil {
+			return err
+		}
+		if resp.RefreshToken == "" || resp.AccessToken == "" {
+			if resp.ErrorMessage != "" {
+				return fmt.Errorf("failed to refresh token: %s", resp.ErrorMessage)
+			}
+			return fmt.Errorf("empty token returned from official API")
+		}
+		d.AccessToken = resp.AccessToken
+		d.RefreshToken = resp.RefreshToken
+		op.MustSaveDriverStorage(d)
+		return nil
+	}
+	// 使用本地客户端的情况下检查是否为空
+	if d.ClientID == "" || d.ClientSecret == "" {
+		return fmt.Errorf("empty ClientID or ClientSecret")
+	}
+	// 走原有的刷新逻辑
 	u := "https://openapi.baidu.com/oauth/2.0/token"
 	var resp base.TokenResp
 	var e TokenErrResp
-	_, err := base.RestyClient.R().SetResult(&resp).SetError(&e).SetQueryParams(map[string]string{
-		"grant_type":    "refresh_token",
-		"refresh_token": d.RefreshToken,
-		"client_id":     d.ClientID,
-		"client_secret": d.ClientSecret,
-	}).Get(u)
+	_, err := base.RestyClient.R().
+		SetResult(&resp).
+		SetError(&e).
+		SetQueryParams(map[string]string{
+			"grant_type":    "refresh_token",
+			"refresh_token": d.RefreshToken,
+			"client_id":     d.ClientID,
+			"client_secret": d.ClientSecret,
+		}).
+		Get(u)
 	if err != nil {
 		return err
 	}

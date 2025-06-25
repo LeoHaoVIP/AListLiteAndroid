@@ -3,13 +3,14 @@ package ftp
 import (
 	"context"
 	"fmt"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/fs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/server/common"
-	"github.com/pkg/errors"
 	stdpath "path"
+
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/fs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/pkg/errors"
 )
 
 func Mkdir(ctx context.Context, path string) error {

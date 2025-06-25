@@ -1,8 +1,9 @@
 package dropbox
 
 import (
-	"github.com/alist-org/alist/v3/internal/model"
 	"time"
+
+	"github.com/OpenListTeam/OpenList/internal/model"
 )
 
 type TokenResp struct {

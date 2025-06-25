@@ -1,8 +1,9 @@
 package weiyun
 
 import (
-	"github.com/alist-org/alist/v3/pkg/utils"
 	"time"
+
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 
 	weiyunsdkgo "github.com/foxxorcat/weiyun-sdk-go"
 )

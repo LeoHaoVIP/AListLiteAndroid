@@ -3,13 +3,15 @@ package ftp
 import (
 	"context"
 	"errors"
-	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/fs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/spf13/afero"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/fs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	ftpserver "github.com/fclairamb/ftpserverlib"
+	"github.com/spf13/afero"
 )
 
 type AferoAdapter struct {
@@ -61,7 +63,7 @@ func (a *AferoAdapter) Stat(name string) (os.FileInfo, error) {
 }
 
 func (a *AferoAdapter) Name() string {
-	return "AList FTP Endpoint"
+	return "OpenList FTP Endpoint"
 }
 
 func (a *AferoAdapter) Chmod(_ string, _ os.FileMode) error {
@@ -114,6 +116,26 @@ func (a *AferoAdapter) GetHandle(name string, flags int, offset int64) (ftpserve
 		}
 	}
 	return OpenDownload(a.ctx, path, offset)
+}
+
+func (a *AferoAdapter) Site(param string) *ftpserver.AnswerCommand {
+	spl := strings.SplitN(param, " ", 2)
+	cmd := strings.ToUpper(spl[0])
+	var params string
+	if len(spl) > 1 {
+		params = spl[1]
+	} else {
+		params = ""
+	}
+	switch cmd {
+	case "SIZE":
+		code, msg := HandleSIZE(params, a)
+		return &ftpserver.AnswerCommand{
+			Code:    code,
+			Message: msg,
+		}
+	}
+	return nil
 }
 
 func (a *AferoAdapter) SetNextFileSize(size int64) {

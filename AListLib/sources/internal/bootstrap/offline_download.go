@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/alist-org/alist/v3/internal/offline_download/tool"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/internal/offline_download/tool"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 )
 
 func InitOfflineDownloadTools() {

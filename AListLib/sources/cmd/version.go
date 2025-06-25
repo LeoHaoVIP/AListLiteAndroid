@@ -8,14 +8,14 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/alist-org/alist/v3/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/conf"
 	"github.com/spf13/cobra"
 )
 
 // VersionCmd represents the version command
 var VersionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Show current version of AList",
+	Short: "Show current version of OpenList",
 	Run: func(cmd *cobra.Command, args []string) {
 		goVersion := fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 

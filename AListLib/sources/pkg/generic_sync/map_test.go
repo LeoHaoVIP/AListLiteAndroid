@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/alist-org/alist/v3/pkg/generic_sync"
+	"github.com/OpenListTeam/OpenList/pkg/generic_sync"
 )
 
 func TestConcurrentRange(t *testing.T) {

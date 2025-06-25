@@ -1,16 +1,16 @@
 package server
 
 import (
-	"github.com/alist-org/alist/v3/cmd/flags"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/message"
-	"github.com/alist-org/alist/v3/internal/sign"
-	"github.com/alist-org/alist/v3/internal/stream"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/server/common"
-	"github.com/alist-org/alist/v3/server/handles"
-	"github.com/alist-org/alist/v3/server/middlewares"
-	"github.com/alist-org/alist/v3/server/static"
+	"github.com/OpenListTeam/OpenList/cmd/flags"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/message"
+	"github.com/OpenListTeam/OpenList/internal/sign"
+	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/server/handles"
+	"github.com/OpenListTeam/OpenList/server/middlewares"
+	"github.com/OpenListTeam/OpenList/server/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -147,6 +147,7 @@ func admin(g *gin.RouterGroup) {
 	setting.POST("/set_115", handles.Set115)
 	setting.POST("/set_pikpak", handles.SetPikPak)
 	setting.POST("/set_thunder", handles.SetThunder)
+	setting.POST("/set_thunder_browser", handles.SetThunderBrowser)
 
 	// retain /admin/task API to ensure compatibility with legacy automation scripts
 	_task(g.Group("/task"))

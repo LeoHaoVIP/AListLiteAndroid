@@ -6,9 +6,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/avast/retry-go"
 	sdk "github.com/xhofe/115-sdk-go"

@@ -3,14 +3,14 @@ package data
 import (
 	"strconv"
 
-	"github.com/alist-org/alist/v3/cmd/flags"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/db"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/offline_download/tool"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/pkg/utils/random"
+	"github.com/OpenListTeam/OpenList/cmd/flags"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/db"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/offline_download/tool"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/pkg/utils/random"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -96,7 +96,7 @@ func InitialSettings() []model.SettingItem {
 		{Key: conf.VERSION, Value: conf.Version, Type: conf.TypeString, Group: model.SITE, Flag: model.READONLY},
 		//{Key: conf.ApiUrl, Value: "", Type: conf.TypeString, Group: model.SITE},
 		//{Key: conf.BasePath, Value: "", Type: conf.TypeString, Group: model.SITE},
-		{Key: conf.SiteTitle, Value: "AList", Type: conf.TypeString, Group: model.SITE},
+		{Key: conf.SiteTitle, Value: "OpenList", Type: conf.TypeString, Group: model.SITE},
 		{Key: conf.Announcement, Value: "### repo\nhttps://github.com/LeoHaoVIP/AListLiteAndroid", Type: conf.TypeText, Group: model.SITE},
 		{Key: "pagination_type", Value: "pagination", Type: conf.TypeSelect, Options: "all,pagination,load_more,auto_load_more", Group: model.SITE},
 		{Key: "default_page_size", Value: "30", Type: conf.TypeNumber, Group: model.SITE},
@@ -136,7 +136,7 @@ func InitialSettings() []model.SettingItem {
 		//	"Google":"https://docs.google.com/gview?url=$url&embedded=true",
 		//}`, Type: conf.TypeText, Group: model.PREVIEW},
 		//		{Key: conf.PdfViewers, Value: `{
-		//	"pdf.js":"https://alist-org.github.io/pdf.js/web/viewer.html?file=$url"
+		//	"pdf.js":"https://openlistteam.github.io/pdf.js/web/viewer.html?file=$url"
 		//}`, Type: conf.TypeText, Group: model.PREVIEW},
 		{Key: "audio_cover", Value: "/images/logo.png", Type: conf.TypeString, Group: model.PREVIEW},
 		{Key: conf.AudioAutoplay, Value: "true", Type: conf.TypeBool, Group: model.PREVIEW},
@@ -155,10 +155,10 @@ func InitialSettings() []model.SettingItem {
 ([[:xdigit:]]{1,4}(?::[[:xdigit:]]{1,4}){7}|::|:(?::[[:xdigit:]]{1,4}){1,6}|[[:xdigit:]]{1,4}:(?::[[:xdigit:]]{1,4}){1,5}|(?:[[:xdigit:]]{1,4}:){2}(?::[[:xdigit:]]{1,4}){1,4}|(?:[[:xdigit:]]{1,4}:){3}(?::[[:xdigit:]]{1,4}){1,3}|(?:[[:xdigit:]]{1,4}:){4}(?::[[:xdigit:]]{1,4}){1,2}|(?:[[:xdigit:]]{1,4}:){5}:[[:xdigit:]]{1,4}|(?:[[:xdigit:]]{1,4}:){1,6}:)
 (?U)access_token=(.*)&`,
 			Type: conf.TypeText, Group: model.GLOBAL, Flag: model.PRIVATE},
-		{Key: conf.OcrApi, Value: "https://api.nn.ci/ocr/file/json", Type: conf.TypeString, Group: model.GLOBAL},
+		{Key: conf.OcrApi, Value: "https://api.example.com/ocr/file/json", Type: conf.TypeString, Group: model.GLOBAL}, // TODO: This can be replace by a community-hosted endpoint, see https://github.com/xhofe/ocr_api_server
 		{Key: conf.FilenameCharMapping, Value: `{"/": "|"}`, Type: conf.TypeText, Group: model.GLOBAL},
 		{Key: conf.ForwardDirectLinkParams, Value: "false", Type: conf.TypeBool, Group: model.GLOBAL},
-		{Key: conf.IgnoreDirectLinkParams, Value: "sign,alist_ts", Type: conf.TypeString, Group: model.GLOBAL},
+		{Key: conf.IgnoreDirectLinkParams, Value: "sign,openlist_ts", Type: conf.TypeString, Group: model.GLOBAL},
 		{Key: conf.WebauthnLoginEnabled, Value: "false", Type: conf.TypeBool, Group: model.GLOBAL, Flag: model.PUBLIC},
 
 		// single settings

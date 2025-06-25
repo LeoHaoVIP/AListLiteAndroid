@@ -1,9 +1,10 @@
 package middlewares
 
 import (
-	"github.com/alist-org/alist/v3/internal/stream"
-	"github.com/gin-gonic/gin"
 	"io"
+
+	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/gin-gonic/gin"
 )
 
 func MaxAllowed(n int) gin.HandlerFunc {

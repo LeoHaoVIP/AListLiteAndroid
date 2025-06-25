@@ -3,7 +3,7 @@ package url_tree_test
 import (
 	"testing"
 
-	"github.com/alist-org/alist/v3/drivers/url_tree"
+	"github.com/OpenListTeam/OpenList/drivers/url_tree"
 )
 
 func testTree() (*url_tree.Node, error) {

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/drivers/base"
+	"github.com/OpenListTeam/OpenList/drivers/base"
 	"golang.org/x/net/publicsuffix"
 )
 

@@ -7,18 +7,45 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 )
 
 func (d *Dropbox) refreshToken() error {
-	url := d.base + "/oauth2/token"
-	if utils.SliceContains([]string{"", DefaultClientID}, d.ClientID) {
-		url = d.OauthTokenURL
+	// 使用在线API刷新Token，无需ClientID和ClientSecret
+	if d.UseOnlineAPI && len(d.APIAddress) > 0 {
+		u := d.APIAddress
+		var resp struct {
+			RefreshToken string `json:"refresh_token"`
+			AccessToken  string `json:"access_token"`
+			ErrorMessage string `json:"text"`
+		}
+		_, err := base.RestyClient.R().
+			SetResult(&resp).
+			SetQueryParams(map[string]string{
+				"refresh_ui": d.RefreshToken,
+				"server_use": "true",
+				"driver_txt": "dropboxs_go",
+			}).
+			Get(u)
+		if err != nil {
+			return err
+		}
+		if resp.RefreshToken == "" || resp.AccessToken == "" {
+			if resp.ErrorMessage != "" {
+				return fmt.Errorf("failed to refresh token: %s", resp.ErrorMessage)
+			}
+			return fmt.Errorf("empty token returned from official API")
+		}
+		d.AccessToken = resp.AccessToken
+		d.RefreshToken = resp.RefreshToken
+		op.MustSaveDriverStorage(d)
+		return nil
 	}
+	url := d.base + "/oauth2/token"
 	var tokenResp TokenResp
 	resp, err := base.RestyClient.R().
 		//ForceContentType("application/x-www-form-urlencoded").

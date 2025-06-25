@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/model"
 )
 
 // FolderResp represents the structure of the folder response from the OneDrive API.

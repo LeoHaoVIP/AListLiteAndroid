@@ -1,8 +1,8 @@
 package crypt
 
 import (
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/op"
 )
 
 type Addition struct {
@@ -20,9 +20,9 @@ type Addition struct {
 	EncryptedSuffix  string `json:"encrypted_suffix" required:"true" default:".bin" help:"for advanced user only! encrypted files will have this suffix"`
 	FileNameEncoding string `json:"filename_encoding" type:"select" required:"true" options:"base64,base32,base32768" default:"base64" help:"for advanced user only!"`
 
-	Thumbnail   bool   `json:"thumbnail" required:"true" default:"false" help:"enable thumbnail which pre-generated under .thumbnails folder"`
+	Thumbnail bool `json:"thumbnail" required:"true" default:"false" help:"enable thumbnail which pre-generated under .thumbnails folder"`
 
-	ShowHidden       bool   `json:"show_hidden"  default:"true" required:"false" help:"show hidden directories and files"`
+	ShowHidden bool `json:"show_hidden"  default:"true" required:"false" help:"show hidden directories and files"`
 }
 
 var config = driver.Config{

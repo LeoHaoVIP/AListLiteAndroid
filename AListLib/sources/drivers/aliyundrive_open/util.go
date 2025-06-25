@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 )
@@ -20,10 +20,38 @@ import (
 // do others that not defined in Driver interface
 
 func (d *AliyundriveOpen) _refreshToken() (string, string, error) {
-	url := API_URL + "/oauth/access_token"
-	if d.OauthTokenURL != "" && d.ClientID == "" {
-		url = d.OauthTokenURL
+	if d.UseOnlineAPI && d.APIAddress != "" {
+		u := d.APIAddress
+		var resp struct {
+			RefreshToken string `json:"refresh_token"`
+			AccessToken  string `json:"access_token"`
+			ErrorMessage string `json:"text"`
+		}
+		_, err := base.RestyClient.R().
+			SetResult(&resp).
+			SetQueryParams(map[string]string{
+				"refresh_ui": d.RefreshToken,
+				"server_use": "true",
+				"driver_txt": "alicloud_qr",
+			}).
+			Get(u)
+		if err != nil {
+			return "", "", err
+		}
+		if resp.RefreshToken == "" || resp.AccessToken == "" {
+			if resp.ErrorMessage != "" {
+				return "", "", fmt.Errorf("failed to refresh token: %s", resp.ErrorMessage)
+			}
+			return "", "", fmt.Errorf("empty token returned from official API")
+		}
+		return resp.RefreshToken, resp.AccessToken, nil
 	}
+
+	// 本地刷新逻辑，必须要求 client_id 和 client_secret
+	if d.ClientID == "" || d.ClientSecret == "" {
+		return "", "", fmt.Errorf("empty ClientID or ClientSecret")
+	}
+	url := API_URL + "/oauth/access_token"
 	//var resp base.TokenResp
 	var e ErrResp
 	res, err := base.RestyClient.R().

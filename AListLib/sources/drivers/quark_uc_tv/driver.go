@@ -3,15 +3,16 @@ package quark_uc_tv
 import (
 	"context"
 	"fmt"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/go-resty/resty/v2"
 	"strconv"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/go-resty/resty/v2"
+
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
 )
 
 type QuarkUCTV struct {
@@ -138,9 +139,9 @@ func (d *QuarkUCTV) Link(ctx context.Context, file model.Obj, args model.LinkArg
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &model.Link{
-		URL:  fileLink.Data.DownloadURL,
+		URL:         fileLink.Data.DownloadURL,
 		Concurrency: 3,
 		PartSize:    10 * utils.MB,
 	}, nil

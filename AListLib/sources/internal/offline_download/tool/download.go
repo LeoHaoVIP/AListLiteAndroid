@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/internal/task"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/internal/task"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/xhofe/tache"
@@ -87,6 +87,9 @@ outer:
 	if t.tool.Name() == "Thunder" {
 		return nil
 	}
+	if t.tool.Name() == "ThunderBrowser" {
+		return nil
+	}
 	if t.tool.Name() == "115 Cloud" {
 		// hack for 115
 		<-time.After(time.Second * 1)
@@ -159,7 +162,7 @@ func (t *DownloadTask) Update() (bool, error) {
 
 func (t *DownloadTask) Transfer() error {
 	toolName := t.tool.Name()
-	if toolName == "115 Cloud" || toolName == "PikPak" || toolName == "Thunder" {
+	if toolName == "115 Cloud" || toolName == "PikPak" || toolName == "Thunder" || toolName == "ThunderBrowser" {
 		// 如果不是直接下载到目标路径，则进行转存
 		if t.TempDir != t.DstDirPath {
 			return transferObj(t.Ctx(), t.TempDir, t.DstDirPath, t.DeletePolicy)

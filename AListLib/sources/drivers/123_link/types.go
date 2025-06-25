@@ -3,8 +3,8 @@ package _123Link
 import (
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
 )
 
 // Node is a node in the folder tree

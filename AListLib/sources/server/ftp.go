@@ -5,13 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/server/ftp"
 	"math/rand"
 	"net"
 	"net/http"
@@ -19,6 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/server/ftp"
+	ftpserver "github.com/fclairamb/ftpserverlib"
 )
 
 type FtpMainDriver struct {
@@ -57,31 +58,27 @@ func NewMainDriver() (*FtpMainDriver, error) {
 	}
 	return &FtpMainDriver{
 		settings: &ftpserver.Settings{
-			ListenAddr:                conf.Conf.FTP.Listen,
-			PublicHost:                lookupIP(setting.GetStr(conf.FTPPublicHost)),
-			PassiveTransferPortGetter: newPortMapper(setting.GetStr(conf.FTPPasvPortMap)),
-			FindPasvPortAttempts:      conf.Conf.FTP.FindPasvPortAttempts,
-			ActiveTransferPortNon20:   conf.Conf.FTP.ActiveTransferPortNon20,
-			IdleTimeout:               conf.Conf.FTP.IdleTimeout,
-			ConnectionTimeout:         conf.Conf.FTP.ConnectionTimeout,
-			DisableMLSD:               false,
-			DisableMLST:               false,
-			DisableMFMT:               true,
-			Banner:                    setting.GetStr(conf.Announcement),
-			TLSRequired:               tlsRequired,
-			DisableLISTArgs:           false,
-			DisableSite:               false,
-			DisableActiveMode:         conf.Conf.FTP.DisableActiveMode,
-			EnableHASH:                false,
-			DisableSTAT:               false,
-			DisableSYST:               false,
-			EnableCOMB:                false,
-			DefaultTransferType:       transferType,
-			ActiveConnectionsCheck:    activeConnCheck,
-			PasvConnectionsCheck:      pasvConnCheck,
-			SiteHandlers: map[string]ftpserver.SiteHandler{
-				"SIZE": ftp.HandleSIZE,
-			},
+			ListenAddr:               conf.Conf.FTP.Listen,
+			PublicHost:               lookupIP(setting.GetStr(conf.FTPPublicHost)),
+			PassiveTransferPortRange: newPortMapper(setting.GetStr(conf.FTPPasvPortMap)),
+			ActiveTransferPortNon20:  conf.Conf.FTP.ActiveTransferPortNon20,
+			IdleTimeout:              conf.Conf.FTP.IdleTimeout,
+			ConnectionTimeout:        conf.Conf.FTP.ConnectionTimeout,
+			DisableMLSD:              false,
+			DisableMLST:              false,
+			DisableMFMT:              true,
+			Banner:                   setting.GetStr(conf.Announcement),
+			TLSRequired:              tlsRequired,
+			DisableLISTArgs:          false,
+			DisableSite:              false,
+			DisableActiveMode:        conf.Conf.FTP.DisableActiveMode,
+			EnableHASH:               false,
+			DisableSTAT:              false,
+			DisableSYST:              false,
+			EnableCOMB:               false,
+			DefaultTransferType:      transferType,
+			ActiveConnectionsCheck:   activeConnCheck,
+			PasvConnectionsCheck:     pasvConnCheck,
 		},
 		proxyHeader:  header,
 		clients:      make(map[uint32]ftpserver.ClientContext),
@@ -101,7 +98,7 @@ func (d *FtpMainDriver) ClientConnected(cc ftpserver.ClientContext) (string, err
 	}
 	defer d.shutdownLock.RUnlock()
 	d.clients[cc.ID()] = cc
-	return "AList FTP Endpoint", nil
+	return "OpenList FTP Endpoint", nil
 }
 
 func (d *FtpMainDriver) ClientDisconnected(cc ftpserver.ClientContext) {
@@ -181,16 +178,39 @@ func lookupIP(host string) string {
 	return v6
 }
 
+type group struct {
+	ExposedStart  int
+	ListenedStart int
+	Length        int
+}
+
+type pasvPortGetter struct {
+	groups      []group
+	totalLength int
+}
+
+func (m *pasvPortGetter) FetchNext() (int, int, bool) {
+	idxPort := rand.Intn(m.totalLength)
+	for _, g := range m.groups {
+		if idxPort >= g.Length {
+			idxPort -= g.Length
+		} else {
+			return g.ExposedStart + idxPort, g.ListenedStart + idxPort, true
+		}
+	}
+	// unreachable
+	return 0, 0, false
+}
+
+func (m *pasvPortGetter) NumberAttempts() int {
+	return conf.Conf.FTP.FindPasvPortAttempts
+}
+
 func newPortMapper(str string) ftpserver.PasvPortGetter {
 	if str == "" {
 		return nil
 	}
 	pasvPortMappers := strings.Split(strings.Replace(str, "\n", ",", -1), ",")
-	type group struct {
-		ExposedStart  int
-		ListenedStart int
-		Length        int
-	}
 	groups := make([]group, len(pasvPortMappers))
 	totalLength := 0
 	convertToPorts := func(str string) (int, int, error) {
@@ -254,18 +274,7 @@ func newPortMapper(str string) ftpserver.PasvPortGetter {
 			return nil
 		}
 	}
-	return func() (int, int, bool) {
-		idxPort := rand.Intn(totalLength)
-		for _, g := range groups {
-			if idxPort >= g.Length {
-				idxPort -= g.Length
-			} else {
-				return g.ExposedStart + idxPort, g.ListenedStart + idxPort, true
-			}
-		}
-		// unreachable
-		return 0, 0, false
-	}
+	return &pasvPortGetter{groups: groups, totalLength: totalLength}
 }
 
 func getTlsConf(keyPath, certPath string) (*tls.Config, error) {

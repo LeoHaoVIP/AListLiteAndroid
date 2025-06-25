@@ -69,6 +69,9 @@ const (
 	// thunder
 	ThunderTempDir = "thunder_temp_dir"
 
+	// thunder_browser
+	ThunderBrowserTempDir = "thunder_browser_temp_dir"
+
 	// single
 	Token         = "token"
 	IndexProgress = "index_progress"
@@ -123,6 +126,7 @@ const (
 	TaskOfflineDownloadTransferThreadsNum = "offline_download_transfer_task_threads_num"
 	TaskUploadThreadsNum                  = "upload_task_threads_num"
 	TaskCopyThreadsNum                    = "copy_task_threads_num"
+	TaskMoveThreadsNum                    = "move_task_threads_num"
 	TaskDecompressDownloadThreadsNum      = "decompress_download_task_threads_num"
 	TaskDecompressUploadThreadsNum        = "decompress_upload_task_threads_num"
 	StreamMaxClientDownloadSpeed          = "max_client_download_speed"

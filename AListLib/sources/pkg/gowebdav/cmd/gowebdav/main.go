@@ -13,7 +13,7 @@ import (
 	"runtime"
 	"strings"
 
-	d "github.com/alist-org/alist/v3/pkg/gowebdav"
+	d "github.com/OpenListTeam/OpenList/pkg/gowebdav"
 )
 
 func main() {

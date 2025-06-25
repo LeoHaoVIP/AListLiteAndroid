@@ -1,9 +1,8 @@
-version: '3.3'
 services:
-  alist:
+  openlist:
     restart: always
     volumes:
-      - '/etc/alist:/opt/alist/data'
+      - '/etc/openlist:/opt/openlist/data'
     ports:
       - '5244:5244'
       - '5245:5245'
@@ -12,5 +11,5 @@ services:
       - PGID=0
       - UMASK=022
       - TZ=UTC
-    container_name: alist
-    image: 'xhofe/alist:latest'
+    container_name: openlist
+    image: 'openlistteam/openlist:latest'

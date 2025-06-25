@@ -1,20 +1,22 @@
 package baidu_netdisk
 
 import (
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/op"
 )
 
 type Addition struct {
-	RefreshToken string `json:"refresh_token" required:"true"`
 	driver.RootPath
 	OrderBy               string `json:"order_by" type:"select" options:"name,time,size" default:"name"`
 	OrderDirection        string `json:"order_direction" type:"select" options:"asc,desc" default:"asc"`
 	DownloadAPI           string `json:"download_api" type:"select" options:"official,crack,crack_video" default:"official"`
-	ClientID              string `json:"client_id" required:"true" default:"iYCeC9g08h5vuP9UqvPHKKSVrKFXGa1v"`
-	ClientSecret          string `json:"client_secret" required:"true" default:"jXiFMOPVPCWlO2M5CwWQzffpNPaGTRBG"`
+	UseOnlineAPI          bool   `json:"use_online_api" default:"true"`
+	APIAddress            string `json:"api_url_address" default:"https://api.oplist.org/baiduyun/renewapi"`
+	ClientID              string `json:"client_id"`
+	ClientSecret          string `json:"client_secret"`
 	CustomCrackUA         string `json:"custom_crack_ua" required:"true" default:"netdisk"`
 	AccessToken           string
+	RefreshToken          string `json:"refresh_token" required:"true"`
 	UploadThread          string `json:"upload_thread" default:"3" help:"1<=thread<=32"`
 	UploadAPI             string `json:"upload_api" default:"https://d.pcs.baidu.com"`
 	CustomUploadPartSize  int64  `json:"custom_upload_part_size" type:"number" default:"0" help:"0 for auto"`

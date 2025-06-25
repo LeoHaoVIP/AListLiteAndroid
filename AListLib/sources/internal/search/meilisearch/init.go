@@ -3,10 +3,11 @@ package meilisearch
 import (
 	"errors"
 	"fmt"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/search/searcher"
-	"github.com/alist-org/alist/v3/pkg/utils"
+
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/search/searcher"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/meilisearch/meilisearch-go"
 )
 
@@ -22,7 +23,7 @@ func init() {
 				Host:   conf.Conf.Meilisearch.Host,
 				APIKey: conf.Conf.Meilisearch.APIKey,
 			}),
-			IndexUid:             conf.Conf.Meilisearch.IndexPrefix + "alist",
+			IndexUid:             conf.Conf.Meilisearch.IndexPrefix + "openlist",
 			FilterableAttributes: []string{"parent", "is_dir", "name"},
 			SearchableAttributes: []string{"name"},
 		}

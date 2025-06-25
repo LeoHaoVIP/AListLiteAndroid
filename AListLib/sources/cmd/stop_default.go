@@ -13,7 +13,7 @@ import (
 // StopCmd represents the stop command
 var StopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop alist server by daemon/pid file",
+	Short: "Stop openlist server by daemon/pid file",
 	Run: func(cmd *cobra.Command, args []string) {
 		stop()
 	},
@@ -22,7 +22,7 @@ var StopCmd = &cobra.Command{
 func stop() {
 	initDaemon()
 	if pid == -1 {
-		log.Info("Seems not have been started. Try use `alist start` to start server.")
+		log.Info("Seems not have been started. Try use `openlist start` to start server.")
 		return
 	}
 	process, err := os.FindProcess(pid)

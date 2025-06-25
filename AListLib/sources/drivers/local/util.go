@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/disintegration/imaging"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
@@ -105,7 +105,7 @@ func readDir(dirname string) ([]fs.FileInfo, error) {
 
 func (d *Local) getThumb(file model.Obj) (*bytes.Buffer, *string, error) {
 	fullPath := file.GetPath()
-	thumbPrefix := "alist_thumb_"
+	thumbPrefix := "openlist_thumb_"
 	thumbName := thumbPrefix + utils.GetMD5EncodeStr(fullPath) + ".png"
 	if d.ThumbCacheFolder != "" {
 		// skip if the file is a thumbnail

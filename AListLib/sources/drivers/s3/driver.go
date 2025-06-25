@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/stream"
-	"github.com/alist-org/alist/v3/pkg/cron"
-	"github.com/alist-org/alist/v3/server/common"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/OpenListTeam/OpenList/pkg/cron"
+	"github.com/OpenListTeam/OpenList/server/common"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -42,7 +42,7 @@ func (d *S3) GetAddition() driver.Additional {
 
 func (d *S3) Init(ctx context.Context) error {
 	if d.Region == "" {
-		d.Region = "alist"
+		d.Region = "openlist"
 	}
 	if d.config.Name == "Doge" {
 		// 多吉云每次临时生成的秘钥有效期为 2h，所以这里设置为 118 分钟重新生成一次

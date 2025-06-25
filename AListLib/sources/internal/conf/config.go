@@ -3,8 +3,8 @@ package conf
 import (
 	"path/filepath"
 
-	"github.com/alist-org/alist/v3/cmd/flags"
-	"github.com/alist-org/alist/v3/pkg/utils/random"
+	"github.com/OpenListTeam/OpenList/cmd/flags"
+	"github.com/OpenListTeam/OpenList/pkg/utils/random"
 )
 
 type Database struct {
@@ -58,6 +58,7 @@ type TasksConfig struct {
 	Transfer           TaskConfig `json:"transfer" envPrefix:"TRANSFER_"`
 	Upload             TaskConfig `json:"upload" envPrefix:"UPLOAD_"`
 	Copy               TaskConfig `json:"copy" envPrefix:"COPY_"`
+	Move               TaskConfig `json:"move" envPrefix:"MOVE_"`
 	Decompress         TaskConfig `json:"decompress" envPrefix:"DECOMPRESS_"`
 	DecompressUpload   TaskConfig `json:"decompress_upload" envPrefix:"DECOMPRESS_UPLOAD_"`
 	AllowRetryCanceled bool       `json:"allow_retry_canceled" env:"ALLOW_RETRY_CANCELED"`
@@ -171,6 +172,11 @@ func DefaultConfig() *Config {
 				Workers: 5,
 			},
 			Copy: TaskConfig{
+				Workers:  5,
+				MaxRetry: 2,
+				// TaskPersistant: true,
+			},
+			Move: TaskConfig{
 				Workers:  5,
 				MaxRetry: 2,
 				// TaskPersistant: true,

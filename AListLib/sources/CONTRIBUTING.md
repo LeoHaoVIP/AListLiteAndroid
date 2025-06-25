@@ -2,7 +2,7 @@
 
 ## Setup your machine
 
-`alist` is written in [Go](https://golang.org/) and [React](https://reactjs.org/).
+`OpenList` is written in [Go](https://golang.org/) and [React](https://reactjs.org/).
 
 Prerequisites:
 
@@ -11,11 +11,11 @@ Prerequisites:
 - [gcc](https://gcc.gnu.org/)
 - [nodejs](https://nodejs.org/)
 
-Clone `alist` and `alist-web` anywhere:
+Clone `OpenList` and `OpenList-Frontend` anywhere:
 
 ```shell
-$ git clone https://github.com/alist-org/alist.git
-$ git clone --recurse-submodules https://github.com/alist-org/alist-web.git
+$ git clone https://github.com/OpenListTeam/OpenList.git
+$ git clone --recurse-submodules https://github.com/OpenListTeam/OpenList-Frontend.git
 ```
 You should switch to the `main` branch for development.
 
@@ -103,5 +103,5 @@ The rest of the commit message is then used for this.
 
 ## Submit a pull request
 
-Push your branch to your `alist` fork and open a pull request against the
+Push your branch to your `openlist` fork and open a pull request against the
 `main` branch.

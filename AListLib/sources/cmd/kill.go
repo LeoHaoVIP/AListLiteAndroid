@@ -1,15 +1,16 @@
 package cmd
 
 import (
+	"os"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // KillCmd represents the kill command
 var KillCmd = &cobra.Command{
 	Use:   "kill",
-	Short: "Force kill alist server process by daemon/pid file",
+	Short: "Force kill openlist server process by daemon/pid file",
 	Run: func(cmd *cobra.Command, args []string) {
 		kill()
 	},
@@ -18,7 +19,7 @@ var KillCmd = &cobra.Command{
 func kill() {
 	initDaemon()
 	if pid == -1 {
-		log.Info("Seems not have been started. Try use `alist start` to start server.")
+		log.Info("Seems not have been started. Try use `openlist start` to start server.")
 		return
 	}
 	process, err := os.FindProcess(pid)

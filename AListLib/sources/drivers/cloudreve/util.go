@@ -13,13 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/pkg/cookie"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/pkg/cookie"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/go-resty/resty/v2"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -334,7 +334,6 @@ func (d *Cloudreve) upOneDrive(ctx context.Context, stream model.FileStreamer, u
 		// req.Header.Set("Content-Length", strconv.Itoa(int(byteSize)))
 		req.Header.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", finish, finish+byteSize-1, stream.GetSize()))
 		req.Header.Set("User-Agent", d.getUA())
-		finish += byteSize
 		res, err := base.HttpClient.Do(req)
 		if err != nil {
 			return err
@@ -394,7 +393,6 @@ func (d *Cloudreve) upS3(ctx context.Context, stream model.FileStreamer, u Uploa
 		}
 		req = req.WithContext(ctx)
 		req.ContentLength = byteSize
-		finish += byteSize
 		res, err := base.HttpClient.Do(req)
 		if err != nil {
 			return err
@@ -411,7 +409,7 @@ func (d *Cloudreve) upS3(ctx context.Context, stream model.FileStreamer, u Uploa
 			utils.Log.Warnf("[Cloudreve-S3] server errors %d while uploading, retrying after %v...", res.StatusCode, backoff)
 			time.Sleep(backoff)
 		case etag == "":
-			return errors.New("faild to get ETag from header")
+			return errors.New("failed to get ETag from header")
 		default:
 			retryCount = 0
 			etags = append(etags, etag)

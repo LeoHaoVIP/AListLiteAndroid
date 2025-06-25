@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"github.com/alist-org/alist/v3/pkg/utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 )
 
 // Client defines our structure

@@ -4,11 +4,11 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/pkg/utils/random"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/pkg/utils/random"
 	"github.com/spf13/cobra"
 )
 
@@ -26,8 +26,8 @@ var AdminCmd = &cobra.Command{
 		} else {
 			utils.Log.Infof("Admin user's username: %s", admin.Username)
 			utils.Log.Infof("The password can only be output at the first startup, and then stored as a hash value, which cannot be reversed")
-			utils.Log.Infof("You can reset the password with a random string by running [alist admin random]")
-			utils.Log.Infof("You can also set a new password by running [alist admin set NEW_PASSWORD]")
+			utils.Log.Infof("You can reset the password with a random string by running [openlist admin random]")
+			utils.Log.Infof("You can also set a new password by running [openlist admin set NEW_PASSWORD]")
 		}
 	},
 }

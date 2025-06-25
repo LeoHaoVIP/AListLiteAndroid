@@ -2,10 +2,10 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
-  "name": "AList",
+  "name": "OpenList",
   "icons": [
     {
-      "src": "https://jsd.nn.ci/gh/alist-org/logo@main/logo.png",
+      "src": "https://docs.oplist.org/logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

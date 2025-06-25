@@ -1,7 +1,7 @@
-FROM alpine:edge as builder
+FROM docker.io/library/alpine:edge AS builder
 LABEL stage=go-builder
 WORKDIR /app/
-RUN apk add --no-cache bash curl gcc git go musl-dev
+RUN apk add --no-cache bash curl jq gcc git go musl-dev
 COPY go.mod go.sum ./
 RUN go mod download
 COPY ./ ./
@@ -11,9 +11,9 @@ FROM alpine:edge
 
 ARG INSTALL_FFMPEG=false
 ARG INSTALL_ARIA2=false
-LABEL MAINTAINER="i@nn.ci"
+LABEL MAINTAINER="OpenList"
 
-WORKDIR /opt/alist/
+WORKDIR /opt/openlist/
 
 RUN apk update && \
     apk upgrade --no-cache && \
@@ -32,11 +32,11 @@ RUN apk update && \
         /opt/aria2/.aria2/tracker.sh ; \
     rm -rf /var/cache/apk/*
 
-COPY --chmod=755 --from=builder /app/bin/alist ./
+COPY --chmod=755 --from=builder /app/bin/openlist ./
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 RUN /entrypoint.sh version
 
 ENV PUID=0 PGID=0 UMASK=022 RUN_ARIA2=${INSTALL_ARIA2}
-VOLUME /opt/alist/data/
+VOLUME /opt/openlist/data/
 EXPOSE 5244 5245
 CMD [ "/entrypoint.sh" ]

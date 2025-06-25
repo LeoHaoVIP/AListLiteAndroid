@@ -13,14 +13,14 @@ import (
 	"syscall"
 	"time"
 
-	ftpserver "github.com/KirCute/ftpserverlib-pasvportmap"
-	"github.com/KirCute/sftpd-alist"
-	"github.com/alist-org/alist/v3/cmd/flags"
-	"github.com/alist-org/alist/v3/internal/bootstrap"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/fs"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/server"
+	"github.com/OpenListTeam/OpenList/cmd/flags"
+	"github.com/OpenListTeam/OpenList/internal/bootstrap"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/fs"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/server"
+	"github.com/OpenListTeam/sftpd-openlist"
+	ftpserver "github.com/fclairamb/ftpserverlib"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -236,8 +236,8 @@ func init() {
 	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// OutAlistInit 暴露用于外部启动server的函数
-func OutAlistInit() {
+// OutOpenListInit 暴露用于外部启动server的函数
+func OutOpenListInit() {
 	var (
 		cmd  *cobra.Command
 		args []string

@@ -1,8 +1,8 @@
 package google_drive
 
 import (
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/op"
 )
 
 type Addition struct {
@@ -10,8 +10,10 @@ type Addition struct {
 	RefreshToken   string `json:"refresh_token" required:"true"`
 	OrderBy        string `json:"order_by" type:"string" help:"such as: folder,name,modifiedTime"`
 	OrderDirection string `json:"order_direction" type:"select" options:"asc,desc"`
-	ClientID       string `json:"client_id" required:"true" default:"202264815644.apps.googleusercontent.com"`
-	ClientSecret   string `json:"client_secret" required:"true" default:"X4Z3ca8xfWDb1Voo-F9a7ZxJ"`
+	UseOnlineAPI   bool   `json:"use_online_api" default:"true"`
+	APIAddress     string `json:"api_url_address" default:"https://api.oplist.org/googleui/renewapi"`
+	ClientID       string `json:"client_id"`
+	ClientSecret   string `json:"client_secret"`
 	ChunkSize      int64  `json:"chunk_size" type:"number" default:"5" help:"chunk size while uploading (unit: MB)"`
 }
 

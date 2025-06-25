@@ -1,8 +1,8 @@
 package seafile
 
 import (
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/op"
 )
 
 type Addition struct {
@@ -11,7 +11,7 @@ type Addition struct {
 	Address  string `json:"address" required:"true"`
 	UserName string `json:"username" required:"false"`
 	Password string `json:"password" required:"false"`
-	Token    string `json:"token" required:"false"`	
+	Token    string `json:"token" required:"false"`
 	RepoId   string `json:"repoId" required:"false"`
 	RepoPwd  string `json:"repoPwd" required:"false"`
 }

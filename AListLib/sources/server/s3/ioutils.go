@@ -1,5 +1,5 @@
 // Credits: https://pkg.go.dev/github.com/rclone/rclone@v1.65.2/cmd/serve/s3
-// Package s3 implements a fake s3 server for alist
+// Package s3 implements a fake s3 server for openlist
 package s3
 
 import "io"

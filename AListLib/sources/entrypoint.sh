@@ -3,7 +3,7 @@
 umask ${UMASK}
 
 if [ "$1" = "version" ]; then
-  ./alist version
+  ./openlist version
 else
   if [ "$RUN_ARIA2" = "true" ]; then
     chown -R ${PUID}:${PGID} /opt/aria2/
@@ -14,6 +14,6 @@ else
       >/dev/null 2>&1 &
   fi
 
-  chown -R ${PUID}:${PGID} /opt/alist/
-  exec su-exec ${PUID}:${PGID} ./alist server --no-prefix
+  chown -R ${PUID}:${PGID} /opt/openlist/
+  exec su-exec ${PUID}:${PGID} ./openlist server --no-prefix
 fi

@@ -8,8 +8,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"hash"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	pbPublicUser "github.com/city404/v6-public-rpc-proto/go/v6/user"
 	pubUserFile "github.com/city404/v6-public-rpc-proto/go/v6/userfile"
 	"github.com/google/uuid"
@@ -19,13 +27,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"hash"
-	"io"
-	"net/http"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (

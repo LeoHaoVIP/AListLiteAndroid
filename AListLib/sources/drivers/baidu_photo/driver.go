@@ -13,15 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/sync/semaphore"
-
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/pkg/errgroup"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/pkg/errgroup"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 )
@@ -344,7 +342,7 @@ func (d *BaiduPhoto) Put(ctx context.Context, dstDir model.Obj, stream model.Fil
 			retry.Attempts(3),
 			retry.Delay(time.Second),
 			retry.DelayType(retry.BackOffDelay))
-		sem := semaphore.NewWeighted(3)
+
 		for i, partseq := range precreateResp.BlockList {
 			if utils.IsCanceled(upCtx) {
 				break
@@ -356,10 +354,6 @@ func (d *BaiduPhoto) Put(ctx context.Context, dstDir model.Obj, stream model.Fil
 			}
 
 			threadG.Go(func(ctx context.Context) error {
-				if err = sem.Acquire(ctx, 1); err != nil {
-					return err
-				}
-				defer sem.Release(1)
 				uploadParams := map[string]string{
 					"method":   "upload",
 					"path":     params["path"],

@@ -6,10 +6,10 @@ import (
 	"image/png"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/server/common"
 	"github.com/Xhofe/go-cache"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/server/common"
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/otp/totp"
 )
@@ -136,7 +136,7 @@ func Generate2FA(c *gin.Context) {
 		return
 	}
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "Alist",
+		Issuer:      "OpenList",
 		AccountName: user.Username,
 	})
 	if err != nil {

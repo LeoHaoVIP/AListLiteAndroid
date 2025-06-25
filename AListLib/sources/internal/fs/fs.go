@@ -2,14 +2,15 @@ package fs
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"io"
 
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/internal/task"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/task"
 	"github.com/pkg/errors"
 )
 
@@ -71,6 +72,22 @@ func Move(ctx context.Context, srcPath, dstDirPath string, lazyCache ...bool) er
 		log.Errorf("failed move %s to %s: %+v", srcPath, dstDirPath, err)
 	}
 	return err
+}
+
+func MoveWithTask(ctx context.Context, srcPath, dstDirPath string, lazyCache ...bool) (task.TaskExtensionInfo, error) {
+	res, err := _move(ctx, srcPath, dstDirPath, lazyCache...)
+	if err != nil {
+		log.Errorf("failed move %s to %s: %+v", srcPath, dstDirPath, err)
+	}
+	return res, err
+}
+
+func MoveWithTaskAndValidation(ctx context.Context, srcPath, dstDirPath string, validateExistence bool, lazyCache ...bool) (task.TaskExtensionInfo, error) {
+	res, err := _moveWithValidation(ctx, srcPath, dstDirPath, validateExistence, lazyCache...)
+	if err != nil {
+		log.Errorf("failed move %s to %s: %+v", srcPath, dstDirPath, err)
+	}
+	return res, err
 }
 
 func Copy(ctx context.Context, srcObjPath, dstDirPath string, lazyCache ...bool) (task.TaskExtensionInfo, error) {

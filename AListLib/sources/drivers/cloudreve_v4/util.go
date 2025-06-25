@@ -13,13 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/internal/setting"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/go-resty/resty/v2"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -175,8 +175,7 @@ func (d *CloudreveV4) doLogin(needCaptcha bool) error {
 }
 
 func (d *CloudreveV4) refreshToken() error {
-	var token Token
-	if token.RefreshToken == "" {
+	if d.RefreshToken == "" {
 		if d.Username != "" {
 			err := d.login()
 			if err != nil {
@@ -185,6 +184,7 @@ func (d *CloudreveV4) refreshToken() error {
 		}
 		return nil
 	}
+	var token Token
 	err := d.request(http.MethodPost, "/session/token/refresh", func(req *resty.Request) {
 		req.SetBody(base.Json{
 			"refresh_token": d.RefreshToken,
@@ -352,7 +352,6 @@ func (d *CloudreveV4) upOneDrive(ctx context.Context, file model.FileStreamer, u
 		// req.Header.Set("Content-Length", strconv.Itoa(int(byteSize)))
 		req.Header.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", finish, finish+byteSize-1, file.GetSize()))
 		req.Header.Set("User-Agent", d.getUA())
-		finish += byteSize
 		res, err := base.HttpClient.Do(req)
 		if err != nil {
 			return err
@@ -428,7 +427,7 @@ func (d *CloudreveV4) upS3(ctx context.Context, file model.FileStreamer, u FileU
 			utils.Log.Warnf("server error %d, retrying after %v...", res.StatusCode, backoff)
 			time.Sleep(backoff)
 		case etag == "":
-			return errors.New("faild to get ETag from header")
+			return errors.New("failed to get ETag from header")
 		default:
 			retryCount = 0
 			etags = append(etags, etag)
@@ -470,7 +469,7 @@ func (d *CloudreveV4) upS3(ctx context.Context, file model.FileStreamer, u FileU
 	}
 
 	// 上传成功发送回调请求
-	return d.request(http.MethodPost, "/callback/s3/"+u.SessionID+"/"+u.CallbackSecret, func(req *resty.Request) {
+	return d.request(http.MethodGet, "/callback/s3/"+u.SessionID+"/"+u.CallbackSecret, func(req *resty.Request) {
 		req.SetBody("{}")
 	}, nil)
 }

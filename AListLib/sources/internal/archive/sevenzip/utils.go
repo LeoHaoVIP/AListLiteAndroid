@@ -2,12 +2,13 @@ package sevenzip
 
 import (
 	"errors"
-	"github.com/alist-org/alist/v3/internal/archive/tool"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/stream"
-	"github.com/bodgit/sevenzip"
 	"io"
 	"io/fs"
+
+	"github.com/OpenListTeam/OpenList/internal/archive/tool"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/bodgit/sevenzip"
 )
 
 type WrapReader struct {

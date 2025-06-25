@@ -1,45 +1,41 @@
 <div align="center">
-  <a href="https://alist.nn.ci"><img width="100px" alt="logo" src="https://cdn.jsdelivr.net/gh/alist-org/logo@main/logo.svg"/></a>
-  <p><em>🗂️A file list program that supports multiple storages, powered by Gin and Solidjs.</em></p>
+  <img width="100px" alt="logo" src="https://raw.githubusercontent.com/OpenListTeam/Logo/main/logo.svg"/></a>
+  <p><em>🗂️A file list program that supports multiple storages, powered by Gin and SolidJS, fork of AList.</em></p>
 <div>
-  <a href="https://goreportcard.com/report/github.com/alist-org/alist/v3">
-    <img src="https://goreportcard.com/badge/github.com/alist-org/alist/v3" alt="latest version" />
+  <a href="https://goreportcard.com/report/github.com/OpenListTeam/OpenList/v3">
+    <img src="https://goreportcard.com/badge/github.com/OpenListTeam/OpenList/v3" alt="latest version" />
   </a>
-  <a href="https://github.com/alist-org/alist/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/Xhofe/alist" alt="License" />
+  <a href="https://github.com/OpenListTeam/OpenList/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/OpenListTeam/OpenList" alt="License" />
   </a>
-  <a href="https://github.com/alist-org/alist/actions?query=workflow%3ABuild">
-    <img src="https://img.shields.io/github/actions/workflow/status/Xhofe/alist/build.yml?branch=main" alt="Build status" />
+  <a href="https://github.com/OpenListTeam/OpenList/actions?query=workflow%3ABuild">
+    <img src="https://img.shields.io/github/actions/workflow/status/OpenListTeam/OpenList/build.yml?branch=main" alt="Build status" />
   </a>
-  <a href="https://github.com/alist-org/alist/releases">
-    <img src="https://img.shields.io/github/release/Xhofe/alist" alt="latest version" />
-  </a>
-  <a title="Crowdin" target="_blank" href="https://crwd.in/alist">
-    <img src="https://badges.crowdin.net/alist/localized.svg">
+  <a href="https://github.com/OpenListTeam/OpenList/releases">
+    <img src="https://img.shields.io/github/release/OpenListTeam/OpenList" alt="latest version" />
   </a>
 </div>
 <div>
-  <a href="https://github.com/alist-org/alist/discussions">
-    <img src="https://img.shields.io/github/discussions/Xhofe/alist?color=%23ED8936" alt="discussions" />
+  <a href="https://github.com/OpenListTeam/OpenList/discussions">
+    <img src="https://img.shields.io/github/discussions/OpenListTeam/OpenList?color=%23ED8936" alt="discussions" />
   </a>
-  <a href="https://discord.gg/F4ymsH4xv2">
-    <img src="https://img.shields.io/discord/1018870125102895134?logo=discord" alt="discussions" />
-  </a>
-  <a href="https://github.com/alist-org/alist/releases">
-    <img src="https://img.shields.io/github/downloads/Xhofe/alist/total?color=%239F7AEA&logo=github" alt="Downloads" />
-  </a>
-  <a href="https://hub.docker.com/r/xhofe/alist">
-    <img src="https://img.shields.io/docker/pulls/xhofe/alist?color=%2348BB78&logo=docker&label=pulls" alt="Downloads" />
-  </a>
-  <a href="https://alist.nn.ci/guide/sponsor.html">
-    <img src="https://img.shields.io/badge/%24-sponsor-F87171.svg" alt="sponsor" />
+  <a href="https://github.com/OpenListTeam/OpenList/releases">
+    <img src="https://img.shields.io/github/downloads/OpenListTeam/OpenList/total?color=%239F7AEA&logo=github" alt="Downloads" />
   </a>
 </div>
 </div>
 
 ---
 
-English | [中文](./README_cn.md) | [日本語](./README_ja.md) | [Contributing](./CONTRIBUTING.md) | [CODE_OF_CONDUCT](./CODE_OF_CONDUCT.md)
+> [!IMPORTANT]
+>
+> Drop-in replacement for AList with long-term governance, no hidden risks, and full transparency, built to defend open source against trust-based attacks.
+>
+> We sincerely thank the author [Xhofe](https://github.com/Xhofe) of the original project [AlistGo/alist](https://github.com/AlistGo/alist) and all other contributors.
+>
+> This fork is not yet stable, specific migration progress can be viewed in [OpenList Migration Work Summary](https://github.com/OpenListTeam/OpenList/issues/6).
+
+English | [中文](./README_cn.md) | [日本語](./README_ja.md) | [Contributing](./CONTRIBUTING.md) | [CODE OF CONDUCT](./CODE_OF_CONDUCT.md)
 
 ## Features
 
@@ -88,8 +84,8 @@ English | [中文](./README_cn.md) | [日本語](./README_ja.md) | [Contributing
 - [x] Dark mode
 - [x] I18n
 - [x] Protected routes (password protection and authentication)
-- [x] WebDav (see https://alist.nn.ci/guide/webdav.html for details)
-- [x] [Docker Deploy](https://hub.docker.com/r/xhofe/alist)
+- [x] WebDav (waiting for detail documents)
+- [ ] Docker Deploy (rebuilding)
 - [x] Cloudflare Workers proxy
 - [x] File/Folder package download
 - [x] Web upload(Can allow visitors to upload), delete, mkdir, rename, move and copy
@@ -99,44 +95,35 @@ English | [中文](./README_cn.md) | [日本語](./README_ja.md) | [Contributing
 
 ## Document
 
-<https://alistgo.com/>
+- https://docs.oplist.org
+- https://docs.openlist.team
 
 ## Demo
 
-<https://al.nn.ci>
+N/A (to be rebuilt)
 
 ## Discussion
 
-Please go to our [discussion forum](https://github.com/alist-org/alist/discussions) for general questions, **issues are for bug reports and feature requests only.**
-
-## Sponsor
-
-AList is an open-source software, if you happen to like this project and want me to keep going, please consider sponsoring me or providing a single donation! Thanks for all the love and support:
-https://alist.nn.ci/guide/sponsor.html
-
-### Special sponsors
-
-- [VidHub](https://apps.apple.com/app/apple-store/id1659622164?pt=118612019&ct=alist&mt=8) - An elegant cloud video player within the Apple ecosystem. Support for iPhone, iPad, Mac, and Apple TV.
-- [亚洲云](https://www.asiayun.com/aff/QQCOOQKZ) - 高防服务器|服务器租用|福州高防|广东电信|香港服务器|美国服务器|海外服务器 - 国内靠谱的企业级云计算服务提供商 (sponsored Chinese API server)
-- [找资源](http://zhaoziyuan2.cc/) - 阿里云盘资源搜索引擎
+Please refer to [*Discussions*](https://github.com/OpenListTeam/OpenList/discussions) for raising general questions, ***Issues* is for bug reports and feature requests only.**
 
 ## Contributors
 
 Thanks goes to these wonderful people:
 
-[![Contributors](http://contrib.nn.ci/api?repo=alist-org/alist&repo=alist-org/alist-web&repo=alist-org/docs)](https://github.com/alist-org/alist/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=OpenListTeam/OpenList)](https://github.com/OpenListTeam/OpenList/graphs/contributors)
 
 ## License
 
-The `AList` is open-source software licensed under the AGPL-3.0 license.
+The `OpenList` is open-source software licensed under the AGPL-3.0 license.
 
 ## Disclaimer
+
 - This program is a free and open source project. It is designed to share files on the network disk, which is convenient for downloading and learning Golang. Please abide by relevant laws and regulations when using it, and do not abuse it;
 - This program is implemented by calling the official sdk/interface, without destroying the official interface behavior;
 - This program only does 302 redirect/traffic forwarding, and does not intercept, store, or tamper with any user data;
 - Before using this program, you should understand and bear the corresponding risks, including but not limited to account ban, download speed limit, etc., which is none of this program's business;
-- If there is any infringement, please contact me by [email](mailto:i@nn.ci), and it will be dealt with in time.
+- If there is any infringement, please contact [OpenListTeam](https://github.com/OpenListTeam), and it will be dealt with in time.
 
 ---
 
-> [@GitHub](https://github.com/alist-org) · [@TelegramGroup](https://t.me/alist_chat) · [@Discord](https://discord.gg/F4ymsH4xv2)
+> [@GitHub](https://github.com/OpenListTeam) · [Telegram Group](https://t.me/OpenListTeam) · [Telegram Channel](https://t.me/OpenListOfficial)

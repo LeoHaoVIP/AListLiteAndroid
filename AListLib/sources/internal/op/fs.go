@@ -6,14 +6,14 @@ import (
 	"slices"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/OpenListTeam/OpenList/pkg/generic_sync"
+	"github.com/OpenListTeam/OpenList/pkg/singleflight"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/Xhofe/go-cache"
-	"github.com/alist-org/alist/v3/internal/driver"
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/stream"
-	"github.com/alist-org/alist/v3/pkg/generic_sync"
-	"github.com/alist-org/alist/v3/pkg/singleflight"
-	"github.com/alist-org/alist/v3/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -527,7 +527,7 @@ func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file mod
 	// if file exist and size = 0, delete it
 	dstDirPath = utils.FixAndCleanPath(dstDirPath)
 	dstPath := stdpath.Join(dstDirPath, file.GetName())
-	tempName := file.GetName() + ".alist_to_delete"
+	tempName := file.GetName() + ".openlist_to_delete"
 	tempPath := stdpath.Join(dstDirPath, tempName)
 	fi, err := GetUnwrap(ctx, storage, dstPath)
 	if err == nil {

@@ -1,16 +1,17 @@
-module github.com/alist-org/alist/v3
+module github.com/OpenListTeam/OpenList
 
 go 1.23.4
 
 require (
-	github.com/KirCute/ftpserverlib-pasvportmap v1.25.0
-	github.com/KirCute/sftpd-alist v0.0.12
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.0
+	github.com/OpenListTeam/gofakes3 v0.1.0
+	github.com/OpenListTeam/sftpd-openlist v1.0.1
+	github.com/OpenListTeam/times v0.1.0
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/SheltonZhu/115driver v1.0.34
 	github.com/Xhofe/go-cache v0.0.0-20240804043513-b1a71927bc21
 	github.com/Xhofe/rateg v0.0.0-20230728072201-251a4e1adad4
-	github.com/alist-org/gofakes3 v0.0.7
-	github.com/alist-org/times v0.0.0-20240721124654-efa0c7d3ad92
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go v1.55.5
@@ -26,6 +27,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/dustinxie/ecc v0.0.0-20210511000915-959544187564
+	github.com/fclairamb/ftpserverlib v0.26.1-0.20250611192536-99cb646d0bbe
 	github.com/foxxorcat/mopan-sdk-go v0.1.6
 	github.com/foxxorcat/weiyun-sdk-go v0.1.3
 	github.com/gin-contrib/cors v1.7.2
@@ -41,7 +43,6 @@ require (
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
 	github.com/kdomanski/iso9660 v0.4.0
-	github.com/larksuite/oapi-sdk-go/v3 v3.3.1
 	github.com/maruel/natural v1.1.1
 	github.com/meilisearch/meilisearch-go v0.27.2
 	github.com/mholt/archives v0.1.0
@@ -54,7 +55,7 @@ require (
 	github.com/rclone/rclone v1.67.0
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/afero v1.11.0
+	github.com/spf13/afero v1.14.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20240219080617-d494b6a8ace7
@@ -65,10 +66,10 @@ require (
 	github.com/xhofe/wopan-sdk-go v0.1.3
 	github.com/yeka/zip v0.0.0-20231116150916-03d6312748a9
 	github.com/zzzhr1990/go-common-entity v0.0.0-20221216044934-fd1c571e3a22
-	golang.org/x/crypto v0.39.0
+	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e
-	golang.org/x/image v0.28.0
-	golang.org/x/net v0.41.0
+	golang.org/x/image v0.19.0
+	golang.org/x/net v0.38.0
 	golang.org/x/oauth2 v0.22.0
 	golang.org/x/time v0.8.0
 	google.golang.org/appengine v1.6.8
@@ -79,13 +80,7 @@ require (
 	gorm.io/gorm v1.25.11
 )
 
-require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.0 // indirect
-	golang.org/x/mobile v0.0.0-20250606033058-a2a15c67f36f // indirect
-	golang.org/x/mod v0.25.0 // indirect
-)
+require github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 
 require (
 	github.com/STARRY-S/zip v0.2.1 // indirect
@@ -103,7 +98,7 @@ require (
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
-	github.com/fclairamb/go-log v0.5.0 // indirect
+	github.com/fclairamb/go-log v0.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
@@ -200,7 +195,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20231016141302-07b5767bb0ed // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
@@ -254,11 +249,11 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.etcd.io/bbolt v1.3.8 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/sync v0.15.0
+	golang.org/x/sync v0.12.0
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.26.0
-	golang.org/x/tools v0.34.0 // indirect
+	golang.org/x/text v0.23.0
+	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/api v0.169.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/grpc v1.66.0

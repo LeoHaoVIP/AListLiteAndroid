@@ -2,18 +2,19 @@ package handles
 
 import (
 	"fmt"
-	"github.com/alist-org/alist/v3/internal/task"
 	"io"
 	stdpath "path"
 
-	"github.com/alist-org/alist/v3/internal/errs"
-	"github.com/alist-org/alist/v3/internal/fs"
-	"github.com/alist-org/alist/v3/internal/model"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/internal/sign"
-	"github.com/alist-org/alist/v3/pkg/generic"
-	"github.com/alist-org/alist/v3/pkg/utils"
-	"github.com/alist-org/alist/v3/server/common"
+	"github.com/OpenListTeam/OpenList/internal/task"
+
+	"github.com/OpenListTeam/OpenList/internal/errs"
+	"github.com/OpenListTeam/OpenList/internal/fs"
+	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/internal/sign"
+	"github.com/OpenListTeam/OpenList/pkg/generic"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/server/common"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -87,22 +88,32 @@ func FsMove(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	if !req.Overwrite {
-		for _, name := range req.Names {
-			if res, _ := fs.Get(c, stdpath.Join(dstDir, name), &fs.GetArgs{NoLog: true}); res != nil {
-				common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", name), 403)
-				return
-			}
-		}
-	}
+	
+	// Create all tasks immediately without any synchronous validation
+	// All validation will be done asynchronously in the background
+	var addedTasks []task.TaskExtensionInfo
 	for i, name := range req.Names {
-		err := fs.Move(c, stdpath.Join(srcDir, name), dstDir, len(req.Names) > i+1)
+		t, err := fs.MoveWithTaskAndValidation(c, stdpath.Join(srcDir, name), dstDir, !req.Overwrite, len(req.Names) > i+1)
+		if t != nil {
+			addedTasks = append(addedTasks, t)
+		}
 		if err != nil {
 			common.ErrorResp(c, err, 500)
 			return
 		}
 	}
-	common.SuccessResp(c)
+	
+	// Return immediately with task information
+	if len(addedTasks) > 0 {
+		common.SuccessResp(c, gin.H{
+			"message": fmt.Sprintf("Successfully created %d move task(s)", len(addedTasks)),
+			"tasks": getTaskInfos(addedTasks),
+		})
+	} else {
+		common.SuccessResp(c, gin.H{
+			"message": "Move operations completed immediately",
+		})
+	}
 }
 
 func FsCopy(c *gin.Context) {
@@ -130,14 +141,9 @@ func FsCopy(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	if !req.Overwrite {
-		for _, name := range req.Names {
-			if res, _ := fs.Get(c, stdpath.Join(dstDir, name), &fs.GetArgs{NoLog: true}); res != nil {
-				common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", name), 403)
-				return
-			}
-		}
-	}
+	
+	// Create all tasks immediately without any synchronous validation
+	// All validation will be done asynchronously in the background
 	var addedTasks []task.TaskExtensionInfo
 	for i, name := range req.Names {
 		t, err := fs.Copy(c, stdpath.Join(srcDir, name), dstDir, len(req.Names) > i+1)
@@ -149,9 +155,18 @@ func FsCopy(c *gin.Context) {
 			return
 		}
 	}
-	common.SuccessResp(c, gin.H{
-		"tasks": getTaskInfos(addedTasks),
-	})
+	
+	// Return immediately with task information
+	if len(addedTasks) > 0 {
+		common.SuccessResp(c, gin.H{
+			"message": fmt.Sprintf("Successfully created %d copy task(s)", len(addedTasks)),
+			"tasks": getTaskInfos(addedTasks),
+		})
+	} else {
+		common.SuccessResp(c, gin.H{
+			"message": "Copy operations completed immediately",
+		})
+	}
 }
 
 type RenameReq struct {

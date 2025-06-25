@@ -3,8 +3,8 @@ package LenovoNasShare
 import (
 	"errors"
 
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -13,7 +13,7 @@ func (d *LenovoNasShare) request(url string, method string, callback base.ReqCal
 	req.SetHeaders(map[string]string{
 		"origin":      "https://siot-share.lenovo.com.cn",
 		"referer":     "https://siot-share.lenovo.com.cn/",
-		"user-agent":  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) alist-client",
+		"user-agent":  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) openlist-client",
 		"platform":    "web",
 		"app-version": "3",
 	})

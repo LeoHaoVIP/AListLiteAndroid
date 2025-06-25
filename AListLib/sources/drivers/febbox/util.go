@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/go-resty/resty/v2"
 	"net/http"
 	"strconv"
+
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/go-resty/resty/v2"
 )
 
 func (d *FebBox) refreshTokenByOAuth2() error {

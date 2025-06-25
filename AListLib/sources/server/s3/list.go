@@ -1,12 +1,12 @@
 // Credits: https://pkg.go.dev/github.com/rclone/rclone@v1.65.2/cmd/serve/s3
-// Package s3 implements a fake s3 server for alist
+// Package s3 implements a fake s3 server for openlist
 package s3
 
 import (
 	"path"
 	"strings"
 
-	"github.com/alist-org/gofakes3"
+	"github.com/OpenListTeam/gofakes3"
 )
 
 func (b *s3Backend) entryListR(bucket, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {

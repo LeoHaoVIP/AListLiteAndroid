@@ -11,12 +11,12 @@ import (
 	"reflect"
 	"strings"
 
-	_ "github.com/alist-org/alist/v3/drivers"
-	"github.com/alist-org/alist/v3/internal/bootstrap"
-	"github.com/alist-org/alist/v3/internal/bootstrap/data"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/op"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	_ "github.com/OpenListTeam/OpenList/drivers"
+	"github.com/OpenListTeam/OpenList/internal/bootstrap"
+	"github.com/OpenListTeam/OpenList/internal/bootstrap/data"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +24,8 @@ import (
 type KV[V any] map[string]V
 
 type Drivers KV[KV[interface{}]]
+
+var frontendPath string
 
 func firstUpper(s string) string {
 	if s == "" {
@@ -39,7 +41,7 @@ func convert(s string) string {
 }
 
 func writeFile(name string, data interface{}) {
-	f, err := os.Open(fmt.Sprintf("../alist-web/src/lang/en/%s.json", name))
+	f, err := os.Open(fmt.Sprintf("%s/src/lang/en/%s.json", frontendPath, name))
 	if err != nil {
 		log.Errorf("failed to open %s.json: %+v", name, err)
 		return
@@ -138,6 +140,7 @@ var LangCmd = &cobra.Command{
 	Use:   "lang",
 	Short: "Generate language json file",
 	Run: func(cmd *cobra.Command, args []string) {
+		frontendPath, _ = cmd.Flags().GetString("frontend-path")
 		bootstrap.InitConfig()
 		err := os.MkdirAll("lang", 0777)
 		if err != nil {
@@ -150,6 +153,9 @@ var LangCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(LangCmd)
+
+	// Add frontend-path flag
+	LangCmd.Flags().String("frontend-path", "../OpenList-Frontend", "Path to the frontend project directory")
 
 	// Here you will define your flags and configuration settings.
 

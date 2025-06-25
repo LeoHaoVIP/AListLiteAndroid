@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alist-org/alist/v3/drivers/base"
+	"github.com/OpenListTeam/OpenList/drivers/base"
 	"github.com/go-resty/resty/v2"
 )
 
 // do others that not defined in Driver interface
 
 const (
-	FETCH_ALL = "all"
-	FETCH_ALBUMS = "albums"
-	FETCH_ROOT = "root"
+	FETCH_ALL          = "all"
+	FETCH_ALBUMS       = "albums"
+	FETCH_ROOT         = "root"
 	FETCH_SHARE_ALBUMS = "share_albums"
 )
 
@@ -89,16 +89,16 @@ func (d *GooglePhoto) getFiles(id string) ([]MediaItem, error) {
 func (d *GooglePhoto) getFakeRoot() ([]MediaItem, error) {
 	return []MediaItem{
 		{
-			Id: FETCH_ALL,
-			Title: "全部媒体",
+			Id:    FETCH_ALL,
+			Title: FETCH_ALL,
 		},
 		{
-			Id: FETCH_ALBUMS,
-			Title: "全部影集",
+			Id:    FETCH_ALBUMS,
+			Title: FETCH_ALBUMS,
 		},
 		{
-			Id: FETCH_SHARE_ALBUMS,
-			Title: "共享影集",
+			Id:    FETCH_SHARE_ALBUMS,
+			Title: FETCH_SHARE_ALBUMS,
 		},
 	}, nil
 }
@@ -131,7 +131,7 @@ func (d *GooglePhoto) getMedias(albumId string) ([]MediaItem, error) {
 		map[string]string{
 			"fields":    "mediaItems(id,baseUrl,mimeType,mediaMetadata,filename),nextPageToken",
 			"pageSize":  "100",
-			"albumId": albumId,
+			"albumId":   albumId,
 			"pageToken": "first",
 		}, http.MethodPost)
 }
@@ -163,7 +163,7 @@ func (d *GooglePhoto) getMedia(id string) (MediaItem, error) {
 	return resp, nil
 }
 
-func (d *GooglePhoto) fetchItems(url string, query map[string]string, method string) ([]MediaItem, error){
+func (d *GooglePhoto) fetchItems(url string, query map[string]string, method string) ([]MediaItem, error) {
 	res := make([]MediaItem, 0)
 	for query["pageToken"] != "" {
 		if query["pageToken"] == "first" {

@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alist-org/alist/v3/cmd/flags"
-	"github.com/alist-org/alist/v3/drivers/base"
-	"github.com/alist-org/alist/v3/internal/conf"
-	"github.com/alist-org/alist/v3/internal/net"
-	"github.com/alist-org/alist/v3/pkg/utils"
+	"github.com/OpenListTeam/OpenList/cmd/flags"
+	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/internal/net"
+	"github.com/OpenListTeam/OpenList/pkg/utils"
 	"github.com/caarlos0/env/v9"
 	log "github.com/sirupsen/logrus"
 )
@@ -88,7 +88,7 @@ func InitConfig() {
 }
 
 func confFromEnv() {
-	prefix := "ALIST_"
+	prefix := "OPENLIST_"
 	if flags.NoPrefix {
 		prefix = ""
 	}
