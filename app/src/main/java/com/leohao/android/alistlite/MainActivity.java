@@ -572,7 +572,7 @@ public class MainActivity extends AppCompatActivity {
                 //最新版本基于的AList版本
                 String latestOnAlistVersion = release.getStr("name").substring(12);
                 //版本更新日志
-                String updateJournal = String.format("\uD83D\uDD25 新版本基于 AList %s 构建\r\n\r\n%s", latestOnAlistVersion, release.getStr("body"));
+                String updateJournal = String.format("\uD83D\uDD25 新版本基于 OpenList %s 构建\r\n\r\n%s", latestOnAlistVersion, release.getStr("body"));
                 //新版本APK下载地址（Github）
                 String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
                 //镜像加速地址
