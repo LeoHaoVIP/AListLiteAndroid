@@ -4,11 +4,9 @@ builtAt="$(date +'%F %T %z')"
 gitAuthor="The OpenList Projects Contributors <noreply@openlist.team>"
 gitCommit=$(git log --pretty=format:"%h" -1)
 
-githubAuthHeader=""
-githubAuthValue=""
+githubAuthArgs=""
 if [ -n "$GITHUB_TOKEN" ]; then
-  githubAuthHeader="--header"
-  githubAuthValue="Authorization: Bearer $GITHUB_TOKEN"
+  githubAuthArgs="--header \"Authorization: Bearer $GITHUB_TOKEN\""
 fi
 
 if [ "$1" = "dev" ]; then
@@ -21,7 +19,7 @@ else
   git tag -d beta || true
   # Always true if there's no tag
   version=$(git describe --abbrev=0 --tags 2>/dev/null || echo "v0.0.0")
-  webVersion=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+  webVersion=$(eval "curl -fsSL --max-time 2 $githubAuthArgs \"https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest\"" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
 fi
 
 echo "backend version: $version"
@@ -37,12 +35,12 @@ ldflags="\
 "
 
 FetchWebDev() {
-  pre_release_tag=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases | jq -r 'map(select(.prerelease)) | first | .tag_name')
+  pre_release_tag=$(eval "curl -fsSL --max-time 2 $githubAuthArgs https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases" | jq -r 'map(select(.prerelease)) | first | .tag_name')
   if [ -z "$pre_release_tag" ] || [ "$pre_release_tag" == "null" ]; then
     # fall back to latest release
-    pre_release_json=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest")
+    pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest\"")
   else
-    pre_release_json=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/tags/$pre_release_tag")
+    pre_release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/tags/$pre_release_tag\"")
   fi
   pre_release_assets=$(echo "$pre_release_json" | jq -r '.assets[].browser_download_url')
   pre_release_tar_url=$(echo "$pre_release_assets" | grep "openlist-frontend-dist" | grep "\.tar\.gz$")
@@ -53,7 +51,7 @@ FetchWebDev() {
 }
 
 FetchWebRelease() {
-  release_json=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest")
+  release_json=$(eval "curl -fsSL --max-time 2 $githubAuthArgs -H \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/OpenListTeam/OpenList-Frontend/releases/latest\"")
   release_assets=$(echo "$release_json" | jq -r '.assets[].browser_download_url')
   release_tar_url=$(echo "$release_assets" | grep "openlist-frontend-dist" | grep "\.tar\.gz$")
   curl -fsSL "$release_tar_url" -o dist.tar.gz
@@ -254,7 +252,7 @@ BuildReleaseFreeBSD() {
   mkdir -p "build/freebsd"
   
   # Get latest FreeBSD 14.x release version from GitHub 
-  freebsd_version=$(curl -fsSL --max-time 2 $githubAuthHeader $githubAuthValue "https://api.github.com/repos/freebsd/freebsd-src/tags" | \
+  freebsd_version=$(eval "curl -fsSL --max-time 2 $githubAuthArgs \"https://api.github.com/repos/freebsd/freebsd-src/tags\"" | \
     jq -r '.[].name' | \
     grep '^release/14\.' | \
     sort -V | \

@@ -18,8 +18,9 @@ type Addition struct {
 }
 
 type Conf struct {
-	ua  string
-	api string
+	ua     string
+	api    string
+	userId string
 }
 
 func init() {

@@ -34,7 +34,19 @@ func (d *QuarkOpen) GetAddition() driver.Additional {
 }
 
 func (d *QuarkOpen) Init(ctx context.Context) error {
-	_, err := d.request(ctx, "/open/v1/user/info", http.MethodGet, nil, nil)
+	var resp UserInfoResp
+
+	_, err := d.request(ctx, "/open/v1/user/info", http.MethodGet, nil, &resp)
+	if err != nil {
+		return err
+	}
+
+	if resp.Data.UserID != "" {
+		d.conf.userId = resp.Data.UserID
+	} else {
+		return errors.New("failed to get user ID")
+	}
+
 	return err
 }
 
@@ -161,6 +173,12 @@ func (d *QuarkOpen) Put(ctx context.Context, dstDir model.Obj, stream model.File
 	if err != nil {
 		return err
 	}
+	// 如果预上传已经完成，直接返回--秒传
+	if pre.Data.Finish == true {
+		up(100)
+		return nil
+	}
+
 	// get part info
 	partInfo := d._getPartInfo(stream, pre.Data.PartSize)
 	// get upload url info

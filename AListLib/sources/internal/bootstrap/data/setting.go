@@ -128,7 +128,7 @@ func InitialSettings() []model.SettingItem {
 		"PDF.js":"/assets/pdfjs/web/viewer.html?file=$e_url"
 	},
 	"epub": {
-		"EPUB.js":"https://alist-org.github.io/static/epub.js/viewer.html?url=$e_url"
+		"EPUB.js":"https://res.oplist.org/epub.js/viewer.html?url=$e_url"
 	}
 }`, Type: conf.TypeText, Group: model.PREVIEW},
 		//		{Key: conf.OfficeViewers, Value: `{

@@ -1,9 +1,8 @@
 package quark_open
 
 import (
-	"time"
-
 	"github.com/OpenListTeam/OpenList/internal/model"
+	"time"
 )
 
 type Resp struct {
@@ -15,6 +14,17 @@ type Resp struct {
 type CommonRsp struct {
 	Status int    `json:"status"`
 	ReqID  string `json:"req_id"`
+}
+
+type UserInfo struct {
+	UserID    string `json:"user_id"`
+	Nickname  string `json:"nickname"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+type UserInfoResp struct {
+	CommonRsp
+	Data UserInfo `json:"data"`
 }
 
 type RefreshTokenOnlineAPIResp struct {
@@ -38,13 +48,17 @@ type File struct {
 	UpdatedAt    int64  `json:"updated_at"`
 }
 
-func fileToObj(f File) *model.Object {
-	return &model.Object{
-		ID:       f.Fid,
-		Name:     f.FileName,
-		Size:     f.Size,
-		Modified: time.UnixMilli(f.UpdatedAt),
-		IsFolder: f.FileType == "0",
+func fileToObj(f File) *model.ObjThumb {
+	return &model.ObjThumb{
+		Object: model.Object{
+			ID:       f.Fid,
+			Name:     f.FileName,
+			Size:     f.Size,
+			Modified: time.UnixMilli(f.UpdatedAt),
+			IsFolder: f.FileType == "0",
+			Ctime:    time.UnixMilli(f.CreatedAt),
+		},
+		Thumbnail: model.Thumbnail{Thumbnail: f.ThumbnailURL},
 	}
 }
 
