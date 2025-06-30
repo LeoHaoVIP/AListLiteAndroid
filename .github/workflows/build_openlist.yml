@@ -18,6 +18,7 @@ jobs:
 
       - name: build openlist aar
         run: |
+          export PATH=$PATH:$GOPATH/bin
           cd $GITHUB_WORKSPACE/AListLib/scripts
           sh install_alist.sh
           sh install_gomobile.sh
