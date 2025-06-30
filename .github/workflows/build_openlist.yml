@@ -18,11 +18,9 @@ jobs:
 
       - name: build openlist aar
         run: |
-          export PATH=$PATH:$GOPATH/bin
           cd $GITHUB_WORKSPACE/AListLib/scripts
           sh install_alist.sh
           sh install_gomobile.sh
-          cd $GITHUB_WORKSPACE/AListLib/sources
-          gomobile bind -ldflags "-s -w" -v -androidapi 21 "github.com/OpenListTeam/OpenList/alistlib"
+          sh build_aar.sh
           cp -f $GITHUB_WORKSPACE/AListLib/sources/alistlib.aar $GITHUB_WORKSPACE/app/libs          
           
