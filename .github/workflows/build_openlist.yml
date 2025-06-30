@@ -1,4 +1,4 @@
-name: release
+name: build_openlist
 
 on:
   # 支持手动触发
@@ -12,7 +12,7 @@ jobs:
         with:
           go-version: 1.24.1
           cache-dependency-path: ${{ github.workspace }}/AListLib/go.sum
-      - name: build_openlist
+      - name: build openlist aar
         run: |
           cd $GITHUB_WORKSPACE/AListLib/scripts
           sh install_alist.sh
