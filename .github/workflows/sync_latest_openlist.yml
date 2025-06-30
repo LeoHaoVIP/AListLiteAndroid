@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: check_openlist_has_new_version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
           export CURRENT_OPENLIST_VERSION=$(sed -n 's/.*OPENLIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)
@@ -25,7 +27,7 @@ jobs:
           echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
           echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
           if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
-              echo "AList Need to Be Updated!"
+              echo "OpenList Need to Be Updated!"
               gh workflow run release.yaml -R LeoHaoVIP/AListLiteAndroid
           else
               echo "No Need to Update."
