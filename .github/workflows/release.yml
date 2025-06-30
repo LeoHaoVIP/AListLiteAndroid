@@ -3,7 +3,7 @@ name: release
 on:
   # 支持手动触发
   workflow_dispatch:
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,4 +11,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: release
         run: |
-          echo "TO BE ADDED"
+          cp -f $GITHUB_WORKSPACE/AListLib/sources/alistlib.aar $GITHUB_WORKSPACE/app/libs
+          sh post_install.sh
+          
+          
+          

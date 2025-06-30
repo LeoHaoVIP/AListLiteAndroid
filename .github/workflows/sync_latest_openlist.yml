@@ -1,0 +1,32 @@
+name: sync_latest_openlist
+
+on:
+  # 支持手动触发
+  workflow_dispatch:
+  # 每小时执行一次
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    branches:
+      - "master"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout_code
+        uses: actions/checkout@v3
+
+      - name: check_openlist_has_new_version
+        run: |
+          cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
+          export CURRENT_OPENLIST_VERSION=$(sed -n 's/.*OPENLIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)
+          export LATEST_OPENLIST_VERSION=$(curl -sL -k https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
+          echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
+          echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
+          if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
+              echo "AList Need to Be Updated!"
+              gh workflow run release.yaml -R LeoHaoVIP/AListLiteAndroid
+          else
+              echo "No Need to Update."
+          fi

@@ -1,0 +1,22 @@
+name: release
+
+on:
+  # 支持手动触发
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: build_openlist
+      - uses: actions/setup-go@v4
+          with:
+            go-version: 1.24.1
+            cache-dependency-path: ${{ github.workspace }}/AListLib/go.sum
+        run: |
+          cd $GITHUB_WORKSPACE/AListLib/scripts
+          sh install_alist.sh
+          sh install_gomobile.sh
+          sh build_aar.sh
+          cp -f $GITHUB_WORKSPACE/AListLib/sources/alistlib.aar $GITHUB_WORKSPACE/app/libs          
+          

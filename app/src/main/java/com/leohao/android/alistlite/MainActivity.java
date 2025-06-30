@@ -628,7 +628,7 @@ public class MainActivity extends AppCompatActivity {
      * 获取当前AList版本
      */
     private String getCurrentAlistVersion() {
-        return Constants.ALIST_VERSION;
+        return Constants.OPENLIST_VERSION;
     }
 
     public static MainActivity getInstance() {
