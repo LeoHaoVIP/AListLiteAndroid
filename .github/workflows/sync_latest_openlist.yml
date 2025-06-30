@@ -6,9 +6,6 @@ on:
   # 每小时执行一次
   schedule:
     - cron: "0 0 * * *"
-  push:
-    branches:
-      - "master"
 
 jobs:
   build:
@@ -23,7 +20,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
           export CURRENT_OPENLIST_VERSION=$(sed -n 's/.*OPENLIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)
-          export LATEST_OPENLIST_VERSION=$(curl -sL -k https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
+          export LATEST_OPENLIST_VERSION=$(curl -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
           echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
           if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
