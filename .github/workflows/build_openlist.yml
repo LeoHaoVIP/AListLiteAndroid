@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: build_openlist
-      - uses: actions/setup-go@v4
+        uses: actions/setup-go@v4
           with:
             go-version: 1.24.1
             cache-dependency-path: ${{ github.workspace }}/AListLib/go.sum

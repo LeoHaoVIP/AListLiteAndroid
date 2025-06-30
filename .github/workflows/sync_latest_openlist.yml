@@ -25,7 +25,7 @@ jobs:
           echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
           if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
               echo "OpenList Need to Be Updated!"
-              gh workflow run release.yml -R LeoHaoVIP/AListLiteAndroid
+              gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
           else
               echo "No Need to Update."
           fi
