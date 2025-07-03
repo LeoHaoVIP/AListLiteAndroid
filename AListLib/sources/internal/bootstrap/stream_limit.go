@@ -3,10 +3,10 @@ package bootstrap
 import (
 	"context"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/setting"
-	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"golang.org/x/time/rate"
 )
 

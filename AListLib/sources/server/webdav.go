@@ -1,20 +1,18 @@
 package server
 
 import (
-	"context"
 	"crypto/subtle"
 	"net/http"
 	"path"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/stream"
-	"github.com/OpenListTeam/OpenList/server/middlewares"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
+	"github.com/OpenListTeam/OpenList/v4/server/middlewares"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/setting"
-	"github.com/OpenListTeam/OpenList/server/webdav"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/server/webdav"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -45,9 +43,7 @@ func WebDav(dav *gin.RouterGroup) {
 }
 
 func ServeWebDAV(c *gin.Context) {
-	user := c.MustGet("user").(*model.User)
-	ctx := context.WithValue(c.Request.Context(), "user", user)
-	handler.ServeHTTP(c.Writer, c.Request.WithContext(ctx))
+	handler.ServeHTTP(c.Writer, c.Request.WithContext(c))
 }
 
 func WebDAVAuth(c *gin.Context) {

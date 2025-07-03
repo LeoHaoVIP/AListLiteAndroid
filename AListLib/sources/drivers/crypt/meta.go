@@ -1,8 +1,8 @@
 package crypt
 
 import (
-	"github.com/OpenListTeam/OpenList/internal/driver"
-	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
 )
 
 type Addition struct {
@@ -28,7 +28,7 @@ type Addition struct {
 var config = driver.Config{
 	Name:              "Crypt",
 	LocalSort:         true,
-	OnlyLocal:         false,
+	OnlyLocal:         true,
 	OnlyProxy:         true,
 	NoCache:           true,
 	NoUpload:          false,

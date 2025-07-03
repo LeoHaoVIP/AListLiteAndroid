@@ -16,14 +16,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 )
 
 type Handler struct {
@@ -241,12 +241,12 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	storage, _ := fs.GetStorage(reqPath, &fs.GetStoragesArgs{})
 	downProxyUrl := storage.GetStorage().DownProxyUrl
 	if storage.GetStorage().WebdavNative() || (storage.GetStorage().WebdavProxy() && downProxyUrl == "") {
-		link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{Header: r.Header, HttpReq: r})
+		link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{Header: r.Header})
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}
 		if storage.GetStorage().ProxyRange {
-			common.ProxyRange(link, fi.GetSize())
+			common.ProxyRange(ctx, link, fi.GetSize())
 		}
 		err = common.Proxy(w, r, link, fi)
 		if err != nil {
@@ -260,7 +260,7 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		w.Header().Set("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
 		http.Redirect(w, r, u, http.StatusFound)
 	} else {
-		link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{IP: utils.ClientIP(r), Header: r.Header, HttpReq: r, Redirect: true})
+		link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{IP: utils.ClientIP(r), Header: r.Header, Redirect: true})
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}

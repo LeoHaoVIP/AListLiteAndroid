@@ -5,18 +5,18 @@ import (
 	"fmt"
 	stdpath "path"
 
-	"github.com/OpenListTeam/OpenList/internal/task"
+	"github.com/OpenListTeam/OpenList/v4/internal/task"
 
-	"github.com/OpenListTeam/OpenList/internal/archive/tool"
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/setting"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/archive/tool"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -101,9 +101,8 @@ func FsArchiveMeta(c *gin.Context) {
 	}
 	archiveArgs := model.ArchiveArgs{
 		LinkArgs: model.LinkArgs{
-			Header:  c.Request.Header,
-			Type:    c.Query("type"),
-			HttpReq: c.Request,
+			Header: c.Request.Header,
+			Type:   c.Query("type"),
 		},
 		Password: req.ArchivePass,
 	}
@@ -132,7 +131,7 @@ func FsArchiveMeta(c *gin.Context) {
 		IsEncrypted: ret.IsEncrypted(),
 		Content:     toContentResp(ret.GetTree()),
 		Sort:        ret.Sort,
-		RawURL:      fmt.Sprintf("%s%s%s", common.GetApiUrl(c.Request), api, utils.EncodePath(reqPath, true)),
+		RawURL:      fmt.Sprintf("%s%s%s", common.GetApiUrl(c), api, utils.EncodePath(reqPath, true)),
 		Sign:        s,
 	})
 }
@@ -181,9 +180,8 @@ func FsArchiveList(c *gin.Context) {
 		ArchiveInnerArgs: model.ArchiveInnerArgs{
 			ArchiveArgs: model.ArchiveArgs{
 				LinkArgs: model.LinkArgs{
-					Header:  c.Request.Header,
-					Type:    c.Query("type"),
-					HttpReq: c.Request,
+					Header: c.Request.Header,
+					Type:   c.Query("type"),
 				},
 				Password: req.ArchivePass,
 			},
@@ -266,9 +264,8 @@ func FsArchiveDecompress(c *gin.Context) {
 			ArchiveInnerArgs: model.ArchiveInnerArgs{
 				ArchiveArgs: model.ArchiveArgs{
 					LinkArgs: model.LinkArgs{
-						Header:  c.Request.Header,
-						Type:    c.Query("type"),
-						HttpReq: c.Request,
+						Header: c.Request.Header,
+						Type:   c.Query("type"),
 					},
 					Password: req.ArchivePass,
 				},
@@ -314,7 +311,6 @@ func ArchiveDown(c *gin.Context) {
 					IP:       c.ClientIP(),
 					Header:   c.Request.Header,
 					Type:     c.Query("type"),
-					HttpReq:  c.Request,
 					Redirect: true,
 				},
 				Password: password,
@@ -344,9 +340,8 @@ func ArchiveProxy(c *gin.Context) {
 		link, file, err := fs.ArchiveDriverExtract(c, archiveRawPath, model.ArchiveInnerArgs{
 			ArchiveArgs: model.ArchiveArgs{
 				LinkArgs: model.LinkArgs{
-					Header:  c.Request.Header,
-					Type:    c.Query("type"),
-					HttpReq: c.Request,
+					Header: c.Request.Header,
+					Type:   c.Query("type"),
 				},
 				Password: password,
 			},
@@ -370,9 +365,8 @@ func ArchiveInternalExtract(c *gin.Context) {
 	rc, size, err := fs.ArchiveInternalExtract(c, archiveRawPath, model.ArchiveInnerArgs{
 		ArchiveArgs: model.ArchiveArgs{
 			LinkArgs: model.LinkArgs{
-				Header:  c.Request.Header,
-				Type:    c.Query("type"),
-				HttpReq: c.Request,
+				Header: c.Request.Header,
+				Type:   c.Query("type"),
 			},
 			Password: password,
 		},

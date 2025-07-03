@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/setting"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 )
@@ -296,7 +296,7 @@ func FsGet(c *gin.Context) {
 					sign.Sign(reqPath))
 			} else {
 				rawURL = fmt.Sprintf("%s/p%s%s",
-					common.GetApiUrl(c.Request),
+					common.GetApiUrl(c),
 					utils.EncodePath(reqPath, true),
 					query)
 			}
@@ -309,7 +309,6 @@ func FsGet(c *gin.Context) {
 				link, _, err := fs.Link(c, reqPath, model.LinkArgs{
 					IP:       c.ClientIP(),
 					Header:   c.Request.Header,
-					HttpReq:  c.Request,
 					Redirect: true,
 				})
 				if err != nil {

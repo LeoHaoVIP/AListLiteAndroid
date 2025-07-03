@@ -3,8 +3,8 @@ package netease_music
 import (
 	"regexp"
 
-	"github.com/OpenListTeam/OpenList/internal/driver"
-	"github.com/OpenListTeam/OpenList/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
 )
 
 type Addition struct {

@@ -1,6 +1,6 @@
 package url_tree
 
-import "github.com/OpenListTeam/OpenList/pkg/utils"
+import "github.com/OpenListTeam/OpenList/v4/pkg/utils"
 
 // Node is a node in the folder tree
 type Node struct {

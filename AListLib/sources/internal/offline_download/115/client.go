@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
 
-	_115 "github.com/OpenListTeam/OpenList/drivers/115"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/offline_download/tool"
-	"github.com/OpenListTeam/OpenList/internal/op"
+	_115 "github.com/OpenListTeam/OpenList/v4/drivers/115"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/offline_download/tool"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
 )
 
 type Cloud115 struct {

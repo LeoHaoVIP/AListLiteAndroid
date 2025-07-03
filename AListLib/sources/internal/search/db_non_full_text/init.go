@@ -1,7 +1,7 @@
 package db_non_full_text
 
 import (
-	"github.com/OpenListTeam/OpenList/internal/search/searcher"
+	"github.com/OpenListTeam/OpenList/v4/internal/search/searcher"
 )
 
 var config = searcher.Config{

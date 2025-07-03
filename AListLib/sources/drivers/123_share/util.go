@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/OpenListTeam/OpenList/drivers/base"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/drivers/base"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/go-resty/resty/v2"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -61,7 +61,7 @@ func (d *Pan123Share) request(url string, method string, callback base.ReqCallba
 		"origin":        "https://www.123pan.com",
 		"referer":       "https://www.123pan.com/",
 		"authorization": "Bearer " + d.AccessToken,
-		"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) opnelist-client",
+		"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) openlist-client",
 		"platform":      "web",
 		"app-version":   "3",
 		//"user-agent":    base.UserAgent,

@@ -7,17 +7,17 @@ import (
 	stdpath "path"
 	"path/filepath"
 
-	_115 "github.com/OpenListTeam/OpenList/drivers/115"
-	"github.com/OpenListTeam/OpenList/drivers/pikpak"
-	"github.com/OpenListTeam/OpenList/drivers/thunder"
-	"github.com/OpenListTeam/OpenList/drivers/thunder_browser"
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/setting"
-	"github.com/OpenListTeam/OpenList/internal/task"
+	_115 "github.com/OpenListTeam/OpenList/v4/drivers/115"
+	"github.com/OpenListTeam/OpenList/v4/drivers/pikpak"
+	"github.com/OpenListTeam/OpenList/v4/drivers/thunder"
+	"github.com/OpenListTeam/OpenList/v4/drivers/thunder_browser"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/internal/task"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
@@ -29,6 +29,7 @@ const (
 	DeleteOnUploadFailed  DeletePolicy = "delete_on_upload_failed"
 	DeleteNever           DeletePolicy = "delete_never"
 	DeleteAlways          DeletePolicy = "delete_always"
+	UploadDownloadStream  DeletePolicy = "upload_download_stream"
 )
 
 type AddURLArgs struct {

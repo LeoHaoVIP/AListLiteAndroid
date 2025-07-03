@@ -5,16 +5,16 @@ import (
 	"io"
 	stdpath "path"
 
-	"github.com/OpenListTeam/OpenList/internal/task"
+	"github.com/OpenListTeam/OpenList/v4/internal/task"
 
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/pkg/generic"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/pkg/generic"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -88,7 +88,16 @@ func FsMove(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	
+
+	if !req.Overwrite {
+		for _, name := range req.Names {
+			if res, _ := fs.Get(c, stdpath.Join(dstDir, name), &fs.GetArgs{NoLog: true}); res != nil {
+				common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", name), 403)
+				return
+			}
+		}
+	}
+
 	// Create all tasks immediately without any synchronous validation
 	// All validation will be done asynchronously in the background
 	var addedTasks []task.TaskExtensionInfo
@@ -102,12 +111,12 @@ func FsMove(c *gin.Context) {
 			return
 		}
 	}
-	
+
 	// Return immediately with task information
 	if len(addedTasks) > 0 {
 		common.SuccessResp(c, gin.H{
 			"message": fmt.Sprintf("Successfully created %d move task(s)", len(addedTasks)),
-			"tasks": getTaskInfos(addedTasks),
+			"tasks":   getTaskInfos(addedTasks),
 		})
 	} else {
 		common.SuccessResp(c, gin.H{
@@ -141,7 +150,16 @@ func FsCopy(c *gin.Context) {
 		common.ErrorResp(c, err, 403)
 		return
 	}
-	
+
+	if !req.Overwrite {
+		for _, name := range req.Names {
+			if res, _ := fs.Get(c, stdpath.Join(dstDir, name), &fs.GetArgs{NoLog: true}); res != nil {
+				common.ErrorStrResp(c, fmt.Sprintf("file [%s] exists", name), 403)
+				return
+			}
+		}
+	}
+
 	// Create all tasks immediately without any synchronous validation
 	// All validation will be done asynchronously in the background
 	var addedTasks []task.TaskExtensionInfo
@@ -155,12 +173,12 @@ func FsCopy(c *gin.Context) {
 			return
 		}
 	}
-	
+
 	// Return immediately with task information
 	if len(addedTasks) > 0 {
 		common.SuccessResp(c, gin.H{
 			"message": fmt.Sprintf("Successfully created %d copy task(s)", len(addedTasks)),
-			"tasks": getTaskInfos(addedTasks),
+			"tasks":   getTaskInfos(addedTasks),
 		})
 	} else {
 		common.SuccessResp(c, gin.H{
@@ -361,13 +379,13 @@ func Link(c *gin.Context) {
 	if storage.Config().OnlyLocal {
 		common.SuccessResp(c, model.Link{
 			URL: fmt.Sprintf("%s/p%s?d&sign=%s",
-				common.GetApiUrl(c.Request),
+				common.GetApiUrl(c),
 				utils.EncodePath(rawPath, true),
 				sign.Sign(rawPath)),
 		})
 		return
 	}
-	link, _, err := fs.Link(c, rawPath, model.LinkArgs{IP: c.ClientIP(), Header: c.Request.Header, HttpReq: c.Request})
+	link, _, err := fs.Link(c, rawPath, model.LinkArgs{IP: c.ClientIP(), Header: c.Request.Header})
 	if err != nil {
 		common.ErrorResp(c, err, 500)
 		return

@@ -3,7 +3,7 @@ package aliyundrive
 import (
 	"crypto/ecdsa"
 
-	"github.com/OpenListTeam/OpenList/pkg/generic_sync"
+	"github.com/OpenListTeam/OpenList/v4/pkg/generic_sync"
 )
 
 type State struct {

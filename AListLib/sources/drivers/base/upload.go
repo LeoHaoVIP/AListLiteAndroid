@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/driver"
-	"github.com/Xhofe/go-cache"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
+	"github.com/OpenListTeam/go-cache"
 )
 
 // storage upload progress, for upload recovery

@@ -3,8 +3,8 @@ package quark_uc_tv
 import (
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 )
 
 type Resp struct {

@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/pkg/errors"
 )
 

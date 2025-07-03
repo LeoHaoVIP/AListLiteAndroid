@@ -13,8 +13,8 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/pkg/utils/random"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils/random"
 )
 
 var (

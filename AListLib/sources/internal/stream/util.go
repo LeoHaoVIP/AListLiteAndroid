@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/net"
-	"github.com/OpenListTeam/OpenList/pkg/http_range"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/net"
+	"github.com/OpenListTeam/OpenList/v4/pkg/http_range"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,7 +19,7 @@ func GetRangeReadCloserFromLink(size int64, link *model.Link) (model.RangeReadCl
 		return nil, fmt.Errorf("can't create RangeReadCloser since URL is empty in link")
 	}
 	rangeReaderFunc := func(ctx context.Context, r http_range.Range) (io.ReadCloser, error) {
-		if link.Concurrency != 0 || link.PartSize != 0 {
+		if link.Concurrency > 0 || link.PartSize > 0 {
 			header := net.ProcessHeader(nil, link.Header)
 			down := net.NewDownloader(func(d *net.Downloader) {
 				d.Concurrency = link.Concurrency

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/search/searcher"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/search/searcher"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/meilisearch/meilisearch-go"
 )
 

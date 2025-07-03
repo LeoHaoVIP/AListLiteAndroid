@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/pkg/http_range"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/pkg/http_range"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -197,6 +197,9 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 	if r.Method != "HEAD" {
 		written, err := utils.CopyWithBufferN(w, sendContent, sendSize)
 		if err != nil {
+			if errors.Is(context.Cause(ctx), context.Canceled) {
+				return nil
+			}
 			log.Warnf("ServeHttp error. err: %s ", err)
 			if written != sendSize {
 				log.Warnf("Maybe size incorrect or reader not giving correct/full data, or connection closed before finish. written bytes: %d ,sendSize:%d, ", written, sendSize)

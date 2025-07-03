@@ -1,128 +1,120 @@
 <div align="center">
-  <img width="100px" alt="logo" src="https://raw.githubusercontent.com/OpenListTeam/Logo/main/logo.svg"/></a>
-  <p><em>🗂複数のストレージをサポートするファイルリストプログラムで、Gin と SolidJS を使用し、AList プロジェクトをフォークして開発されました。</em></p>
-<div>
-  <a href="https://goreportcard.com/report/github.com/OpenListTeam/OpenList/v3">
-    <img src="https://goreportcard.com/badge/github.com/OpenListTeam/OpenList/v3" alt="latest version" />
-  </a>
-  <a href="https://github.com/OpenListTeam/OpenList/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/OpenListTeam/OpenList" alt="License" />
-  </a>
-  <a href="https://github.com/OpenListTeam/OpenList/actions?query=workflow%3ABuild">
-    <img src="https://img.shields.io/github/actions/workflow/status/OpenListTeam/OpenList/build.yml?branch=main" alt="Build status" />
-  </a>
-  <a href="https://github.com/OpenListTeam/OpenList/releases">
-    <img src="https://img.shields.io/github/release/OpenListTeam/OpenList" alt="latest version" />
-  </a>
-</div>
-<div>
-  <a href="https://github.com/OpenListTeam/OpenList/discussions">
-    <img src="https://img.shields.io/github/discussions/OpenListTeam/OpenList?color=%23ED8936" alt="discussions" />
-  </a>
-  <a href="https://github.com/OpenListTeam/OpenList/releases">
-    <img src="https://img.shields.io/github/downloads/OpenListTeam/OpenList/total?color=%239F7AEA&logo=github" alt="Downloads" />
-  </a>
-</div>
+  <img style="width: 128px; height: 128px;" src="https://raw.githubusercontent.com/OpenListTeam/Logo/main/logo.svg" alt="logo" />
+
+  <p><em>OpenList は、信頼ベースの攻撃からオープンソースを守るために構築された、レジリエントで長期ガバナンス、コミュニティ主導の AList フォークです。</em></p>
+
+  <img src="https://goreportcard.com/badge/github.com/OpenListTeam/OpenList/v3" alt="latest version" />
+  <a href="https://github.com/OpenListTeam/OpenList/blob/main/LICENSE"><img src="https://img.shields.io/github/license/OpenListTeam/OpenList" alt="License" /></a>
+  <a href="https://github.com/OpenListTeam/OpenList/actions?query=workflow%3ABuild"><img src="https://img.shields.io/github/actions/workflow/status/OpenListTeam/OpenList/build.yml?branch=main" alt="Build status" /></a>
+  <a href="https://github.com/OpenListTeam/OpenList/releases"><img src="https://img.shields.io/github/release/OpenListTeam/OpenList" alt="latest version" /></a>
+
+  <a href="https://github.com/OpenListTeam/OpenList/discussions"><img src="https://img.shields.io/github/discussions/OpenListTeam/OpenList?color=%23ED8936" alt="discussions" /></a>
+  <a href="https://github.com/OpenListTeam/OpenList/releases"><img src="https://img.shields.io/github/downloads/OpenListTeam/OpenList/total?color=%239F7AEA&logo=github" alt="Downloads" /></a>
 </div>
 
 ---
 
-> [!IMPORTANT]
->
-> より信頼性が高く、持続可能なAListのオープンソース代替案で、将来起こりうる非公開化、ブラックボックス化、または信頼できない変更から保護します。
->
-> 元のプロジェクト [AlistGo/alist](https://github.com/AlistGo/alist) の作者 [Xhofe](https://github.com/Xhofe) および他のすべての貢献者に心から感謝いたします。
->
-> このForkはまだ安定していません。具体的な移行の進捗状況は [OpenList 移行作業のまとめ](https://github.com/OpenListTeam/OpenList/issues/6) でご確認いただけます。
+- [English](./README.md) | [中文](./README_cn.md) | 日本語 | [Dutch](./README_nl.md)
 
-[English](./README.md) | [中文](./README_cn.md) | 日本語 | [Contributing](./CONTRIBUTING.md) | [CODE OF CONDUCT](./CODE_OF_CONDUCT.md)
+- [コントリビュート](./CONTRIBUTING.md)
+- [行動規範](./CODE_OF_CONDUCT.md)
+- [ライセンス](./LICENSE)
 
 ## 特徴
 
-- [x] マルチストレージ
-    - [x] ローカルストレージ
-    - [x] [Aliyundrive](https://www.alipan.com/)
-    - [x] OneDrive / Sharepoint ([グローバル](https://www.office.com/), [cn](https://portal.partner.microsoftonline.cn),de,us)
-    - [x] [189cloud](https://cloud.189.cn) (Personal, Family)
-    - [x] [GoogleDrive](https://drive.google.com/)
-    - [x] [123pan](https://www.123pan.com/)
-    - [x] FTP / SFTP
-    - [x] [PikPak](https://www.mypikpak.com/)
-    - [x] [S3](https://aws.amazon.com/s3/)
-    - [x] [Seafile](https://seafile.com/)
-    - [x] [UPYUN Storage Service](https://www.upyun.com/products/file-storage)
-    - [x] WebDav(Support OneDrive/SharePoint without API)
-    - [x] Teambition([China](https://www.teambition.com/ ),[International](https://us.teambition.com/ ))
-    - [x] [Mediatrack](https://www.mediatrack.cn/)
-    - [x] [139yun](https://yun.139.com/) (Personal, Family, Group)
-    - [x] [YandexDisk](https://disk.yandex.com/)
-    - [x] [BaiduNetdisk](http://pan.baidu.com/)
-    - [x] [Terabox](https://www.terabox.com/main)
-    - [x] [UC](https://drive.uc.cn)
-    - [x] [Quark](https://pan.quark.cn)
-    - [x] [Thunder](https://pan.xunlei.com)
-    - [x] [Lanzou](https://www.lanzou.com/)
-    - [x] [ILanzou](https://www.ilanzou.com/)
-    - [x] [Aliyundrive share](https://www.alipan.com/)
-    - [x] [Google photo](https://photos.google.com/)
-    - [x] [Mega.nz](https://mega.nz)
-    - [x] [Baidu photo](https://photo.baidu.com/)
-    - [x] SMB
-    - [x] [115](https://115.com/)
-    - [X] Cloudreve
-    - [x] [Dropbox](https://www.dropbox.com/)
-    - [x] [FeijiPan](https://www.feijipan.com/)
-    - [x] [dogecloud](https://www.dogecloud.com/product/oss)
-- [x] デプロイが簡単で、すぐに使える
-- [x] ファイルプレビュー (PDF, マークダウン, コード, プレーンテキスト, ...)
+- [x] 複数ストレージ
+  - [x] ローカルストレージ
+  - [x] [Aliyundrive](https://www.alipan.com)
+  - [x] OneDrive / Sharepoint ([グローバル](https://www.microsoft.com/en-us/microsoft-365/onedrive/online-cloud-storage), [中国](https://portal.partner.microsoftonline.cn), DE, US)
+  - [x] [189cloud](https://cloud.189.cn)（個人、家族）
+  - [x] [GoogleDrive](https://drive.google.com)
+  - [x] [123pan](https://www.123pan.com)
+  - [x] [FTP / SFTP](https://en.wikipedia.org/wiki/File_Transfer_Protocol)
+  - [x] [PikPak](https://www.mypikpak.com)
+  - [x] [S3](https://aws.amazon.com/s3)
+  - [x] [Seafile](https://seafile.com)
+  - [x] [UPYUN Storage Service](https://www.upyun.com/products/file-storage)
+  - [x] [WebDAV](https://en.wikipedia.org/wiki/WebDAV)
+  - [x] Teambition([中国](https://www.teambition.com), [国際](https://us.teambition.com))
+  - [x] [Mediatrack](https://www.mediatrack.cn)
+  - [x] [139yun](https://yun.139.com)（個人、家族、グループ）
+  - [x] [YandexDisk](https://disk.yandex.com)
+  - [x] [BaiduNetdisk](http://pan.baidu.com)
+  - [x] [Terabox](https://www.terabox.com/main)
+  - [x] [UC](https://drive.uc.cn)
+  - [x] [Quark](https://pan.quark.cn)
+  - [x] [Thunder](https://pan.xunlei.com)
+  - [x] [Lanzou](https://www.lanzou.com)
+  - [x] [ILanzou](https://www.ilanzou.com)
+  - [x] [Aliyundrive share](https://www.alipan.com)
+  - [x] [Google photo](https://photos.google.com)
+  - [x] [Mega.nz](https://mega.nz)
+  - [x] [Baidu photo](https://photo.baidu.com)
+  - [x] [SMB](https://en.wikipedia.org/wiki/Server_Message_Block)
+  - [x] [115](https://115.com)
+  - [x] [Cloudreve](https://cloudreve.org)
+  - [x] [Dropbox](https://www.dropbox.com)
+  - [x] [FeijiPan](https://www.feijipan.com)
+  - [x] [dogecloud](https://www.dogecloud.com/product/oss)
+  - [x] [Azure Blob Storage](https://azure.microsoft.com/products/storage/blobs)
+- [x] 簡単にデプロイでき、すぐに使える
+- [x] ファイルプレビュー（PDF、markdown、コード、テキストなど）
 - [x] ギャラリーモードでの画像プレビュー
-- [x] ビデオとオーディオのプレビュー、歌詞と字幕のサポート
-- [x] Office ドキュメントのプレビュー (docx, pptx, xlsx, ...)
-- [x] `README.md` のプレビューレンダリング
+- [x] ビデオ・オーディオプレビュー、歌詞・字幕対応
+- [x] Officeドキュメントプレビュー（docx、pptx、xlsxなど）
+- [x] `README.md` プレビュー表示
 - [x] ファイルのパーマリンクコピーと直接ダウンロード
 - [x] ダークモード
-- [x] 国際化
-- [x] 保護されたルート (パスワード保護と認証)
-- [x] WebDav（詳細なドキュメントは今後追加予定）
-- [ ] Docker デプロイ（再構築中）
-- [x] Cloudflare ワーカープロキシ
-- [x] ファイル/フォルダパッケージのダウンロード
-- [x] ウェブアップロード(訪問者にアップロードを許可できる), 削除, mkdir, 名前変更, 移動, コピー
+- [x] 国際化対応
+- [x] 保護されたルート（パスワード保護と認証）
+- [x] WebDAV
+- [x] Dockerデプロイ
+- [x] Cloudflare Workersプロキシ
+- [x] ファイル/フォルダのパッケージダウンロード
+- [x] Webアップロード（訪問者のアップロード許可可）、削除、フォルダ作成、リネーム、移動、コピー
 - [x] オフラインダウンロード
-- [x] 二つのストレージ間でファイルをコピー
-- [x] シングルスレッドのダウンロード/ストリーム向けのマルチスレッド ダウンロード アクセラレーション
+- [x] ストレージ間のファイルコピー
+- [x] 単一ファイルのマルチスレッドダウンロード/ストリーム加速
 
 ## ドキュメント
 
-- https://docs.oplist.org
-- https://docs.openlist.team
+- 📘 [ドキュメント・インストールガイド](https://docs.oplist.org)
+- 📚 [バックアップドキュメントサイト](https://docs.openlist.team)
 
 ## デモ
 
-N/A （再構築中）
+N/A（再構築中）
 
 ## ディスカッション
 
-一般的なご質問は [*Discussions*](https://github.com/OpenListTeam/OpenList/discussions) をご利用ください。***Issues* はバグ報告と機能リクエストに限定されています。**
-
-## コントリビューター
-
-これらの素晴らしい人々に感謝します:
-
-[![Contributors](https://contrib.rocks/image?repo=openlistteam/openlist)](https://github.com/OpenListTeam/OpenList/graphs/contributors)
+一般的な質問は [*Discussions*](https://github.com/OpenListTeam/OpenList/discussions) をご利用ください。***Issues* はバグ報告と機能リクエスト専用です。**
 
 ## ライセンス
 
-「`OpenList`」は AGPL-3.0 ライセンスの下で公開されているオープンソースソフトウェアです。
+「OpenList」は [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt) ライセンスの下で公開されているオープンソースソフトウェアです。
 
 ## 免責事項
 
-- このプログラムはフリーでオープンソースのプロジェクトです。ネットワークディスク上でファイルを共有するように設計されており、golang のダウンロードや学習に便利です。利用にあたっては関連法規を遵守し、悪用しないようお願いします;
-- このプログラムは、公式インターフェースの動作を破壊することなく、公式 sdk/インターフェースを呼び出すことで実装されています;
-- このプログラムは、302リダイレクト/トラフィック転送のみを行い、いかなるユーザーデータも傍受、保存、改ざんしません;
-- このプログラムを使用する前に、アカウントの禁止、ダウンロード速度の制限など、対応するリスクを理解し、負担する必要があります;
-- 権利侵害がある場合は、[OpenListTeam](https://github.com/OpenListTeam) までご連絡ください。チームが迅速に対応いたします。
+- 本プロジェクトは無料のオープンソースソフトウェアであり、ネットワークディスクを通じたファイル共有を容易にすることを目的とし、主に Go 言語のダウンロードと学習をサポートします。
+- 本ソフトウェアの利用にあたっては、関連する法令を遵守し、不正利用を固く禁じます。
+- 本ソフトウェアは公式 SDK または API に基づいており、その動作を一切改変・破壊・妨害しません。
+- 302 リダイレクトまたはトラフィック転送のみを行い、ユーザーデータの傍受・保存・改ざんは一切行いません。
+- 本プロジェクトは、いかなる公式プラットフォームやサービスプロバイダーとも関係ありません。
+- 本ソフトウェアは「現状有姿」で提供されており、商品性や特定目的への適合性を含むいかなる保証もありません。
+- 本ソフトウェアの使用または使用不能によるいかなる直接的・間接的損害についても、メンテナは責任を負いません。
+- 本ソフトウェアの利用に伴うすべてのリスク（アカウントの凍結やダウンロード速度制限などを含む）は、利用者自身が負うものとします。
+- 本プロジェクトは [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt) ライセンスに従います。詳細は [LICENSE](./LICENSE) ファイルをご覧ください。
 
----
+## お問い合わせ
 
-> [@GitHub](https://github.com/OpenListTeam) · [Telegram Group](https://t.me/OpenListTeam) · [Telegram Channel](https://t.me/OpenListOfficial)
+- [@GitHub](https://github.com/OpenListTeam)
+- [Telegram グループ](https://t.me/OpenListTeam)
+- [Telegram チャンネル](https://t.me/OpenListOfficial)
+
+## コントリビューター
+
+オリジナルプロジェクト [AlistGo/alist](https://github.com/AlistGo/alist) の作者 [Xhofe](https://github.com/Xhofe) およびその他すべての貢献者に心より感謝いたします。
+
+素晴らしい皆様に感謝します：
+
+[![Contributors](https://contrib.rocks/image?repo=OpenListTeam/OpenList)](https://github.com/OpenListTeam/OpenList/graphs/contributors)

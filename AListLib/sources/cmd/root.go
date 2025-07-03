@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/OpenListTeam/OpenList/cmd/flags"
-	_ "github.com/OpenListTeam/OpenList/drivers"
-	_ "github.com/OpenListTeam/OpenList/internal/archive"
-	_ "github.com/OpenListTeam/OpenList/internal/offline_download"
+	"github.com/OpenListTeam/OpenList/v4/cmd/flags"
+	_ "github.com/OpenListTeam/OpenList/v4/drivers"
+	_ "github.com/OpenListTeam/OpenList/v4/internal/archive"
+	_ "github.com/OpenListTeam/OpenList/v4/internal/offline_download"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ var RootCmd = &cobra.Command{
 	Use:   "openlist",
 	Short: "A file list program that supports multiple storage.",
 	Long: `A file list program that supports multiple storage,
-built with love by Xhofe and friends in Go/Solid.js.
+built with love by OpenListTeam.
 Complete documentation is available at https://docs.openlist.team/`,
 }
 

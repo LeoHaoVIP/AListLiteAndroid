@@ -3,8 +3,8 @@ package _115
 import (
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/SheltonZhu/115driver/pkg/driver"
 )
 

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/v4/drivers/base"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 )

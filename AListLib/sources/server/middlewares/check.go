@@ -3,16 +3,14 @@ package middlewares
 import (
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 	"github.com/gin-gonic/gin"
 )
 
 func StoragesLoaded(c *gin.Context) {
-	if conf.StoragesLoaded {
-		c.Next()
-	} else {
+	if !conf.StoragesLoaded {
 		if utils.SliceContains([]string{"", "/", "/favicon.ico"}, c.Request.URL.Path) {
 			c.Next()
 			return
@@ -26,5 +24,8 @@ func StoragesLoaded(c *gin.Context) {
 		}
 		common.ErrorStrResp(c, "Loading storage, please wait", 500)
 		c.Abort()
+		return
 	}
+	c.Set(conf.ApiUrlKey, common.GetApiUrlFormRequest(c.Request))
+	c.Next()
 }

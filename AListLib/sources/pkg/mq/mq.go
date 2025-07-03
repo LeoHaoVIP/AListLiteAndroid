@@ -3,7 +3,7 @@ package mq
 import (
 	"sync"
 
-	"github.com/OpenListTeam/OpenList/pkg/generic"
+	"github.com/OpenListTeam/OpenList/v4/pkg/generic"
 )
 
 type Message[T any] struct {

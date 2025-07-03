@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 
-	"github.com/OpenListTeam/OpenList/internal/driver"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/pkg/errors"
 )
 

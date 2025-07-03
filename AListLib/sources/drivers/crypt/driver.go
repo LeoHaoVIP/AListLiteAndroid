@@ -8,16 +8,16 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/driver"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/op"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/internal/stream"
-	"github.com/OpenListTeam/OpenList/pkg/http_range"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
+	"github.com/OpenListTeam/OpenList/v4/pkg/http_range"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 	rcCrypt "github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -163,7 +163,7 @@ func (d *Crypt) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([
 			if d.Thumbnail && thumb == "" {
 				thumbPath := stdpath.Join(args.ReqPath, ".thumbnails", name+".webp")
 				thumb = fmt.Sprintf("%s/d%s?sign=%s",
-					common.GetApiUrl(common.GetHttpReq(ctx)),
+					common.GetApiUrl(ctx),
 					utils.EncodePath(thumbPath, true),
 					sign.Sign(thumbPath))
 			}

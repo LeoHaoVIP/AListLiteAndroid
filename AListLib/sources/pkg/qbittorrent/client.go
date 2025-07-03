@@ -9,7 +9,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 )
 
 type Client interface {

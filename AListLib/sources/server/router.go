@@ -1,16 +1,16 @@
 package server
 
 import (
-	"github.com/OpenListTeam/OpenList/cmd/flags"
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/message"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/internal/stream"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
-	"github.com/OpenListTeam/OpenList/server/handles"
-	"github.com/OpenListTeam/OpenList/server/middlewares"
-	"github.com/OpenListTeam/OpenList/server/static"
+	"github.com/OpenListTeam/OpenList/v4/cmd/flags"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/message"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
+	"github.com/OpenListTeam/OpenList/v4/server/handles"
+	"github.com/OpenListTeam/OpenList/v4/server/middlewares"
+	"github.com/OpenListTeam/OpenList/v4/server/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

@@ -5,7 +5,7 @@ import (
 	stdpath "path"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	log "github.com/sirupsen/logrus"
 )
 

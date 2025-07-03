@@ -3,7 +3,7 @@ package onedrive_app
 import (
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
 )
 
 type Host struct {

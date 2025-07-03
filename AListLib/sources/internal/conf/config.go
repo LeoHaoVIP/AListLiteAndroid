@@ -3,8 +3,8 @@ package conf
 import (
 	"path/filepath"
 
-	"github.com/OpenListTeam/OpenList/cmd/flags"
-	"github.com/OpenListTeam/OpenList/pkg/utils/random"
+	"github.com/OpenListTeam/OpenList/v4/cmd/flags"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils/random"
 )
 
 type Database struct {

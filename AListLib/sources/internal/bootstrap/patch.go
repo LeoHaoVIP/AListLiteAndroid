@@ -5,9 +5,9 @@ import (
 
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/bootstrap/patch"
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/internal/bootstrap/patch"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 )
 
 var LastLaunchedVersion = ""

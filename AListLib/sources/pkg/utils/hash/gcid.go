@@ -7,7 +7,7 @@ import (
 	"hash"
 	"strconv"
 
-	"github.com/OpenListTeam/OpenList/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 )
 
 var GCID = utils.RegisterHashWithParam("gcid", "GCID", 40, func(a ...any) hash.Hash {

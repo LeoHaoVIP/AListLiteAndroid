@@ -5,9 +5,9 @@ import (
 	_ "net/http/pprof"
 	"runtime"
 
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/server/common"
-	"github.com/OpenListTeam/OpenList/server/middlewares"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
+	"github.com/OpenListTeam/OpenList/v4/server/middlewares"
 	"github.com/gin-gonic/gin"
 )
 

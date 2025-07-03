@@ -8,14 +8,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/conf"
-	"github.com/OpenListTeam/OpenList/internal/driver"
-	"github.com/OpenListTeam/OpenList/internal/fs"
-	"github.com/OpenListTeam/OpenList/internal/model"
-	"github.com/OpenListTeam/OpenList/internal/setting"
-	"github.com/OpenListTeam/OpenList/internal/sign"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/server/common"
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
+	"github.com/OpenListTeam/OpenList/v4/internal/fs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/setting"
+	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
@@ -38,7 +38,6 @@ func Down(c *gin.Context) {
 			IP:       c.ClientIP(),
 			Header:   c.Request.Header,
 			Type:     c.Query("type"),
-			HttpReq:  c.Request,
 			Redirect: true,
 		})
 		if err != nil {
@@ -71,9 +70,8 @@ func Proxy(c *gin.Context) {
 			}
 		}
 		link, file, err := fs.Link(c, rawPath, model.LinkArgs{
-			Header:  c.Request.Header,
-			Type:    c.Query("type"),
-			HttpReq: c.Request,
+			Header: c.Request.Header,
+			Type:   c.Query("type"),
 		})
 		if err != nil {
 			common.ErrorResp(c, err, 500)
@@ -126,7 +124,7 @@ func localProxy(c *gin.Context, link *model.Link, file model.Obj, proxyRange boo
 		}
 	}
 	if proxyRange {
-		common.ProxyRange(link, file.GetSize())
+		common.ProxyRange(c, link, file.GetSize())
 	}
 	Writer := &common.WrittenResponseWriter{ResponseWriter: c.Writer}
 

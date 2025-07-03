@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/pkg/utils"
-	"github.com/OpenListTeam/OpenList/pkg/utils/random"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils/random"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/pkg/errors"
 )

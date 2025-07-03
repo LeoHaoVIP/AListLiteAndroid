@@ -1,7 +1,7 @@
 package quark_open
 
 import (
-	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"time"
 )
 

@@ -5,9 +5,9 @@ import (
 	"io"
 	"io/fs"
 
-	"github.com/OpenListTeam/OpenList/internal/archive/tool"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/stream"
+	"github.com/OpenListTeam/OpenList/v4/internal/archive/tool"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/bodgit/sevenzip"
 )
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/internal/driver"
-	"github.com/OpenListTeam/OpenList/internal/errs"
-	"github.com/OpenListTeam/OpenList/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/driver"
+	"github.com/OpenListTeam/OpenList/v4/internal/errs"
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	_ "golang.org/x/image/webp"
 )
 
@@ -76,7 +76,7 @@ func (d *NeteaseMusic) Link(ctx context.Context, file model.Obj, args model.Link
 		if args.Type == "parsed" {
 			return lrc.getLyricLink(), nil
 		} else {
-			return lrc.getProxyLink(args), nil
+			return lrc.getProxyLink(ctx), nil
 		}
 	}
 

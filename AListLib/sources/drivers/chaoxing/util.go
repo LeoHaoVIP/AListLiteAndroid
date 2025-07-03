@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/OpenListTeam/OpenList/drivers/base"
+	"github.com/OpenListTeam/OpenList/v4/drivers/base"
 	"github.com/go-resty/resty/v2"
 )
 
