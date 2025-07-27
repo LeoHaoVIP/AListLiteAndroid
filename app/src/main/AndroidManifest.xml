@@ -55,7 +55,7 @@
         <service
                 android:name=".service.AlistTileService"
                 android:label="@string/alist_tile_label"
-                android:icon="@drawable/alist"
+                android:icon="@drawable/alistlite"
                 android:exported="true"
                 android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
@@ -69,6 +69,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
+        </receiver>
+        <receiver android:name=".broadcast.CopyReceiver"
+                  android:exported="true">
         </receiver>
     </application>
 </manifest>

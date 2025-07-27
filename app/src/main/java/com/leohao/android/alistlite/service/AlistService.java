@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.leohao.android.alistlite.MainActivity;
 import com.leohao.android.alistlite.R;
+import com.leohao.android.alistlite.broadcast.CopyReceiver;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.Constants;
@@ -103,8 +104,28 @@ public class AlistService extends Service {
                     //隐藏服务未开启提示
                     MainActivity.getInstance().runningInfoTextView.setVisibility(View.GONE);
                 }
-                //更新消息内容里的服务地址
-                notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText(serverAddress).setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
+                //创建 Intent，用于复制服务器地址到剪贴板
+                Intent copyIntent = new Intent(this, CopyReceiver.class);
+                copyIntent.putExtra("address", serverAddress);
+                PendingIntent copyPendingIntent;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    copyPendingIntent = PendingIntent.getBroadcast(this, 0, copyIntent, PendingIntent.FLAG_IMMUTABLE);
+                } else {
+                    copyPendingIntent = PendingIntent.getBroadcast(this, 0, copyIntent, PendingIntent.FLAG_ONE_SHOT);
+                }
+                //创建复制服务地址的 Action
+                NotificationCompat.Action addressCopyAction = new NotificationCompat.Action.Builder(
+                        R.drawable.copy,
+                        "复制服务地址",
+                        copyPendingIntent)
+                        .build();
+                //更新消息内容里的服务地址，同时添加服务地址复制入口
+                notification = new NotificationCompat.Builder(this, channelId)
+                        .setContentTitle(getString(R.string.alist_service_is_running))
+                        .setContentText(serverAddress)
+                        .setSmallIcon(R.drawable.ic_launcher)
+                        .addAction(addressCopyAction)
+                        .setContentIntent(pendingIntent).build();
                 startForeground(startId, notification);
                 //更新磁贴状态
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
