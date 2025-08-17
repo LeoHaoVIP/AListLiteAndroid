@@ -1,5 +1,5 @@
 <p align="center"><a href="https://github.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer"><img width="100" src="./README/ic_launcher.png" alt="yoga logo"></a></p>
-<h3 align="center">AListLite | 在 Android 上一键启动 AList 服务</h3>
+    <h3 align="center">AListLite | 在 Android 上一键启动 OpenList 服务</h3>
 <h5 align="center">AListLite 支持服务一键启动、状态栏磁贴、后台常驻、开机自启和高级配置等功能，界面简洁，上手简单。</h5>
 <p align="center">
     <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/releases" style="color: white" target="_blank"
@@ -27,7 +27,7 @@
 
 # AListLite
 
-[AListLite](https://github.com/LeoHaoVIP/AListLiteAndroid) 是一款支持运行 AList 服务的 Android 应用，相对于教程 [BV1ex4y157xJ](https://www.bilibili.com/video/BV1ex4y157xJ) 中的描述，用户无需借助安装 Termux 即可实现在 Android 设备（手机/电视）上使用 AList 服务。
+[AListLite](https://github.com/LeoHaoVIP/AListLiteAndroid) 是一款支持运行 [AList](https://alistgo.com/zh/) 服务（现已迁移到 [OpenList](https://oplist.org/zh/)）的 Android 应用，相对于教程 [BV1ex4y157xJ](https://www.bilibili.com/video/BV1ex4y157xJ) 中的描述，用户无需借助安装 Termux 即可实现在 Android 设备（手机/电视）上使用 AList 服务。
 
 [AListLite](https://github.com/LeoHaoVIP/AListLiteAndroid) 支持服务一键启动、状态栏磁贴、后台常驻、开机自启和高级配置等功能，界面简洁，上手简单。
 
@@ -60,7 +60,7 @@
 >
 > ② 设备本地请访问 http://localhost:5244
 
-点击右上角开关，开启或停止 AList 服务。服务启动成功后将显示 AList 前端页面，同时在上方标识当前绑定的 IP 地址与端口。
+点击右上角开关，开启或停止 AList 服务，服务启动成功后将显示 AList 前端页面。
 
 <center class="half">
 <img src="./README/main-page.png" alt="APP 主页面" style="zoom:30%"/>
@@ -70,7 +70,7 @@
 
 > **开机自启说明**
 >
-> 若要实现 AList 服务开机自启，授予相关权限外，还需要在系统设置中手动开启 APP 的自启动开关。
+> 若要实现 AList 服务开机自启，授予相关权限后，还需要在系统设置中手动开启 APP 的自启动开关。
 
 首次打开 APP 后，软件将申请必要的存储、通知与后台运行权限，权限授予情况可点击软件右上角 `+` 号，进入 `权限配置` 页面查看。
 
@@ -80,7 +80,7 @@
 
 ### 修改管理员密码
 
-点击软件右上角 `+` 号，选择 `密码设置` 可修改管理员密码，默认登录信息为 `admin` + `123456`。
+点击软件右上角 `+` 号，选择 `密码设置` 可修改管理员密码，默认登录信息为 `admin` / `123456`。
 
 <center class="half">
 <img src="./README/password-page.png" alt="设定管理员密码" style="zoom:30%"/>
@@ -93,6 +93,7 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 <center class="half">
 <img src="./README/tile-service.png" alt="AList 服务磁贴" style="zoom:30%"/>
 </center>
+
 ### 远程访问
 
 点击软件右上角 `+` 号，选择 `远程访问` 可调出远程访问二维码，便于 TV 端用户在移动设备上完成配置操作。
@@ -103,7 +104,7 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 
 # Update
 
-对于已安装 APP 的用户，软件每次开启时将自动检查更新，用户也可点击软件右上角 `+` 号，选择下方 `检查更新` 手动获取新版本发布情况。
+对于已安装 APP 的用户，软件每次开启时将自动检查更新。用户也可点击软件右上角 `+` 号，选择下方 `检查更新` 手动获取新版本发布情况。
 
 <center class="half">
 <img src="./README/update-page.png" alt="版本信息页面" style="zoom:30%"/>
@@ -112,7 +113,7 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 
 # Advanced
 
-为最大程度匹配 AList 本身的能力，AListLite 支持用户手动修改 AList 配置文件。用户可点击软件右上角 `+` 号，选择 `高级配置` 修改配置文件，实现自定义端口、HTTPS、数据库配置等个性化需求。
+为最大程度匹配 AList 本身的能力，AListLite 允许用户手动修改 AList 配置文件。用户可点击软件右上角 `+` 号，选择 `高级配置` 进入配置文件修改页面，实现自定义端口、HTTPS 设置、数据库配置等个性化需求。
 
 > 注意：错误的配置可能导致服务无法启动，请谨慎操作！
 
