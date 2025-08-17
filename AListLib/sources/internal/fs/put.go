@@ -3,15 +3,20 @@ package fs
 import (
 	"context"
 	"fmt"
+	stdpath "path"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/server/common"
+
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/op"
 	"github.com/OpenListTeam/OpenList/v4/internal/task"
-	"github.com/pkg/errors"
+	"github.com/OpenListTeam/OpenList/v4/internal/task_group"
 	"github.com/OpenListTeam/tache"
+	"github.com/pkg/errors"
 )
 
 type UploadTask struct {
@@ -36,6 +41,22 @@ func (t *UploadTask) Run() error {
 	return op.Put(t.Ctx(), t.storage, t.dstDirActualPath, t.file, t.SetProgress, true)
 }
 
+func (t *UploadTask) OnSucceeded() {
+	task_group.TransferCoordinator.Done(stdpath.Join(t.storage.GetStorage().MountPath, t.dstDirActualPath), true)
+}
+
+func (t *UploadTask) OnFailed() {
+	task_group.TransferCoordinator.Done(stdpath.Join(t.storage.GetStorage().MountPath, t.dstDirActualPath), false)
+}
+
+func (t *UploadTask) SetRetry(retry int, maxRetry int) {
+	t.TaskExtension.SetRetry(retry, maxRetry)
+	if retry == 0 &&
+		(t.GetErr() == nil && t.GetState() != tache.StatePending) { // 手动重试
+		task_group.TransferCoordinator.AddTask(stdpath.Join(t.storage.GetStorage().MountPath, t.dstDirActualPath), nil)
+	}
+}
+
 var UploadTaskManager *tache.Manager[*UploadTask]
 
 // putAsTask add as a put task and return immediately
@@ -55,16 +76,18 @@ func putAsTask(ctx context.Context, dstDirPath string, file model.FileStreamer) 
 		//file.SetReader(tempFile)
 		//file.SetTmpFile(tempFile)
 	}
-	taskCreator, _ := ctx.Value("user").(*model.User) // taskCreator is nil when convert failed
+	taskCreator, _ := ctx.Value(conf.UserKey).(*model.User) // taskCreator is nil when convert failed
 	t := &UploadTask{
 		TaskExtension: task.TaskExtension{
 			Creator: taskCreator,
+			ApiUrl:  common.GetApiUrl(ctx),
 		},
 		storage:          storage,
 		dstDirActualPath: dstDirActualPath,
 		file:             file,
 	}
 	t.SetTotalBytes(file.GetSize())
+	task_group.TransferCoordinator.AddTask(dstDirPath, nil)
 	UploadTaskManager.Add(t)
 	return t, nil
 }
@@ -73,9 +96,11 @@ func putAsTask(ctx context.Context, dstDirPath string, file model.FileStreamer) 
 func putDirectly(ctx context.Context, dstDirPath string, file model.FileStreamer, lazyCache ...bool) error {
 	storage, dstDirActualPath, err := op.GetStorageAndActualPath(dstDirPath)
 	if err != nil {
+		_ = file.Close()
 		return errors.WithMessage(err, "failed get storage")
 	}
 	if storage.Config().NoUpload {
+		_ = file.Close()
 		return errors.WithStack(errs.UploadNotSupported)
 	}
 	return op.Put(ctx, storage, dstDirActualPath, file, nil, lazyCache...)

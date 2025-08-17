@@ -276,7 +276,9 @@ func (d *ILanZou) Put(ctx context.Context, dstDir model.Obj, s model.FileStreame
 	etag := s.GetHash().GetHash(utils.MD5)
 	var err error
 	if len(etag) != utils.MD5.Width {
-		_, etag, err = stream.CacheFullInTempFileAndHash(s, utils.MD5)
+		cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+		up = model.UpdateProgressWithRange(up, 50, 100)
+		_, etag, err = stream.CacheFullInTempFileAndHash(s, cacheFileProgress, utils.MD5)
 		if err != nil {
 			return nil, err
 		}

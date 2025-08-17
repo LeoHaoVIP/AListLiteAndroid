@@ -8,6 +8,7 @@ import (
 
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 
 	"github.com/hirochachacha/go-smb2"
@@ -29,10 +30,10 @@ func (d *SMB) GetAddition() driver.Additional {
 }
 
 func (d *SMB) Init(ctx context.Context) error {
-	if strings.Index(d.Addition.Address, ":") < 0 {
+	if !strings.Contains(d.Addition.Address, ":") {
 		d.Addition.Address = d.Addition.Address + ":445"
 	}
-	return d.initFS()
+	return d._initFS()
 }
 
 func (d *SMB) Drop(ctx context.Context) error {
@@ -79,11 +80,21 @@ func (d *SMB) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*m
 		d.cleanLastConnTime()
 		return nil, err
 	}
-	link := &model.Link{
-		MFile: remoteFile,
-	}
 	d.updateLastConnTime()
-	return link, nil
+	if remoteFile != nil && !d.Config().OnlyLinkMFile {
+		return &model.Link{
+			RangeReader: &model.FileRangeReader{
+				RangeReaderIF: stream.RateLimitRangeReaderFunc(stream.GetRangeReaderFromMFile(file.GetSize(), remoteFile)),
+			},
+		}, nil
+	}
+	return &model.Link{
+		MFile: &stream.RateLimitFile{
+			File:    remoteFile,
+			Limiter: stream.ServerDownloadLimit,
+			Ctx:     ctx,
+		},
+	}, nil
 }
 
 func (d *SMB) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) error {

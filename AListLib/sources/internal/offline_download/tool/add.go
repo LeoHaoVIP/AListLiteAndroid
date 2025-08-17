@@ -2,6 +2,10 @@ package tool
 
 import (
 	"context"
+	"github.com/OpenListTeam/OpenList/v4/drivers/thunder_browser"
+
+	_115_open "github.com/OpenListTeam/OpenList/v4/drivers/115_open"
+	"github.com/OpenListTeam/OpenList/v4/server/common"
 
 	"net/url"
 	stdpath "path"
@@ -10,7 +14,7 @@ import (
 	_115 "github.com/OpenListTeam/OpenList/v4/drivers/115"
 	"github.com/OpenListTeam/OpenList/v4/drivers/pikpak"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder"
-	"github.com/OpenListTeam/OpenList/v4/drivers/thunder_browser"
+	"github.com/OpenListTeam/OpenList/v4/drivers/thunderx"
 	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/fs"
@@ -72,13 +76,13 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 	// get tool
 	tool, err := Tools.Get(args.Tool)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed get tool")
+		return nil, errors.Wrapf(err, "failed get offline download tool")
 	}
 	// check tool is ready
 	if !tool.IsReady() {
 		// try to init tool
 		if _, err := tool.Init(); err != nil {
-			return nil, errors.Wrapf(err, "failed init tool %s", args.Tool)
+			return nil, errors.Wrapf(err, "failed init offline download tool %s", args.Tool)
 		}
 	}
 
@@ -93,6 +97,12 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 			tempDir = args.DstDirPath
 		} else {
 			tempDir = filepath.Join(setting.GetStr(conf.Pan115TempDir), uid)
+		}
+	case "115 Open":
+		if _, ok := storage.(*_115_open.Open115); ok {
+			tempDir = args.DstDirPath
+		} else {
+			tempDir = filepath.Join(setting.GetStr(conf.Pan115OpenTempDir), uid)
 		}
 	case "PikPak":
 		if _, ok := storage.(*pikpak.PikPak); ok {
@@ -113,12 +123,19 @@ func AddURL(ctx context.Context, args *AddURLArgs) (task.TaskExtensionInfo, erro
 		default:
 			tempDir = filepath.Join(setting.GetStr(conf.ThunderBrowserTempDir), uid)
 		}
+	case "ThunderX":
+		if _, ok := storage.(*thunderx.ThunderX); ok {
+			tempDir = args.DstDirPath
+		} else {
+			tempDir = filepath.Join(setting.GetStr(conf.ThunderXTempDir), uid)
+		}
 	}
 
-	taskCreator, _ := ctx.Value("user").(*model.User) // taskCreator is nil when convert failed
+	taskCreator, _ := ctx.Value(conf.UserKey).(*model.User) // taskCreator is nil when convert failed
 	t := &DownloadTask{
 		TaskExtension: task.TaskExtension{
 			Creator: taskCreator,
+			ApiUrl:  common.GetApiUrl(ctx),
 		},
 		Url:          args.URL,
 		DstDirPath:   args.DstDirPath,

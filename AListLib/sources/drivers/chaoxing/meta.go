@@ -32,7 +32,6 @@ func init() {
 			config: driver.Config{
 				Name:              "ChaoXingGroupDrive",
 				OnlyProxy:         true,
-				OnlyLocal:         false,
 				DefaultRoot:       "-1",
 				NoOverwriteUpload: true,
 			},

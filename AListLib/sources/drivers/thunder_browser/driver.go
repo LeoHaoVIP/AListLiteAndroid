@@ -491,7 +491,9 @@ func (xc *XunLeiBrowserCommon) Put(ctx context.Context, dstDir model.Obj, stream
 	gcid := stream.GetHash().GetHash(hash_extend.GCID)
 	var err error
 	if len(gcid) < hash_extend.GCID.Width {
-		_, gcid, err = streamPkg.CacheFullInTempFileAndHash(stream, hash_extend.GCID, stream.GetSize())
+		cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+		up = model.UpdateProgressWithRange(up, 50, 100)
+		_, gcid, err = streamPkg.CacheFullInTempFileAndHash(stream, cacheFileProgress, hash_extend.GCID, stream.GetSize())
 		if err != nil {
 			return err
 		}

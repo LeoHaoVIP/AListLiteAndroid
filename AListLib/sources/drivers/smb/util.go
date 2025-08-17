@@ -1,6 +1,7 @@
 package smb
 
 import (
+	"fmt"
 	"io/fs"
 	"net"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/pkg/singleflight"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 
 	"github.com/hirochachacha/go-smb2"
@@ -26,6 +28,12 @@ func (d *SMB) getLastConnTime() time.Time {
 }
 
 func (d *SMB) initFS() error {
+	err, _, _ := singleflight.ErrorGroup.Do(fmt.Sprintf("SMB.initFS:%p", d), func() (error, error) {
+		return d._initFS(), nil
+	})
+	return err
+}
+func (d *SMB) _initFS() error {
 	conn, err := net.Dial("tcp", d.Address)
 	if err != nil {
 		return err

@@ -36,10 +36,10 @@ func loginLdap(c *gin.Context, req *LoginReq) {
 
 	// check count of login
 	ip := c.ClientIP()
-	count, ok := loginCache.Get(ip)
-	if ok && count >= defaultTimes {
+	count, ok := model.LoginCache.Get(ip)
+	if ok && count >= model.DefaultMaxAuthRetries {
 		common.ErrorStrResp(c, "Too many unsuccessful sign-in attempts have been made using an incorrect username or password, Try again later.", 429)
-		loginCache.Expire(ip, defaultDuration)
+		model.LoginCache.Expire(ip, model.DefaultLockDuration)
 		return
 	}
 
@@ -94,7 +94,7 @@ func loginLdap(c *gin.Context, req *LoginReq) {
 	if err != nil {
 		utils.Log.Errorf("Failed to auth. %v", err)
 		common.ErrorResp(c, err, 400)
-		loginCache.Set(ip, count+1)
+		model.LoginCache.Set(ip, count+1)
 		return
 	} else {
 		utils.Log.Infof("Auth successful username:%s", req.Username)
@@ -106,7 +106,7 @@ func loginLdap(c *gin.Context, req *LoginReq) {
 		user, err = ladpRegister(req.Username)
 		if err != nil {
 			common.ErrorResp(c, err, 400)
-			loginCache.Set(ip, count+1)
+			model.LoginCache.Set(ip, count+1)
 			return
 		}
 	}
@@ -118,7 +118,7 @@ func loginLdap(c *gin.Context, req *LoginReq) {
 		return
 	}
 	common.SuccessResp(c, gin.H{"token": token})
-	loginCache.Del(ip)
+	model.LoginCache.Del(ip)
 }
 
 func ladpRegister(username string) (*model.User, error) {

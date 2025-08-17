@@ -15,17 +15,8 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "GitHub Releases",
-	LocalSort:         false,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           false,
-	NoUpload:          false,
-	NeedMs:            false,
-	DefaultRoot:       "",
-	CheckStatus:       false,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:     "GitHub Releases",
+	NoUpload: true,
 }
 
 func init() {

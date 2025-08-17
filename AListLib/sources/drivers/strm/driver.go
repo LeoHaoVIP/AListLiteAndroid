@@ -114,7 +114,7 @@ func (d *Strm) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([]
 func (d *Strm) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*model.Link, error) {
 	link := d.getLink(ctx, file.GetPath())
 	return &model.Link{
-		MFile: model.NewNopMFile(strings.NewReader(link)),
+		MFile: strings.NewReader(link),
 	}, nil
 }
 

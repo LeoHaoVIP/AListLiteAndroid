@@ -16,6 +16,7 @@ import (
 )
 
 func Init(e *gin.Engine) {
+	e.ContextWithFallback = true
 	if !utils.SliceContains([]string{"", "/"}, conf.URL.Path) {
 		e.GET("/", func(c *gin.Context) {
 			c.Redirect(302, conf.URL.Path)
@@ -140,13 +141,16 @@ func admin(g *gin.RouterGroup) {
 	setting.GET("/list", handles.ListSettings)
 	setting.POST("/save", handles.SaveSettings)
 	setting.POST("/delete", handles.DeleteSetting)
+	setting.POST("/default", handles.DefaultSettings)
 	setting.POST("/reset_token", handles.ResetToken)
 	setting.POST("/set_aria2", handles.SetAria2)
 	setting.POST("/set_qbit", handles.SetQbittorrent)
 	setting.POST("/set_transmission", handles.SetTransmission)
 	setting.POST("/set_115", handles.Set115)
+	setting.POST("/set_115_open", handles.Set115Open)
 	setting.POST("/set_pikpak", handles.SetPikPak)
 	setting.POST("/set_thunder", handles.SetThunder)
+	setting.POST("/set_thunderx", handles.SetThunderX)
 	setting.POST("/set_thunder_browser", handles.SetThunderBrowser)
 
 	// retain /admin/task API to ensure compatibility with legacy automation scripts

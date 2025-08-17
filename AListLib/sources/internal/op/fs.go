@@ -4,6 +4,7 @@ import (
 	"context"
 	stdpath "path"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
@@ -100,6 +101,10 @@ func ClearCache(storage driver.Driver, path string) {
 			}
 		}
 	}
+	listCache.Del(Key(storage, path))
+}
+
+func DeleteCache(storage driver.Driver, path string) {
 	listCache.Del(Key(storage, path))
 }
 
@@ -244,44 +249,87 @@ func GetUnwrap(ctx context.Context, storage driver.Driver, path string) (model.O
 }
 
 var linkCache = cache.NewMemCache(cache.WithShards[*model.Link](16))
-var linkG singleflight.Group[*model.Link]
+var linkG = singleflight.Group[*model.Link]{Remember: true}
 
 // Link get link, if is an url. should have an expiry time
 func Link(ctx context.Context, storage driver.Driver, path string, args model.LinkArgs) (*model.Link, model.Obj, error) {
 	if storage.Config().CheckStatus && storage.GetStorage().Status != WORK {
 		return nil, nil, errors.Errorf("storage not init: %s", storage.GetStorage().Status)
 	}
-	file, err := GetUnwrap(ctx, storage, path)
-	if err != nil {
-		return nil, nil, errors.WithMessage(err, "failed to get file")
+	var (
+		file model.Obj
+		err  error
+	)
+	// use cache directly
+	dir, name := stdpath.Split(stdpath.Join(storage.GetStorage().MountPath, path))
+	if cacheFiles, ok := listCache.Get(strings.TrimSuffix(dir, "/")); ok {
+		for _, f := range cacheFiles {
+			if f.GetName() == name {
+				file = model.UnwrapObj(f)
+				break
+			}
+		}
+	} else {
+		if g, ok := storage.(driver.GetObjInfo); ok {
+			file, err = g.GetObjInfo(ctx, path)
+		} else {
+			file, err = GetUnwrap(ctx, storage, path)
+		}
+	}
+	if file == nil {
+		if err != nil {
+			return nil, nil, errors.WithMessage(err, "failed to get file")
+		}
+		return nil, nil, errors.WithStack(errs.ObjectNotFound)
 	}
 	if file.IsDir() {
 		return nil, nil, errors.WithStack(errs.NotFile)
 	}
-	key := Key(storage, path)
+
+	key := stdpath.Join(Key(storage, path), args.Type)
 	if link, ok := linkCache.Get(key); ok {
 		return link, file, nil
 	}
+
+	var forget utils.CloseFunc
 	fn := func() (*model.Link, error) {
 		link, err := storage.Link(ctx, file, args)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed get link")
 		}
 		if link.Expiration != nil {
-			if link.IPCacheKey {
-				key = key + ":" + args.IP
-			}
 			linkCache.Set(key, link, cache.WithEx[*model.Link](*link.Expiration))
 		}
+		link.Add(forget)
 		return link, nil
 	}
 
-	if storage.Config().OnlyLocal {
+	if storage.Config().OnlyLinkMFile {
 		link, err := fn()
+		if err != nil {
+			return nil, nil, err
+		}
 		return link, file, err
 	}
 
+	forget = func() error {
+		if forget != nil {
+			forget = nil
+			linkG.Forget(key)
+		}
+		return nil
+	}
 	link, err, _ := linkG.Do(key, fn)
+	if err == nil && !link.AcquireReference() {
+		link, err, _ = linkG.Do(key, fn)
+		if err == nil {
+			link.AcquireReference()
+		}
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return link, file, err
 }
 
@@ -334,13 +382,13 @@ func MakeDir(ctx context.Context, storage driver.Driver, path string, lazyCache 
 						if newObj != nil {
 							addCacheObj(storage, parentPath, model.WrapObjName(newObj))
 						} else if !utils.IsBool(lazyCache...) {
-							ClearCache(storage, parentPath)
+							DeleteCache(storage, parentPath)
 						}
 					}
 				case driver.Mkdir:
 					err = s.MakeDir(ctx, parentDir, dirName)
 					if err == nil && !utils.IsBool(lazyCache...) {
-						ClearCache(storage, parentPath)
+						DeleteCache(storage, parentPath)
 					}
 				default:
 					return nil, errs.NotImplement
@@ -385,7 +433,7 @@ func Move(ctx context.Context, storage driver.Driver, srcPath, dstDirPath string
 			if newObj != nil {
 				addCacheObj(storage, dstDirPath, model.WrapObjName(newObj))
 			} else if !utils.IsBool(lazyCache...) {
-				ClearCache(storage, dstDirPath)
+				DeleteCache(storage, dstDirPath)
 			}
 		}
 	case driver.Move:
@@ -393,7 +441,7 @@ func Move(ctx context.Context, storage driver.Driver, srcPath, dstDirPath string
 		if err == nil {
 			delCacheObj(storage, srcDirPath, srcRawObj)
 			if !utils.IsBool(lazyCache...) {
-				ClearCache(storage, dstDirPath)
+				DeleteCache(storage, dstDirPath)
 			}
 		}
 	default:
@@ -422,13 +470,13 @@ func Rename(ctx context.Context, storage driver.Driver, srcPath, dstName string,
 			if newObj != nil {
 				updateCacheObj(storage, srcDirPath, srcRawObj, model.WrapObjName(newObj))
 			} else if !utils.IsBool(lazyCache...) {
-				ClearCache(storage, srcDirPath)
+				DeleteCache(storage, srcDirPath)
 			}
 		}
 	case driver.Rename:
 		err = s.Rename(ctx, srcObj, dstName)
 		if err == nil && !utils.IsBool(lazyCache...) {
-			ClearCache(storage, srcDirPath)
+			DeleteCache(storage, srcDirPath)
 		}
 	default:
 		return errs.NotImplement
@@ -460,13 +508,13 @@ func Copy(ctx context.Context, storage driver.Driver, srcPath, dstDirPath string
 			if newObj != nil {
 				addCacheObj(storage, dstDirPath, model.WrapObjName(newObj))
 			} else if !utils.IsBool(lazyCache...) {
-				ClearCache(storage, dstDirPath)
+				DeleteCache(storage, dstDirPath)
 			}
 		}
 	case driver.Copy:
 		err = s.Copy(ctx, srcObj, dstDir)
 		if err == nil && !utils.IsBool(lazyCache...) {
-			ClearCache(storage, dstDirPath)
+			DeleteCache(storage, dstDirPath)
 		}
 	default:
 		return errs.NotImplement
@@ -510,14 +558,15 @@ func Remove(ctx context.Context, storage driver.Driver, path string) error {
 }
 
 func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file model.FileStreamer, up driver.UpdateProgress, lazyCache ...bool) error {
-	if storage.Config().CheckStatus && storage.GetStorage().Status != WORK {
-		return errors.Errorf("storage not init: %s", storage.GetStorage().Status)
-	}
+	close := file.Close
 	defer func() {
-		if err := file.Close(); err != nil {
+		if err := close(); err != nil {
 			log.Errorf("failed to close file streamer, %v", err)
 		}
 	}()
+	if storage.Config().CheckStatus && storage.GetStorage().Status != WORK {
+		return errors.Errorf("storage not init: %s", storage.GetStorage().Status)
+	}
 	// UrlTree PUT
 	if storage.GetStorage().Driver == "UrlTree" {
 		var link string
@@ -568,13 +617,13 @@ func Put(ctx context.Context, storage driver.Driver, dstDirPath string, file mod
 			if newObj != nil {
 				addCacheObj(storage, dstDirPath, model.WrapObjName(newObj))
 			} else if !utils.IsBool(lazyCache...) {
-				ClearCache(storage, dstDirPath)
+				DeleteCache(storage, dstDirPath)
 			}
 		}
 	case driver.Put:
 		err = s.Put(ctx, parentDir, file, up)
 		if err == nil && !utils.IsBool(lazyCache...) {
-			ClearCache(storage, dstDirPath)
+			DeleteCache(storage, dstDirPath)
 		}
 	default:
 		return errs.NotImplement
@@ -626,13 +675,13 @@ func PutURL(ctx context.Context, storage driver.Driver, dstDirPath, dstName, url
 			if newObj != nil {
 				addCacheObj(storage, dstDirPath, model.WrapObjName(newObj))
 			} else if !utils.IsBool(lazyCache...) {
-				ClearCache(storage, dstDirPath)
+				DeleteCache(storage, dstDirPath)
 			}
 		}
 	case driver.PutURL:
 		err = s.PutURL(ctx, dstDir, dstName, url)
 		if err == nil && !utils.IsBool(lazyCache...) {
-			ClearCache(storage, dstDirPath)
+			DeleteCache(storage, dstDirPath)
 		}
 	default:
 		return errs.NotImplement

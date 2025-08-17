@@ -37,10 +37,11 @@ func (d *QuarkOrUC) GetAddition() driver.Additional {
 func (d *QuarkOrUC) Init(ctx context.Context) error {
 	_, err := d.request("/config", http.MethodGet, nil, nil)
 	if err == nil {
-		if d.AdditionVersion != 1 {
-			d.AdditionVersion = 1
-			if !d.UseTransCodingAddress {
+		if d.AdditionVersion != 2 {
+			d.AdditionVersion = 2
+			if !d.UseTransCodingAddress && len(d.DownProxyURL) == 0 {
 				d.WebProxy = true
+				d.WebdavPolicy = "native_proxy"
 			}
 		}
 	}
@@ -143,7 +144,9 @@ func (d *QuarkOrUC) Put(ctx context.Context, dstDir model.Obj, stream model.File
 	}
 
 	if len(writers) > 0 {
-		_, err := streamPkg.CacheFullInTempFileAndWriter(stream, io.MultiWriter(writers...))
+		cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+		up = model.UpdateProgressWithRange(up, 50, 100)
+		_, err := streamPkg.CacheFullInTempFileAndWriter(stream, cacheFileProgress, io.MultiWriter(writers...))
 		if err != nil {
 			return err
 		}

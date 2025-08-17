@@ -15,7 +15,7 @@ type SiteConfig struct {
 func getSiteConfig() SiteConfig {
 	siteConfig := SiteConfig{
 		BasePath: conf.URL.Path,
-		Cdn:      strings.ReplaceAll(strings.TrimSuffix(conf.Conf.Cdn, "/"), "$version", strings.TrimPrefix(conf.WebVersion, "v"),),
+		Cdn:      strings.ReplaceAll(strings.TrimSuffix(conf.Conf.Cdn, "/"), "$version", strings.TrimPrefix(conf.WebVersion, "v")),
 	}
 	if siteConfig.BasePath != "" {
 		siteConfig.BasePath = utils.FixAndCleanPath(siteConfig.BasePath)

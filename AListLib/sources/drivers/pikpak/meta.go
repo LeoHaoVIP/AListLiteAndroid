@@ -17,9 +17,8 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:        "PikPak",
-	LocalSort:   true,
-	DefaultRoot: "",
+	Name:      "PikPak",
+	LocalSort: true,
 }
 
 func init() {

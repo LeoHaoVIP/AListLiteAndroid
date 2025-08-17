@@ -1,18 +1,28 @@
 package ftp
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/pkg/singleflight"
 	"github.com/jlaffaye/ftp"
 )
 
 // do others that not defined in Driver interface
 
 func (d *FTP) login() error {
+	err, _, _ := singleflight.ErrorGroup.Do(fmt.Sprintf("FTP.login:%p", d), func() (error, error) {
+		return d._login(), nil
+	})
+	return err
+}
+
+func (d *FTP) _login() error {
+
 	if d.conn != nil {
 		_, err := d.conn.CurrentDir()
 		if err == nil {

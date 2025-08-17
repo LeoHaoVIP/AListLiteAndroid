@@ -6,6 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash"
+	"io"
+	"net/http"
+
 	"github.com/OpenListTeam/OpenList/v4/drivers/base"
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
@@ -13,9 +17,6 @@ import (
 	streamPkg "github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/go-resty/resty/v2"
-	"hash"
-	"io"
-	"net/http"
 )
 
 type QuarkOpen struct {
@@ -157,7 +158,9 @@ func (d *QuarkOpen) Put(ctx context.Context, dstDir model.Obj, stream model.File
 	}
 
 	if len(writers) > 0 {
-		_, err := streamPkg.CacheFullInTempFileAndWriter(stream, io.MultiWriter(writers...))
+		cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+		up = model.UpdateProgressWithRange(up, 50, 100)
+		_, err := streamPkg.CacheFullInTempFileAndWriter(stream, cacheFileProgress, io.MultiWriter(writers...))
 		if err != nil {
 			return err
 		}

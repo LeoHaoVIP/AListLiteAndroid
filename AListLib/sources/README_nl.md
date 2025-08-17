@@ -20,6 +20,34 @@
 - [Gedragscode](./CODE_OF_CONDUCT.md)
 - [Licentie](./LICENSE)
 
+## Disclaimer
+
+OpenList is een open-source project dat onafhankelijk wordt onderhouden door het OpenList Team, volgend op de AGPL-3.0 licentie en toegewijd aan het behouden van volledige code openheid en transparantie van wijzigingen.
+
+We hebben gemerkt dat er in de gemeenschap enkele derde partij projecten zijn verschenen met namen vergelijkbaar met dit project, zoals OpenListApp/OpenListApp, evenals enkele betaalde eigendomssoftware die dezelfde of soortgelijke naamgeving gebruikt. Om verwarring bij gebruikers te voorkomen, verklaren we hierbij:
+
+- OpenList heeft geen officiële associatie met enige derde partij afgeleide projecten.
+
+- Alle software, code en diensten van dit project worden onderhouden door het OpenList Team en zijn gratis beschikbaar op GitHub.
+
+- Projectdocumentatie en API diensten zijn voornamelijk afhankelijk van liefdadigheidsbronnen verstrekt door Cloudflare. Er zijn momenteel geen betaalplannen of commerciële implementaties, en het gebruik van bestaande functies brengt geen kosten met zich mee.
+
+We respecteren de rechten van de gemeenschap voor vrij gebruik en afgeleide ontwikkeling, maar we roepen downstream projecten ook ten zeerste op:
+
+- Mogen niet de "OpenList" naam gebruiken voor namaakpromotie of commercieel gewin;
+
+- Mogen OpenList-gebaseerde code niet distribueren op een closed-source manier of AGPL licentievoorwaarden schenden.
+
+Om een gezonde ecosysteemontwikkeling beter te onderhouden, bevelen we aan:
+
+- Duidelijk de projectbron aangeven en passende open-source licenties kiezen in overeenstemming met de open-source geest;
+
+- Bij commercieel gebruik, vermijd het gebruik van "OpenList" of enige verwarrende naamgeving als projectnaam;
+
+- Als u materialen onder OpenListTeam/Logo moet gebruiken, kunt u deze wijzigen en gebruiken onder naleving van de overeenkomst.
+
+Dank u voor uw ondersteuning en begrip
+
 ## Functies
 
 - [x] Meerdere opslagmogelijkheden
@@ -78,8 +106,9 @@
 
 ## Documentatie
 
-- 📘 [Documentatie & Installatiegids](https://docs.oplist.org)
-- 📚 [Back-up documentatiesite](https://docs.openlist.team)
+- 📘 [Global Site](https://doc.oplist.org)
+- 📚 [Backup Site](https://doc.openlist.team)
+- 🌏 [CN Site](https://doc.oplist.org.cn)
 
 ## Demo
 

@@ -3,6 +3,7 @@ package net
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 
 	"github.com/OpenListTeam/OpenList/v4/pkg/http_range"
@@ -69,7 +71,7 @@ func (d Downloader) Download(ctx context.Context, p *HttpRequestParams) (readClo
 
 	var finalP HttpRequestParams
 	awsutil.Copy(&finalP, p)
-	if finalP.Range.Length == -1 {
+	if finalP.Range.Length < 0 || finalP.Range.Start+finalP.Range.Length > finalP.Size {
 		finalP.Range.Length = finalP.Size - finalP.Range.Start
 	}
 	impl := downloader{params: &finalP, cfg: d, ctx: ctx}
@@ -119,7 +121,7 @@ type ConcurrencyLimit struct {
 	Limit int // 需要大于0
 }
 
-var ErrExceedMaxConcurrency = fmt.Errorf("ExceedMaxConcurrency")
+var ErrExceedMaxConcurrency = ErrorHttpStatusCode(http.StatusTooManyRequests)
 
 func (l *ConcurrencyLimit) sub() error {
 	l._m.Lock()
@@ -180,13 +182,13 @@ func (d *downloader) download() (io.ReadCloser, error) {
 		resp.Body = utils.NewReadCloser(resp.Body, func() error {
 			d.m.Lock()
 			defer d.m.Unlock()
+			var err error
 			if closeFunc != nil {
 				d.concurrencyFinish()
-				err := closeFunc()
+				err = closeFunc()
 				closeFunc = nil
-				return err
 			}
-			return nil
+			return err
 		})
 		return resp.Body, nil
 	}
@@ -199,7 +201,7 @@ func (d *downloader) download() (io.ReadCloser, error) {
 	d.pos = d.params.Range.Start
 	d.maxPos = d.params.Range.Start + d.params.Range.Length
 	d.concurrency = d.cfg.Concurrency
-	d.sendChunkTask(true)
+	_ = d.sendChunkTask(true)
 
 	var rc io.ReadCloser = NewMultiReadCloser(d.bufs[0], d.interrupt, d.finishBuf)
 
@@ -272,24 +274,27 @@ func (d *downloader) sendChunkTask(newConcurrency bool) error {
 
 // when the final reader Close, we interrupt
 func (d *downloader) interrupt() error {
-	if d.written != d.params.Range.Length {
+	d.m.Lock()
+	defer d.m.Unlock()
+	err := d.err
+	if err == nil && d.written != d.params.Range.Length {
 		log.Debugf("Downloader interrupt before finish")
-		if d.getErr() == nil {
-			d.setErr(fmt.Errorf("interrupted"))
-		}
+		err := fmt.Errorf("interrupted")
+		d.err = err
 	}
-	d.cancel(d.err)
-	defer func() {
-		close(d.chunkChannel)
+	close(d.chunkChannel)
+	if d.bufs != nil {
+		d.cancel(err)
 		for _, buf := range d.bufs {
 			buf.Close()
 		}
+		d.bufs = nil
 		if d.concurrency > 0 {
 			d.concurrency = -d.concurrency
 		}
 		log.Debugf("maxConcurrency:%d", d.cfg.Concurrency+d.concurrency)
-	}()
-	return d.err
+	}
+	return err
 }
 func (d *downloader) getBuf(id int) (b *Buf) {
 	return d.bufs[id%len(d.bufs)]
@@ -300,7 +305,7 @@ func (d *downloader) finishBuf(id int) (isLast bool, nextBuf *Buf) {
 		return true, nil
 	}
 
-	d.sendChunkTask(false)
+	_ = d.sendChunkTask(false)
 
 	d.readingID = id
 	return false, d.getBuf(id)
@@ -309,31 +314,35 @@ func (d *downloader) finishBuf(id int) (isLast bool, nextBuf *Buf) {
 // downloadPart is an individual goroutine worker reading from the ch channel
 // and performing Http request on the data with a given byte range.
 func (d *downloader) downloadPart() {
-	//defer d.wg.Done()
+	defer d.concurrencyFinish()
 	for {
-		c, ok := <-d.chunkChannel
-		if !ok {
-			break
-		}
-		if d.getErr() != nil {
-			// Drain the channel if there is an error, to prevent deadlocking
-			// of download producer.
-			break
-		}
-		if err := d.downloadChunk(&c); err != nil {
-			if err == errCancelConcurrency {
-				break
+		select {
+		case <-d.ctx.Done():
+			return
+		case c, ok := <-d.chunkChannel:
+			if !ok {
+				return
 			}
-			if err == context.Canceled {
-				if e := context.Cause(d.ctx); e != nil {
-					err = e
+			if d.getErr() != nil {
+				// Drain the channel if there is an error, to prevent deadlocking
+				// of download producer.
+				return
+			}
+			if err := d.downloadChunk(&c); err != nil {
+				if err == errCancelConcurrency {
+					return
 				}
+				if err == context.Canceled {
+					if e := context.Cause(d.ctx); e != nil {
+						err = e
+					}
+				}
+				d.setErr(err)
+				d.cancel(err)
+				return
 			}
-			d.setErr(err)
-			d.cancel(err)
 		}
 	}
-	d.concurrencyFinish()
 }
 
 // downloadChunk downloads the chunk
@@ -385,20 +394,21 @@ func (d *downloader) downloadChunk(ch *chunk) error {
 	return err
 }
 
-var errCancelConcurrency = fmt.Errorf("cancel concurrency")
-var errInfiniteRetry = fmt.Errorf("infinite retry")
+var errCancelConcurrency = errors.New("cancel concurrency")
+var errInfiniteRetry = errors.New("infinite retry")
 
 func (d *downloader) tryDownloadChunk(params *HttpRequestParams, ch *chunk) (int64, error) {
 	resp, err := d.cfg.HttpClient(d.ctx, params)
 	if err != nil {
-		if resp == nil {
+		statusCode, ok := errors.Unwrap(err).(ErrorHttpStatusCode)
+		if !ok {
 			return 0, err
 		}
-		if resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
+		if statusCode == http.StatusRequestedRangeNotSatisfiable {
 			return 0, err
 		}
 		if ch.id == 0 { //第1个任务 有限的重试，超过重试就会结束请求
-			switch resp.StatusCode {
+			switch statusCode {
 			default:
 				return 0, err
 			case http.StatusTooManyRequests:
@@ -407,7 +417,7 @@ func (d *downloader) tryDownloadChunk(params *HttpRequestParams, ch *chunk) (int
 			case http.StatusGatewayTimeout:
 			}
 			<-time.After(time.Millisecond * 200)
-			return 0, &errNeedRetry{err: fmt.Errorf("http request failure,status: %d", resp.StatusCode)}
+			return 0, &errNeedRetry{err: err}
 		}
 
 		// 来到这 说明第1个分片下载 连接成功了
@@ -443,7 +453,7 @@ func (d *downloader) tryDownloadChunk(params *HttpRequestParams, ch *chunk) (int
 			return 0, err
 		}
 	}
-	d.sendChunkTask(true)
+	_ = d.sendChunkTask(true)
 	n, err := utils.CopyWithBuffer(ch.buf, resp.Body)
 
 	if err != nil {
@@ -545,12 +555,26 @@ type chunk struct {
 
 func DefaultHttpRequestFunc(ctx context.Context, params *HttpRequestParams) (*http.Response, error) {
 	header := http_range.ApplyRangeToHttpHeader(params.Range, params.HeaderRef)
+	return RequestHttp(ctx, "GET", header, params.URL)
+}
 
-	res, err := RequestHttp(ctx, "GET", header, params.URL)
-	if err != nil {
-		return res, err
+func GetRangeReaderHttpRequestFunc(rangeReader model.RangeReaderIF) HttpRequestFunc {
+	return func(ctx context.Context, params *HttpRequestParams) (*http.Response, error) {
+		rc, err := rangeReader.RangeRead(ctx, params.Range)
+		if err != nil {
+			return nil, err
+		}
+
+		return &http.Response{
+			StatusCode: http.StatusPartialContent,
+			Status:     http.StatusText(http.StatusPartialContent),
+			Body:       rc,
+			Header: http.Header{
+				"Content-Range": {params.Range.ContentRange(params.Size)},
+			},
+			ContentLength: params.Range.Length,
+		}, nil
 	}
-	return res, nil
 }
 
 type HttpRequestParams struct {

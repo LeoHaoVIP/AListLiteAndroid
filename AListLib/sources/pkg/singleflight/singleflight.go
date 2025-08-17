@@ -4,7 +4,7 @@
 
 // Package singleflight provides a duplicate function call suppression
 // mechanism.
-package singleflight
+package singleflight // import "golang.org/x/sync/singleflight"
 
 import (
 	"bytes"
@@ -31,6 +31,15 @@ func (p *panicError) Error() string {
 	return fmt.Sprintf("%v\n\n%s", p.value, p.stack)
 }
 
+func (p *panicError) Unwrap() error {
+	err, ok := p.value.(error)
+	if !ok {
+		return nil
+	}
+
+	return err
+}
+
 func newPanicError(v any) error {
 	stack := debug.Stack()
 
@@ -52,10 +61,6 @@ type call[T any] struct {
 	val T
 	err error
 
-	// forgotten indicates whether Forget was called with this call's key
-	// while the call was still in flight.
-	forgotten bool
-
 	// These fields are read and written with the singleflight
 	// mutex held before the WaitGroup is done, and are read but
 	// not written after the WaitGroup is done.
@@ -68,6 +73,8 @@ type call[T any] struct {
 type Group[T any] struct {
 	mu sync.Mutex          // protects m
 	m  map[string]*call[T] // lazily initialized
+
+	Remember bool
 }
 
 // Result holds the results of Do, so they can be passed
@@ -148,10 +155,10 @@ func (g *Group[T]) doCall(c *call[T], key string, fn func() (T, error)) {
 			c.err = errGoexit
 		}
 
-		c.wg.Done()
 		g.mu.Lock()
 		defer g.mu.Unlock()
-		if !c.forgotten {
+		c.wg.Done()
+		if !g.Remember && g.m[key] == c {
 			delete(g.m, key)
 		}
 
@@ -204,9 +211,6 @@ func (g *Group[T]) doCall(c *call[T], key string, fn func() (T, error)) {
 // an earlier call to complete.
 func (g *Group[T]) Forget(key string) {
 	g.mu.Lock()
-	if c, ok := g.m[key]; ok {
-		c.forgotten = true
-	}
 	delete(g.m, key)
 	g.mu.Unlock()
 }

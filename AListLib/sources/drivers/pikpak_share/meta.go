@@ -15,10 +15,9 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:        "PikPakShare",
-	LocalSort:   true,
-	NoUpload:    true,
-	DefaultRoot: "",
+	Name:      "PikPakShare",
+	LocalSort: true,
+	NoUpload:  true,
 }
 
 func init() {

@@ -1,12 +1,14 @@
 package crypt
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	stdpath "path"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
@@ -110,7 +112,7 @@ func (d *Crypt) List(ctx context.Context, dir model.Obj, args model.ListArgs) ([
 	//return d.list(ctx, d.RemotePath, path)
 	//remoteFull
 
-	objs, err := fs.List(ctx, d.getPathForRemote(path, true), &fs.ListArgs{NoLog: true})
+	objs, err := fs.List(ctx, d.getPathForRemote(path, true), &fs.ListArgs{NoLog: true, Refresh: args.Refresh})
 	// the obj must implement the model.SetPath interface
 	// return objs, err
 	if err != nil {
@@ -241,6 +243,9 @@ func (d *Crypt) Get(ctx context.Context, path string) (model.Obj, error) {
 	//return nil, errs.ObjectNotFound
 }
 
+// https://github.com/rclone/rclone/blob/v1.67.0/backend/crypt/cipher.go#L37
+const fileHeaderSize = 32
+
 func (d *Crypt) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*model.Link, error) {
 	dstDirActualPath, err := d.getActualPathForRemote(file.GetPath(), false)
 	if err != nil {
@@ -251,61 +256,69 @@ func (d *Crypt) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 		return nil, err
 	}
 
-	if remoteLink.RangeReadCloser == nil && remoteLink.MFile == nil && len(remoteLink.URL) == 0 {
+	remoteSize := remoteLink.ContentLength
+	if remoteSize <= 0 {
+		remoteSize = remoteFile.GetSize()
+	}
+	rrf, err := stream.GetRangeReaderFromLink(remoteSize, remoteLink)
+	if err != nil {
+		_ = remoteLink.Close()
 		return nil, fmt.Errorf("the remote storage driver need to be enhanced to support encrytion")
 	}
-	remoteFileSize := remoteFile.GetSize()
-	remoteClosers := utils.EmptyClosers()
-	rangeReaderFunc := func(ctx context.Context, underlyingOffset, underlyingLength int64) (io.ReadCloser, error) {
-		length := underlyingLength
-		if underlyingLength >= 0 && underlyingOffset+underlyingLength >= remoteFileSize {
-			length = -1
-		}
-		rrc := remoteLink.RangeReadCloser
-		if len(remoteLink.URL) > 0 {
-			var converted, err = stream.GetRangeReadCloserFromLink(remoteFileSize, remoteLink)
-			if err != nil {
-				return nil, err
+
+	mu := &sync.Mutex{}
+	var fileHeader []byte
+	rangeReaderFunc := func(ctx context.Context, offset, limit int64) (io.ReadCloser, error) {
+		length := limit
+		if offset == 0 && limit > 0 {
+			mu.Lock()
+			if limit <= fileHeaderSize {
+				defer mu.Unlock()
+				if fileHeader != nil {
+					return io.NopCloser(bytes.NewReader(fileHeader[:limit])), nil
+				}
+				length = fileHeaderSize
+			} else if fileHeader == nil {
+				defer mu.Unlock()
+			} else {
+				mu.Unlock()
 			}
-			rrc = converted
-		}
-		if rrc != nil {
-			remoteReader, err := rrc.RangeRead(ctx, http_range.Range{Start: underlyingOffset, Length: length})
-			remoteClosers.AddClosers(rrc.GetClosers())
-			if err != nil {
-				return nil, err
-			}
-			return remoteReader, nil
-		}
-		if remoteLink.MFile != nil {
-			_, err := remoteLink.MFile.Seek(underlyingOffset, io.SeekStart)
-			if err != nil {
-				return nil, err
-			}
-			//keep reuse same MFile and close at last.
-			remoteClosers.Add(remoteLink.MFile)
-			return io.NopCloser(remoteLink.MFile), nil
 		}
 
-		return nil, errs.NotSupport
-
-	}
-	resultRangeReader := func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
-		readSeeker, err := d.cipher.DecryptDataSeek(ctx, rangeReaderFunc, httpRange.Start, httpRange.Length)
+		remoteReader, err := rrf.RangeRead(ctx, http_range.Range{Start: offset, Length: length})
 		if err != nil {
 			return nil, err
 		}
-		return readSeeker, nil
+
+		if offset == 0 && limit > 0 {
+			fileHeader = make([]byte, fileHeaderSize)
+			n, _ := io.ReadFull(remoteReader, fileHeader)
+			if n != fileHeaderSize {
+				fileHeader = nil
+				return nil, fmt.Errorf("can't read data, expected=%d, got=%d", fileHeaderSize, n)
+			}
+			if limit <= fileHeaderSize {
+				remoteReader.Close()
+				return io.NopCloser(bytes.NewReader(fileHeader[:limit])), nil
+			} else {
+				remoteReader = utils.ReadCloser{
+					Reader: io.MultiReader(bytes.NewReader(fileHeader), remoteReader),
+					Closer: remoteReader,
+				}
+			}
+		}
+		return remoteReader, nil
 	}
-
-	resultRangeReadCloser := &model.RangeReadCloser{RangeReader: resultRangeReader, Closers: remoteClosers}
-	resultLink := &model.Link{
-		RangeReadCloser: resultRangeReadCloser,
-		Expiration:      remoteLink.Expiration,
-	}
-
-	return resultLink, nil
-
+	return &model.Link{
+		RangeReader: stream.RangeReaderFunc(func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
+			readSeeker, err := d.cipher.DecryptDataSeek(ctx, rangeReaderFunc, httpRange.Start, httpRange.Length)
+			if err != nil {
+				return nil, err
+			}
+			return readSeeker, nil
+		}),
+		SyncClosers: utils.NewSyncClosers(remoteLink),
+	}, nil
 }
 
 func (d *Crypt) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) error {

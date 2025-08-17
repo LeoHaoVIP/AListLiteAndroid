@@ -85,7 +85,6 @@ func (i *Addition) GetIdentity() string {
 var config = driver.Config{
 	Name:      "ThunderX",
 	LocalSort: true,
-	OnlyProxy: false,
 }
 
 var configExpert = driver.Config{

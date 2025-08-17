@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/model"
+
 	"github.com/OpenListTeam/OpenList/v4/drivers/base"
 	"github.com/OpenListTeam/OpenList/v4/internal/op"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
@@ -209,4 +211,49 @@ func (d *QuarkUCTV) generateReqSign(method string, pathname string, key string) 
 	xPanTokenHex := hex.EncodeToString(xPanToken[:])
 
 	return timestamp, xPanTokenHex, reqIDHex
+}
+
+func (d *QuarkUCTV) getTranscodingLink(ctx context.Context, file model.Obj) (*model.Link, error) {
+	var fileLink StreamingFileLink
+	_, err := d.request(ctx, "/file", "GET", func(req *resty.Request) {
+		req.SetQueryParams(map[string]string{
+			"method":     "streaming",
+			"group_by":   "source",
+			"fid":        file.GetID(),
+			"resolution": "low,normal,high,super,2k,4k",
+			"support":    "dolby_vision",
+		})
+	}, &fileLink)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Link{
+		URL:           fileLink.Data.VideoInfo[0].URL,
+		Concurrency:   3,
+		PartSize:      10 * utils.MB,
+		ContentLength: fileLink.Data.VideoInfo[0].Size,
+	}, nil
+}
+
+func (d *QuarkUCTV) getDownloadLink(ctx context.Context, file model.Obj) (*model.Link, error) {
+	var fileLink DownloadFileLink
+	_, err := d.request(ctx, "/file", "GET", func(req *resty.Request) {
+		req.SetQueryParams(map[string]string{
+			"method":     "download",
+			"group_by":   "source",
+			"fid":        file.GetID(),
+			"resolution": "low,normal,high,super,2k,4k",
+			"support":    "dolby_vision",
+		})
+	}, &fileLink)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Link{
+		URL:         fileLink.Data.DownloadURL,
+		Concurrency: 3,
+		PartSize:    10 * utils.MB,
+	}, nil
 }

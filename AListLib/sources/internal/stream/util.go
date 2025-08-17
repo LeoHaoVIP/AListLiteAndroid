@@ -3,10 +3,12 @@ package stream
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/net"
 	"github.com/OpenListTeam/OpenList/v4/pkg/http_range"
@@ -14,57 +16,93 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func GetRangeReadCloserFromLink(size int64, link *model.Link) (model.RangeReadCloserIF, error) {
-	if len(link.URL) == 0 {
-		return nil, fmt.Errorf("can't create RangeReadCloser since URL is empty in link")
-	}
-	rangeReaderFunc := func(ctx context.Context, r http_range.Range) (io.ReadCloser, error) {
-		if link.Concurrency > 0 || link.PartSize > 0 {
-			header := net.ProcessHeader(nil, link.Header)
-			down := net.NewDownloader(func(d *net.Downloader) {
-				d.Concurrency = link.Concurrency
-				d.PartSize = link.PartSize
-			})
-			req := &net.HttpRequestParams{
-				URL:       link.URL,
-				Range:     r,
-				Size:      size,
-				HeaderRef: header,
-			}
-			rc, err := down.Download(ctx, req)
-			return rc, err
+type RangeReaderFunc func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error)
 
-		}
-		response, err := RequestRangedHttp(ctx, link, r.Start, r.Length)
-		if err != nil {
-			if response == nil {
-				return nil, fmt.Errorf("http request failure, err:%s", err)
+func (f RangeReaderFunc) RangeRead(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
+	return f(ctx, httpRange)
+}
+
+func GetRangeReaderFromLink(size int64, link *model.Link) (model.RangeReaderIF, error) {
+	if link.MFile != nil {
+		return &model.FileRangeReader{RangeReaderIF: GetRangeReaderFromMFile(size, link.MFile)}, nil
+	}
+	if link.Concurrency > 0 || link.PartSize > 0 {
+		down := net.NewDownloader(func(d *net.Downloader) {
+			d.Concurrency = link.Concurrency
+			d.PartSize = link.PartSize
+		})
+		var rangeReader RangeReaderFunc = func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
+			var req *net.HttpRequestParams
+			if link.RangeReader != nil {
+				req = &net.HttpRequestParams{
+					Range: httpRange,
+					Size:  size,
+				}
+			} else {
+				requestHeader, _ := ctx.Value(conf.RequestHeaderKey).(http.Header)
+				header := net.ProcessHeader(requestHeader, link.Header)
+				req = &net.HttpRequestParams{
+					Range:     httpRange,
+					Size:      size,
+					URL:       link.URL,
+					HeaderRef: header,
+				}
 			}
-			return nil, err
+			return down.Download(ctx, req)
 		}
-		if r.Start == 0 && (r.Length == -1 || r.Length == size) || response.StatusCode == http.StatusPartialContent ||
-			checkContentRange(&response.Header, r.Start) {
+		if link.RangeReader != nil {
+			down.HttpClient = net.GetRangeReaderHttpRequestFunc(link.RangeReader)
+			return rangeReader, nil
+		}
+		return RateLimitRangeReaderFunc(rangeReader), nil
+	}
+
+	if link.RangeReader != nil {
+		return link.RangeReader, nil
+	}
+
+	if len(link.URL) == 0 {
+		return nil, errors.New("invalid link: must have at least one of MFile, URL, or RangeReader")
+	}
+	rangeReader := func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
+		if httpRange.Length < 0 || httpRange.Start+httpRange.Length > size {
+			httpRange.Length = size - httpRange.Start
+		}
+		requestHeader, _ := ctx.Value(conf.RequestHeaderKey).(http.Header)
+		header := net.ProcessHeader(requestHeader, link.Header)
+		header = http_range.ApplyRangeToHttpHeader(httpRange, header)
+
+		response, err := net.RequestHttp(ctx, "GET", header, link.URL)
+		if err != nil {
+			if _, ok := errors.Unwrap(err).(net.ErrorHttpStatusCode); ok {
+				return nil, err
+			}
+			return nil, fmt.Errorf("http request failure, err:%w", err)
+		}
+		if httpRange.Start == 0 && (httpRange.Length == -1 || httpRange.Length == size) || response.StatusCode == http.StatusPartialContent ||
+			checkContentRange(&response.Header, httpRange.Start) {
 			return response.Body, nil
 		} else if response.StatusCode == http.StatusOK {
 			log.Warnf("remote http server not supporting range request, expect low perfromace!")
-			readCloser, err := net.GetRangedHttpReader(response.Body, r.Start, r.Length)
+			readCloser, err := net.GetRangedHttpReader(response.Body, httpRange.Start, httpRange.Length)
 			if err != nil {
 				return nil, err
 			}
 			return readCloser, nil
 		}
-
 		return response.Body, nil
 	}
-	resultRangeReadCloser := model.RangeReadCloser{RangeReader: rangeReaderFunc}
-	return &resultRangeReadCloser, nil
+	return RateLimitRangeReaderFunc(rangeReader), nil
 }
 
-func RequestRangedHttp(ctx context.Context, link *model.Link, offset, length int64) (*http.Response, error) {
-	header := net.ProcessHeader(nil, link.Header)
-	header = http_range.ApplyRangeToHttpHeader(http_range.Range{Start: offset, Length: length}, header)
-
-	return net.RequestHttp(ctx, "GET", header, link.URL)
+func GetRangeReaderFromMFile(size int64, file model.File) RangeReaderFunc {
+	return func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
+		length := httpRange.Length
+		if length < 0 || httpRange.Start+length > size {
+			length = size - httpRange.Start
+		}
+		return &model.FileCloser{File: io.NewSectionReader(file, httpRange.Start, length)}, nil
+	}
 }
 
 // 139 cloud does not properly return 206 http status code, add a hack here
@@ -98,42 +136,52 @@ func (r *ReaderWithCtx) Close() error {
 	return nil
 }
 
-func CacheFullInTempFileAndUpdateProgress(stream model.FileStreamer, up model.UpdateProgress) (model.File, error) {
+func CacheFullInTempFileAndWriter(stream model.FileStreamer, up model.UpdateProgress, w io.Writer) (model.File, error) {
 	if cache := stream.GetFile(); cache != nil {
-		up(100)
+		if w != nil {
+			_, err := cache.Seek(0, io.SeekStart)
+			if err == nil {
+				var reader io.Reader = stream
+				if up != nil {
+					reader = &ReaderUpdatingProgress{
+						Reader:         stream,
+						UpdateProgress: up,
+					}
+				}
+				_, err = utils.CopyWithBuffer(w, reader)
+				if err == nil {
+					_, err = cache.Seek(0, io.SeekStart)
+				}
+			}
+			return cache, err
+		}
+		if up != nil {
+			up(100)
+		}
 		return cache, nil
 	}
-	tmpF, err := utils.CreateTempFile(&ReaderUpdatingProgress{
-		Reader:         stream,
-		UpdateProgress: up,
-	}, stream.GetSize())
-	if err == nil {
-		stream.SetTmpFile(tmpF)
-	}
-	return tmpF, err
-}
 
-func CacheFullInTempFileAndWriter(stream model.FileStreamer, w io.Writer) (model.File, error) {
-	if cache := stream.GetFile(); cache != nil {
-		_, err := cache.Seek(0, io.SeekStart)
-		if err == nil {
-			_, err = utils.CopyWithBuffer(w, cache)
-			if err == nil {
-				_, err = cache.Seek(0, io.SeekStart)
-			}
+	var reader io.Reader = stream
+	if up != nil {
+		reader = &ReaderUpdatingProgress{
+			Reader:         stream,
+			UpdateProgress: up,
 		}
-		return cache, err
 	}
-	tmpF, err := utils.CreateTempFile(io.TeeReader(stream, w), stream.GetSize())
+
+	if w != nil {
+		reader = io.TeeReader(reader, w)
+	}
+	tmpF, err := utils.CreateTempFile(reader, stream.GetSize())
 	if err == nil {
 		stream.SetTmpFile(tmpF)
 	}
 	return tmpF, err
 }
 
-func CacheFullInTempFileAndHash(stream model.FileStreamer, hashType *utils.HashType, params ...any) (model.File, string, error) {
-	h := hashType.NewFunc(params...)
-	tmpF, err := CacheFullInTempFileAndWriter(stream, h)
+func CacheFullInTempFileAndHash(stream model.FileStreamer, up model.UpdateProgress, hashType *utils.HashType, hashParams ...any) (model.File, string, error) {
+	h := hashType.NewFunc(hashParams...)
+	tmpF, err := CacheFullInTempFileAndWriter(stream, up, h)
 	if err != nil {
 		return nil, "", err
 	}

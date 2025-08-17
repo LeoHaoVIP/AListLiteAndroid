@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,12 +17,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
+	"github.com/OpenListTeam/OpenList/v4/internal/net"
 	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/fs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
-	"github.com/OpenListTeam/OpenList/v4/internal/sign"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/OpenListTeam/OpenList/v4/server/common"
 )
@@ -193,7 +195,7 @@ func (h *Handler) handleOptions(w http.ResponseWriter, r *http.Request) (status 
 		return status, err
 	}
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return 403, err
@@ -221,7 +223,7 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	}
 	// TODO: check locks for read-only access??
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return http.StatusForbidden, err
@@ -230,41 +232,44 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	if err != nil {
 		return http.StatusNotFound, err
 	}
-	if r.Method == http.MethodHead {
-		w.Header().Set("Content-Length", fmt.Sprintf("%d", fi.GetSize()))
-		return http.StatusOK, nil
-	}
 	if fi.IsDir() {
 		return http.StatusMethodNotAllowed, nil
 	}
 	// Let ServeContent determine the Content-Type header.
 	storage, _ := fs.GetStorage(reqPath, &fs.GetStoragesArgs{})
-	downProxyUrl := storage.GetStorage().DownProxyUrl
-	if storage.GetStorage().WebdavNative() || (storage.GetStorage().WebdavProxy() && downProxyUrl == "") {
-		link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{Header: r.Header})
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-		if storage.GetStorage().ProxyRange {
-			common.ProxyRange(ctx, link, fi.GetSize())
-		}
-		err = common.Proxy(w, r, link, fi)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("webdav proxy error: %+v", err)
-		}
-	} else if storage.GetStorage().WebdavProxy() && downProxyUrl != "" {
-		u := fmt.Sprintf("%s%s?sign=%s",
-			strings.Split(downProxyUrl, "\n")[0],
-			utils.EncodePath(reqPath, true),
-			sign.Sign(reqPath))
-		w.Header().Set("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
-		http.Redirect(w, r, u, http.StatusFound)
-	} else {
+	if storage.GetStorage().Webdav302() {
 		link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{IP: utils.ClientIP(r), Header: r.Header, Redirect: true})
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}
+		defer link.Close()
 		http.Redirect(w, r, link.URL, http.StatusFound)
+		return 0, nil
+	}
+
+	if storage.GetStorage().WebdavProxyURL() {
+		if url := common.GenerateDownProxyURL(storage.GetStorage(), reqPath); url != "" {
+			w.Header().Set("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
+			http.Redirect(w, r, url, http.StatusFound)
+			return 0, nil
+		}
+	}
+
+	link, _, err := fs.Link(ctx, reqPath, model.LinkArgs{Header: r.Header})
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	defer link.Close()
+
+	if storage.GetStorage().ProxyRange {
+		link = common.ProxyRange(ctx, link, fi.GetSize())
+	}
+	err = common.Proxy(w, r, link, fi)
+	if err != nil {
+		if statusCode, ok := errors.Unwrap(err).(net.ErrorHttpStatusCode); ok {
+			return int(statusCode), err
+		}
+		return http.StatusInternalServerError, fmt.Errorf("webdav proxy error: %+v", err)
 	}
 	return 0, nil
 }
@@ -281,7 +286,7 @@ func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) (status i
 	defer release()
 
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return 403, err
@@ -305,6 +310,12 @@ func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) (status i
 }
 
 func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int, err error) {
+	defer func() {
+		if n, _ := io.ReadFull(r.Body, []byte{0}); n == 1 {
+			_, _ = utils.CopyWithBuffer(io.Discard, r.Body)
+		}
+		_ = r.Body.Close()
+	}()
 	reqPath, status, err := h.stripPrefix(r.URL.Path)
 	if err != nil {
 		return status, err
@@ -320,7 +331,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return http.StatusForbidden, err
@@ -344,8 +355,6 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 		return http.StatusNotFound, err
 	}
 
-	_ = r.Body.Close()
-	_ = fsStream.Close()
 	// TODO(rost): Returning 405 Method Not Allowed might not be appropriate.
 	if err != nil {
 		return http.StatusMethodNotAllowed, err
@@ -374,7 +383,7 @@ func (h *Handler) handleMkcol(w http.ResponseWriter, r *http.Request) (status in
 	defer release()
 
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return 403, err
@@ -438,7 +447,7 @@ func (h *Handler) handleCopyMove(w http.ResponseWriter, r *http.Request) (status
 	}
 
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	src, err = user.JoinPath(src)
 	if err != nil {
 		return 403, err
@@ -502,7 +511,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 	}
 
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	token, ld, now, created := "", LockDetails{}, time.Now(), false
 	if li == (lockInfo{}) {
 		// An empty lockInfo means to refresh the lock.
@@ -621,8 +630,8 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 	}
 	ctx := r.Context()
 	userAgent := r.Header.Get("User-Agent")
-	ctx = context.WithValue(ctx, "userAgent", userAgent)
-	user := ctx.Value("user").(*model.User)
+	ctx = context.WithValue(ctx, conf.UserAgentKey, userAgent)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return 403, err
@@ -701,7 +710,7 @@ func (h *Handler) handleProppatch(w http.ResponseWriter, r *http.Request) (statu
 	defer release()
 
 	ctx := r.Context()
-	user := ctx.Value("user").(*model.User)
+	user := ctx.Value(conf.UserKey).(*model.User)
 	reqPath, err = user.JoinPath(reqPath)
 	if err != nil {
 		return 403, err

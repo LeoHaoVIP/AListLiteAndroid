@@ -1,9 +1,11 @@
 package handles
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/bootstrap/data"
 	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/op"
@@ -89,6 +91,46 @@ func ListSettings(c *gin.Context) {
 		return
 	}
 	common.SuccessResp(c, settings)
+}
+
+func DefaultSettings(c *gin.Context) {
+	groupStr := c.Query("group")
+	groupsStr := c.Query("groups")
+	settings := data.InitialSettings()
+	if groupsStr == "" && groupStr == "" {
+		for i := range settings {
+			(&settings[i]).Index = uint(i)
+		}
+		common.SuccessResp(c, settings)
+	} else {
+		var groupStrings []string
+		if groupsStr != "" {
+			groupStrings = strings.Split(groupsStr, ",")
+		} else {
+			groupStrings = append(groupStrings, groupStr)
+		}
+		var groups []int
+		for _, str := range groupStrings {
+			group, err := strconv.Atoi(str)
+			if err != nil {
+				common.ErrorResp(c, err, 400)
+				return
+			}
+			groups = append(groups, group)
+		}
+		sort.Ints(groups)
+		var resultItems []model.SettingItem
+		for _, group := range groups {
+			for i := range settings {
+				item := settings[i]
+				if group == item.Group {
+					item.Index = uint(i)
+					resultItems = append(resultItems, item)
+				}
+			}
+		}
+		common.SuccessResp(c, resultItems)
+	}
 }
 
 func DeleteSetting(c *gin.Context) {

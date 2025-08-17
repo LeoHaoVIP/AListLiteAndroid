@@ -14,6 +14,7 @@ import (
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/t3rm1n4l/go-mega"
@@ -95,8 +96,8 @@ func (d *Mega) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*
 		size := file.GetSize()
 		resultRangeReader := func(ctx context.Context, httpRange http_range.Range) (io.ReadCloser, error) {
 			length := httpRange.Length
-			if httpRange.Length >= 0 && httpRange.Start+httpRange.Length >= size {
-				length = -1
+			if httpRange.Length < 0 || httpRange.Start+httpRange.Length >= size {
+				length = size - httpRange.Start
 			}
 			var down *mega.Download
 			err := utils.Retry(3, time.Second, func() (err error) {
@@ -114,11 +115,9 @@ func (d *Mega) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*
 
 			return readers.NewLimitedReadCloser(oo, length), nil
 		}
-		resultRangeReadCloser := &model.RangeReadCloser{RangeReader: resultRangeReader}
-		resultLink := &model.Link{
-			RangeReadCloser: resultRangeReadCloser,
-		}
-		return resultLink, nil
+		return &model.Link{
+			RangeReader: stream.RateLimitRangeReaderFunc(resultRangeReader),
+		}, nil
 	}
 	return nil, fmt.Errorf("unable to convert dir to mega n")
 }

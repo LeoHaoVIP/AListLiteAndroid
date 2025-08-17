@@ -14,12 +14,9 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "WeiYun",
-	LocalSort:         false,
-	OnlyProxy:         true,
-	CheckStatus:       true,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:        "WeiYun",
+	OnlyProxy:   true,
+	CheckStatus: true,
 }
 
 func init() {

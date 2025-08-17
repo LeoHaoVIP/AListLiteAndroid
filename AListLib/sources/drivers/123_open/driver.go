@@ -109,7 +109,9 @@ func (d *Open123) Put(ctx context.Context, dstDir model.Obj, file model.FileStre
 	etag := file.GetHash().GetHash(utils.MD5)
 
 	if len(etag) < utils.MD5.Width {
-		_, etag, err = stream.CacheFullInTempFileAndHash(file, utils.MD5)
+		cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+		up = model.UpdateProgressWithRange(up, 50, 100)
+		_, etag, err = stream.CacheFullInTempFileAndHash(file, cacheFileProgress, utils.MD5)
 		if err != nil {
 			return err
 		}
@@ -121,7 +123,6 @@ func (d *Open123) Put(ctx context.Context, dstDir model.Obj, file model.FileStre
 	if createResp.Data.Reuse {
 		return nil
 	}
-	up(10)
 
 	return d.Upload(ctx, file, createResp, up)
 }

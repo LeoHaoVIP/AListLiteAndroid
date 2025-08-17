@@ -16,17 +16,9 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "FebBox",
-	LocalSort:         false,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           false,
-	NoUpload:          true,
-	NeedMs:            false,
-	DefaultRoot:       "0",
-	CheckStatus:       false,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:        "FebBox",
+	NoUpload:    true,
+	DefaultRoot: "0",
 }
 
 func init() {

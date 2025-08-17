@@ -96,37 +96,23 @@ func (d *Alias) list(ctx context.Context, dst, sub string, args *fs.ListArgs) ([
 	})
 }
 
-func (d *Alias) link(ctx context.Context, dst, sub string, args model.LinkArgs) (*model.Link, error) {
-	reqPath := stdpath.Join(dst, sub)
-	// 参考 crypt 驱动
+func (d *Alias) link(ctx context.Context, reqPath string, args model.LinkArgs) (*model.Link, model.Obj, error) {
 	storage, reqActualPath, err := op.GetStorageAndActualPath(reqPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	useRawLink := len(common.GetApiUrl(ctx)) == 0 // ftp、s3
-	if !useRawLink {
-		_, ok := storage.(*Alias)
-		useRawLink = !ok && !args.Redirect
+	// proxy || ftp,s3
+	if !args.Redirect || len(common.GetApiUrl(ctx)) == 0 {
+		return op.Link(ctx, storage, reqActualPath, args)
 	}
-	if useRawLink {
-		link, _, err := op.Link(ctx, storage, reqActualPath, args)
-		return link, err
-	}
-	_, err = fs.Get(ctx, reqPath, &fs.GetArgs{NoLog: true})
+	obj, err := fs.Get(ctx, reqPath, &fs.GetArgs{NoLog: true})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if common.ShouldProxy(storage, stdpath.Base(sub)) {
-		link := &model.Link{
-			URL: fmt.Sprintf("%s/p%s?sign=%s",
-				common.GetApiUrl(ctx),
-				utils.EncodePath(reqPath, true),
-				sign.Sign(reqPath)),
-		}
-		return link, nil
+	if common.ShouldProxy(storage, stdpath.Base(reqPath)) {
+		return nil, obj, nil
 	}
-	link, _, err := op.Link(ctx, storage, reqActualPath, args)
-	return link, err
+	return op.Link(ctx, storage, reqActualPath, args)
 }
 
 func (d *Alias) getReqPath(ctx context.Context, obj model.Obj, isParent bool) ([]*string, error) {

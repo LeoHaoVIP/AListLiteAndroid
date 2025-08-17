@@ -1,8 +1,10 @@
 package sftp
 
 import (
+	"fmt"
 	"path"
 
+	"github.com/OpenListTeam/OpenList/v4/pkg/singleflight"
 	"github.com/pkg/sftp"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -11,6 +13,12 @@ import (
 // do others that not defined in Driver interface
 
 func (d *SFTP) initClient() error {
+	err, _, _ := singleflight.ErrorGroup.Do(fmt.Sprintf("SFTP.initClient:%p", d), func() (error, error) {
+		return d._initClient(), nil
+	})
+	return err
+}
+func (d *SFTP) _initClient() error {
 	var auth ssh.AuthMethod
 	if len(d.PrivateKey) > 0 {
 		var err error
@@ -52,7 +60,9 @@ func (d *SFTP) clientReconnectOnConnectionError() error {
 		return nil
 	}
 	log.Debugf("[sftp] discarding closed sftp connection: %v", err)
-	_ = d.client.Close()
+	if d.client != nil {
+		_ = d.client.Close()
+	}
 	err = d.initClient()
 	return err
 }

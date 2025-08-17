@@ -34,11 +34,20 @@
     </script>
     
     
-    <script type="module">import.meta.url;import("_").catch(()=>1);async function* g(){};if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+    <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
     <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=  window.__dynamic_base__+e.getAttribute('data-src'),n.onload=function(){System.import(  window.__dynamic_base__+document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <!-- customize body -->
+    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+    
+    <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/index-legacy-CfXu3iPN.js"></script>
     <script>
 (function(){
-var preloads = [{"parentTagName":"head","tagName":"link","attrs":{"href":"/static/manifest.json","rel":"manifest"}},{"parentTagName":"head","tagName":"script","attrs":{"type":"module","crossorigin":"","src":"/assets/index-745d7911.js"}},{"parentTagName":"head","tagName":"link","attrs":{"rel":"stylesheet","href":"/assets/index-c0564af7.css"}}];
+var preloads = [{"parentTagName":"head","tagName":"link","attrs":{"href":"/static/manifest.json","rel":"manifest"}},{"parentTagName":"head","tagName":"script","attrs":{"type":"module","crossorigin":"","src":"/assets/index-BeFrtC4h.js"}},{"parentTagName":"head","tagName":"link","attrs":{"rel":"stylesheet","crossorigin":"","href":"/assets/index-DYLAoZjS.css"}},{"parentTagName":"body","tagName":"script","attrs":{"nomodule":"","crossorigin":"","id":"vite-legacy-polyfill","src":"/assets/polyfills-legacy-BPfokQaO.js"}}];
 function setAttribute(target, attrs) {
 for (var key in attrs) {
   target.setAttribute(key, attrs[key]);
@@ -60,22 +69,6 @@ document.getElementsByTagName(item.parentTagName)[0].appendChild(childNode);
 }
 })();
 </script>
-</head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+</body>
 
-    
-    <!-- customize body -->
-    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
-    <script nomodule crossorigin id="vite-legacy-polyfill" data-src="/assets/polyfills-legacy-fa59231c.js">!(function() {
-      var e = document.createElement('script')
-      e.src =   window.__dynamic_base__ + document.getElementById('vite-legacy-polyfill').getAttribute('data-src');
-      e.onload = function() {
-        System.import(  window.__dynamic_base__+document.getElementById('vite-legacy-entry').getAttribute('data-src'))
-      };
-      document.body.appendChild(e)
-    })();</script>
-    <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/index-legacy-54a561d9.js"></script>
-  </body>
 </html>

@@ -16,17 +16,10 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "UrlTree",
-	LocalSort:         true,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           true,
-	NoUpload:          false,
-	NeedMs:            false,
-	DefaultRoot:       "",
-	CheckStatus:       true,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:        "UrlTree",
+	LocalSort:   true,
+	NoCache:     true,
+	CheckStatus: true,
 }
 
 func init() {

@@ -820,7 +820,9 @@ func (y *Cloud189PC) GetMultiUploadUrls(ctx context.Context, isFamily bool, uplo
 
 // 旧版本上传，家庭云不支持覆盖
 func (y *Cloud189PC) OldUpload(ctx context.Context, dstDir model.Obj, file model.FileStreamer, up driver.UpdateProgress, isFamily bool, overwrite bool) (model.Obj, error) {
-	tempFile, fileMd5, err := stream.CacheFullInTempFileAndHash(file, utils.MD5)
+	cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+	up = model.UpdateProgressWithRange(up, 50, 100)
+	tempFile, fileMd5, err := stream.CacheFullInTempFileAndHash(file, cacheFileProgress, utils.MD5)
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@ type Addition struct {
 var config = driver.Config{
 	Name:              "Template",
 	LocalSort:         false,
-	OnlyLocal:         false,
+	OnlyLinkMFile:     false,
 	OnlyProxy:         false,
 	NoCache:           false,
 	NoUpload:          false,
@@ -25,6 +25,7 @@ var config = driver.Config{
 	CheckStatus:       false,
 	Alert:             "",
 	NoOverwriteUpload: false,
+	NoLinkURL:         false,
 }
 
 func init() {

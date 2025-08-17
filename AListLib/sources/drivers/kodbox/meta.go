@@ -14,8 +14,7 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:        "KodBox",
-	DefaultRoot: "",
+	Name: "KodBox",
 }
 
 func init() {

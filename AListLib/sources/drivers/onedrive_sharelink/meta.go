@@ -22,7 +22,6 @@ var config = driver.Config{
 	OnlyProxy:   true,
 	NoUpload:    true,
 	DefaultRoot: "/",
-	CheckStatus: false,
 }
 
 func init() {

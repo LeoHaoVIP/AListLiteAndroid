@@ -2,9 +2,11 @@ package handles
 
 import (
 	_115 "github.com/OpenListTeam/OpenList/v4/drivers/115"
+	_115_open "github.com/OpenListTeam/OpenList/v4/drivers/115_open"
 	"github.com/OpenListTeam/OpenList/v4/drivers/pikpak"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder"
 	"github.com/OpenListTeam/OpenList/v4/drivers/thunder_browser"
+	"github.com/OpenListTeam/OpenList/v4/drivers/thunderx"
 	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/offline_download/tool"
@@ -152,6 +154,50 @@ func Set115(c *gin.Context) {
 	common.SuccessResp(c, "ok")
 }
 
+type Set115OpenReq struct {
+	TempDir string `json:"temp_dir" form:"temp_dir"`
+}
+
+func Set115Open(c *gin.Context) {
+	var req Set115OpenReq
+	if err := c.ShouldBind(&req); err != nil {
+		common.ErrorResp(c, err, 400)
+		return
+	}
+	if req.TempDir != "" {
+		storage, _, err := op.GetStorageAndActualPath(req.TempDir)
+		if err != nil {
+			common.ErrorStrResp(c, "storage does not exists", 400)
+			return
+		}
+		if storage.Config().CheckStatus && storage.GetStorage().Status != op.WORK {
+			common.ErrorStrResp(c, "storage not init: "+storage.GetStorage().Status, 400)
+			return
+		}
+		if _, ok := storage.(*_115_open.Open115); !ok {
+			common.ErrorStrResp(c, "unsupported storage driver for offline download, only 115 Open is supported", 400)
+			return
+		}
+	}
+	items := []model.SettingItem{
+		{Key: conf.Pan115OpenTempDir, Value: req.TempDir, Type: conf.TypeString, Group: model.OFFLINE_DOWNLOAD, Flag: model.PRIVATE},
+	}
+	if err := op.SaveSettingItems(items); err != nil {
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	_tool, err := tool.Tools.Get("115 Open")
+	if err != nil {
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	if _, err := _tool.Init(); err != nil {
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	common.SuccessResp(c, "ok")
+}
+
 type SetPikPakReq struct {
 	TempDir string `json:"temp_dir" form:"temp_dir"`
 }
@@ -240,6 +286,50 @@ func SetThunder(c *gin.Context) {
 	common.SuccessResp(c, "ok")
 }
 
+type SetThunderXReq struct {
+	TempDir string `json:"temp_dir" form:"temp_dir"`
+}
+
+func SetThunderX(c *gin.Context) {
+	var req SetThunderXReq
+	if err := c.ShouldBind(&req); err != nil {
+		common.ErrorResp(c, err, 400)
+		return
+	}
+	if req.TempDir != "" {
+		storage, _, err := op.GetStorageAndActualPath(req.TempDir)
+		if err != nil {
+			common.ErrorStrResp(c, "storage does not exists", 400)
+			return
+		}
+		if storage.Config().CheckStatus && storage.GetStorage().Status != op.WORK {
+			common.ErrorStrResp(c, "storage not init: "+storage.GetStorage().Status, 400)
+			return
+		}
+		if _, ok := storage.(*thunderx.ThunderX); !ok {
+			common.ErrorStrResp(c, "unsupported storage driver for offline download, only ThunderX is supported", 400)
+			return
+		}
+	}
+	items := []model.SettingItem{
+		{Key: conf.ThunderXTempDir, Value: req.TempDir, Type: conf.TypeString, Group: model.OFFLINE_DOWNLOAD, Flag: model.PRIVATE},
+	}
+	if err := op.SaveSettingItems(items); err != nil {
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	_tool, err := tool.Tools.Get("ThunderX")
+	if err != nil {
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	if _, err := _tool.Init(); err != nil {
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	common.SuccessResp(c, "ok")
+}
+
 type SetThunderBrowserReq struct {
 	TempDir string `json:"temp_dir" form:"temp_dir"`
 }
@@ -298,7 +388,7 @@ type AddOfflineDownloadReq struct {
 }
 
 func AddOfflineDownload(c *gin.Context) {
-	user := c.MustGet("user").(*model.User)
+	user := c.Request.Context().Value(conf.UserKey).(*model.User)
 	if !user.CanAddOfflineDownloadTasks() {
 		common.ErrorStrResp(c, "permission denied", 403)
 		return

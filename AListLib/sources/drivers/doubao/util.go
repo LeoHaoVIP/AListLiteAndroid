@@ -14,7 +14,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"path/filepath"
+	stdpath "path"
 	"sort"
 	"strconv"
 	"strings"
@@ -353,7 +353,7 @@ func (d *Doubao) getUploadConfig(upConfig *UploadConfig, dataType string, file m
 				"ServiceId":     d.UploadToken.Alice[dataType].ServiceID,
 				"NeedFallback":  "true",
 				"FileSize":      strconv.FormatInt(file.GetSize(), 10),
-				"FileExtension": filepath.Ext(file.GetName()),
+				"FileExtension": stdpath.Ext(file.GetName()),
 				"s":             randomString(),
 			}
 		}
@@ -524,7 +524,6 @@ func (d *Doubao) UploadByMultipart(ctx context.Context, config *UploadConfig, fi
 	if err != nil {
 		return nil, fmt.Errorf("failed to cache file: %w", err)
 	}
-	defer tempFile.Close()
 	up(10.0) // 更新进度
 	// 设置并行上传
 	threadG, uploadCtx := errgroup.NewGroupWithContext(ctx, d.uploadThread,

@@ -126,25 +126,13 @@ func (d *QuarkUCTV) List(ctx context.Context, dir model.Obj, args model.ListArgs
 }
 
 func (d *QuarkUCTV) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*model.Link, error) {
-	var fileLink FileLink
-	_, err := d.request(ctx, "/file", "GET", func(req *resty.Request) {
-		req.SetQueryParams(map[string]string{
-			"method":     "download",
-			"group_by":   "source",
-			"fid":        file.GetID(),
-			"resolution": "low,normal,high,super,2k,4k",
-			"support":    "dolby_vision",
-		})
-	}, &fileLink)
-	if err != nil {
-		return nil, err
+	f := file.(*Files)
+
+	if d.Addition.VideoLinkMethod == "streaming" && f.Category == 1 && f.Size > 0 {
+		return d.getTranscodingLink(ctx, file)
 	}
 
-	return &model.Link{
-		URL:         fileLink.Data.DownloadURL,
-		Concurrency: 3,
-		PartSize:    10 * utils.MB,
-	}, nil
+	return d.getDownloadLink(ctx, file)
 }
 
 func (d *QuarkUCTV) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) (model.Obj, error) {

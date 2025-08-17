@@ -18,17 +18,10 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "HalalCloud",
-	LocalSort:         false,
-	OnlyLocal:         true,
-	OnlyProxy:         true,
-	NoCache:           false,
-	NoUpload:          false,
-	NeedMs:            false,
-	DefaultRoot:       "/",
-	CheckStatus:       false,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:        "HalalCloud",
+	OnlyProxy:   true,
+	DefaultRoot: "/",
+	NoLinkURL:   true,
 }
 
 func init() {

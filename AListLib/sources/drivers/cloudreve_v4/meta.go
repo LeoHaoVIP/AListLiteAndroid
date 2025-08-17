@@ -26,15 +26,8 @@ type Addition struct {
 
 var config = driver.Config{
 	Name:              "Cloudreve V4",
-	LocalSort:         false,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           false,
-	NoUpload:          false,
-	NeedMs:            false,
 	DefaultRoot:       "cloudreve://my",
 	CheckStatus:       true,
-	Alert:             "",
 	NoOverwriteUpload: true,
 }
 

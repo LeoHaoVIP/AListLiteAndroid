@@ -1,4 +1,4 @@
-FROM docker.io/library/alpine:edge AS builder
+FROM alpine:edge AS builder
 LABEL stage=go-builder
 WORKDIR /app/
 RUN apk add --no-cache bash curl jq gcc git go musl-dev
@@ -7,30 +7,15 @@ RUN go mod download
 COPY ./ ./
 RUN bash build.sh release docker
 
-FROM alpine:edge
+### Default image is base. You can add other support by modifying BASE_IMAGE_TAG. The following parameters are supported: base (default), aria2, ffmpeg, aio
+ARG BASE_IMAGE_TAG=base
+FROM openlistteam/openlist-base-image:${BASE_IMAGE_TAG}
 
 ARG INSTALL_FFMPEG=false
 ARG INSTALL_ARIA2=false
 LABEL MAINTAINER="OpenList"
 
 WORKDIR /opt/openlist/
-
-RUN apk update && \
-    apk upgrade --no-cache && \
-    apk add --no-cache bash ca-certificates su-exec tzdata; \
-    [ "$INSTALL_FFMPEG" = "true" ] && apk add --no-cache ffmpeg; \
-    [ "$INSTALL_ARIA2" = "true" ] && apk add --no-cache curl aria2 && \
-        mkdir -p /opt/aria2/.aria2 && \
-        wget https://github.com/P3TERX/aria2.conf/archive/refs/heads/master.tar.gz -O /tmp/aria-conf.tar.gz && \
-        tar -zxvf /tmp/aria-conf.tar.gz -C /opt/aria2/.aria2 --strip-components=1 && rm -f /tmp/aria-conf.tar.gz && \
-        sed -i 's|rpc-secret|#rpc-secret|g' /opt/aria2/.aria2/aria2.conf && \
-        sed -i 's|/root/.aria2|/opt/aria2/.aria2|g' /opt/aria2/.aria2/aria2.conf && \
-        sed -i 's|/root/.aria2|/opt/aria2/.aria2|g' /opt/aria2/.aria2/script.conf && \
-        sed -i 's|/root|/opt/aria2|g' /opt/aria2/.aria2/aria2.conf && \
-        sed -i 's|/root|/opt/aria2|g' /opt/aria2/.aria2/script.conf && \
-        touch /opt/aria2/.aria2/aria2.session && \
-        /opt/aria2/.aria2/tracker.sh ; \
-    rm -rf /var/cache/apk/*
 
 COPY --chmod=755 --from=builder /app/bin/openlist ./
 COPY --chmod=755 entrypoint.sh /entrypoint.sh

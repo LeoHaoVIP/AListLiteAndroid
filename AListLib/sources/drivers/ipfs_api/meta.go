@@ -17,7 +17,6 @@ var config = driver.Config{
 	Name:        "IPFS API",
 	DefaultRoot: "/",
 	LocalSort:   true,
-	OnlyProxy:   false,
 }
 
 func init() {

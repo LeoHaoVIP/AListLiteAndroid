@@ -6,10 +6,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"mime"
 	"mime/multipart"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -74,11 +72,7 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 	contentTypes, haveType := w.Header()["Content-Type"]
 	var contentType string
 	if !haveType {
-		contentType = mime.TypeByExtension(filepath.Ext(name))
-		if contentType == "" {
-			// most modern application can handle the default contentType
-			contentType = "application/octet-stream"
-		}
+		contentType = utils.GetMimeType(name)
 		w.Header().Set("Content-Type", contentType)
 	} else if len(contentTypes) > 0 {
 		contentType = contentTypes[0]
@@ -114,14 +108,14 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 
 	// 使用请求的Context
 	// 不然从sendContent读不到数据，即使请求断开CopyBuffer也会一直堵塞
-	ctx := context.WithValue(r.Context(), "request_header", r.Header)
+	ctx := r.Context()
 	switch {
 	case len(ranges) == 0:
 		reader, err := RangeReadCloser.RangeRead(ctx, http_range.Range{Length: -1})
 		if err != nil {
 			code = http.StatusRequestedRangeNotSatisfiable
-			if err == ErrExceedMaxConcurrency {
-				code = http.StatusTooManyRequests
+			if statusCode, ok := errors.Unwrap(err).(ErrorHttpStatusCode); ok {
+				code = int(statusCode)
 			}
 			http.Error(w, err.Error(), code)
 			return nil
@@ -143,8 +137,8 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 		sendContent, err = RangeReadCloser.RangeRead(ctx, ra)
 		if err != nil {
 			code = http.StatusRequestedRangeNotSatisfiable
-			if err == ErrExceedMaxConcurrency {
-				code = http.StatusTooManyRequests
+			if statusCode, ok := errors.Unwrap(err).(ErrorHttpStatusCode); ok {
+				code = int(statusCode)
 			}
 			http.Error(w, err.Error(), code)
 			return nil
@@ -205,8 +199,8 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request, name string, modTime time
 				log.Warnf("Maybe size incorrect or reader not giving correct/full data, or connection closed before finish. written bytes: %d ,sendSize:%d, ", written, sendSize)
 			}
 			code = http.StatusInternalServerError
-			if err == ErrExceedMaxConcurrency {
-				code = http.StatusTooManyRequests
+			if statusCode, ok := errors.Unwrap(err).(ErrorHttpStatusCode); ok {
+				code = int(statusCode)
 			}
 			w.WriteHeader(code)
 			return err
@@ -259,9 +253,15 @@ func RequestHttp(ctx context.Context, httpMethod string, headerOverride http.Hea
 		_ = res.Body.Close()
 		msg := string(all)
 		log.Debugln(msg)
-		return res, fmt.Errorf("http request [%s] failure,status: %d response:%s", URL, res.StatusCode, msg)
+		return nil, fmt.Errorf("http request [%s] failure,status: %w response:%s", URL, ErrorHttpStatusCode(res.StatusCode), msg)
 	}
 	return res, nil
+}
+
+type ErrorHttpStatusCode int
+
+func (e ErrorHttpStatusCode) Error() string {
+	return fmt.Sprintf("%d|%s", e, http.StatusText(int(e)))
 }
 
 var once sync.Once

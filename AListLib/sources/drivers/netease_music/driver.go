@@ -73,7 +73,7 @@ func (d *NeteaseMusic) List(ctx context.Context, dir model.Obj, args model.ListA
 
 func (d *NeteaseMusic) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*model.Link, error) {
 	if lrc, ok := file.(*LyricObj); ok {
-		if args.Type == "parsed" {
+		if args.Type == "parsed" && !args.Redirect {
 			return lrc.getLyricLink(), nil
 		} else {
 			return lrc.getProxyLink(ctx), nil

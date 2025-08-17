@@ -26,17 +26,12 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "Crypt",
-	LocalSort:         true,
-	OnlyLocal:         true,
-	OnlyProxy:         true,
-	NoCache:           true,
-	NoUpload:          false,
-	NeedMs:            false,
-	DefaultRoot:       "/",
-	CheckStatus:       false,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:        "Crypt",
+	LocalSort:   true,
+	OnlyProxy:   true,
+	NoCache:     true,
+	DefaultRoot: "/",
+	NoLinkURL:   true,
 }
 
 func init() {

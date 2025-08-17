@@ -18,13 +18,6 @@ type Addition struct {
 
 var config = driver.Config{
 	Name:              "Dropbox",
-	LocalSort:         false,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           false,
-	NoUpload:          false,
-	NeedMs:            false,
-	DefaultRoot:       "",
 	NoOverwriteUpload: true,
 }
 

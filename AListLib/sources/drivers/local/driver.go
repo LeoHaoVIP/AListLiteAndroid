@@ -19,6 +19,7 @@ import (
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/sign"
+	"github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/OpenListTeam/OpenList/v4/server/common"
 	"github.com/OpenListTeam/times"
@@ -172,19 +173,6 @@ func (d *Local) FileInfoToObj(ctx context.Context, f fs.FileInfo, reqPath string
 	}
 	return &file
 }
-func (d *Local) GetMeta(ctx context.Context, path string) (model.Obj, error) {
-	f, err := os.Stat(path)
-	if err != nil {
-		return nil, err
-	}
-	file := d.FileInfoToObj(ctx, f, path, path)
-	//h := "123123"
-	//if s, ok := f.(model.SetHash); ok && file.GetHash() == ("","")  {
-	//	s.SetHash(h,"SHA1")
-	//}
-	return file, nil
-
-}
 
 func (d *Local) Get(ctx context.Context, path string) (model.Obj, error) {
 	path = filepath.Join(d.GetRootPath(), path)
@@ -220,7 +208,7 @@ func (d *Local) Get(ctx context.Context, path string) (model.Obj, error) {
 
 func (d *Local) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*model.Link, error) {
 	fullPath := file.GetPath()
-	var link model.Link
+	link := &model.Link{}
 	if args.Type == "thumb" && utils.Ext(file.GetName()) != "svg" {
 		var buf *bytes.Buffer
 		var thumbPath *string
@@ -240,10 +228,17 @@ func (d *Local) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 			if err != nil {
 				return nil, err
 			}
+			// Get thumbnail file size for Content-Length
+			stat, err := open.Stat()
+			if err != nil {
+				open.Close()
+				return nil, err
+			}
+			link.ContentLength = int64(stat.Size())
 			link.MFile = open
 		} else {
-			link.MFile = model.NewNopMFile(bytes.NewReader(buf.Bytes()))
-			//link.Header.Set("Content-Length", strconv.Itoa(buf.Len()))
+			link.MFile = bytes.NewReader(buf.Bytes())
+			link.ContentLength = int64(buf.Len())
 		}
 	} else {
 		open, err := os.Open(fullPath)
@@ -252,7 +247,14 @@ func (d *Local) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 		}
 		link.MFile = open
 	}
-	return &link, nil
+	if link.MFile != nil && !d.Config().OnlyLinkMFile {
+		link.AddIfCloser(link.MFile)
+		link.RangeReader = &model.FileRangeReader{
+			RangeReaderIF: stream.GetRangeReaderFromMFile(file.GetSize(), link.MFile),
+		}
+		link.MFile = nil
+	}
+	return link, nil
 }
 
 func (d *Local) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) error {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/url"
 	stdpath "path"
 	"strings"
@@ -97,9 +96,9 @@ func (d *S3) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (*mo
 		input.ResponseContentDisposition = &disposition
 	}
 
-	req, reqErr := d.linkClient.GetObjectRequest(input)
-	if reqErr != nil {
-		return nil, fmt.Errorf("failed to create GetObject request: %w", reqErr)
+	req, _ := d.linkClient.GetObjectRequest(input)
+	if req == nil {
+		return nil, fmt.Errorf("failed to create GetObject request")
 	}
 	var link model.Link
 	var err error
@@ -158,7 +157,7 @@ func (d *S3) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) e
 			Name:     getPlaceholderName(d.Placeholder),
 			Modified: time.Now(),
 		},
-		Reader:   io.NopCloser(bytes.NewReader([]byte{})),
+		Reader:   bytes.NewReader([]byte{}),
 		Mimetype: "application/octet-stream",
 	}, func(float64) {})
 }

@@ -4,6 +4,7 @@ TAG_NAME=$(curl -s -k https://api.github.com/repos/OpenListTeam/OpenList/release
 URL="https://github.com/OpenListTeam/OpenList/archive/refs/tags/${TAG_NAME}.tar.gz"
 echo "Downloading openlist ${TAG_NAME} from ${URL}"
 curl -L -k $URL -o "openlist${TAG_NAME}.tar.gz"
+find ../sources/ -mindepth 1 -maxdepth 1 ! -name "alistlib" -exec rm -rf {} +
 tar xf "openlist${TAG_NAME}.tar.gz" --strip-components 1 -C ../sources
 rm -f ../sources/.gitignore
 # Frontend

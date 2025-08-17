@@ -6,12 +6,12 @@ import (
 	"io"
 	"time"
 
+	sdk "github.com/OpenListTeam/115-sdk-go"
 	"github.com/OpenListTeam/OpenList/v4/internal/driver"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/avast/retry-go"
-	sdk "github.com/OpenListTeam/115-sdk-go"
 )
 
 func calPartSize(fileSize int64) int64 {
@@ -121,7 +121,7 @@ func (d *Open115) multpartUpload(ctx context.Context, stream model.FileStreamer,
 		} else {
 			offset += partSize
 		}
-		up(float64(offset) / float64(fileSize))
+		up(float64(offset) * 100 / float64(fileSize))
 	}
 
 	// callbackRespBytes := make([]byte, 1024)

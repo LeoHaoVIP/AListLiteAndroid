@@ -186,7 +186,9 @@ func (d *Pan115) Put(ctx context.Context, dstDir model.Obj, stream model.FileStr
 	preHash = strings.ToUpper(preHash)
 	fullHash := stream.GetHash().GetHash(utils.SHA1)
 	if len(fullHash) != utils.SHA1.Width {
-		_, fullHash, err = streamPkg.CacheFullInTempFileAndHash(stream, utils.SHA1)
+		cacheFileProgress := model.UpdateProgressWithRange(up, 0, 50)
+		up = model.UpdateProgressWithRange(up, 50, 100)
+		_, fullHash, err = streamPkg.CacheFullInTempFileAndHash(stream, cacheFileProgress, utils.SHA1)
 		if err != nil {
 			return nil, err
 		}

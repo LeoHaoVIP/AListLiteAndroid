@@ -1,0 +1,1 @@
+import{D as t,o as s,cw as o}from"./index-BeFrtC4h.js";const c=e=>{const r=s();return t(o,{get colorScheme(){return e.yes?"success":"danger"},get children(){return r("global.".concat(e.yes?"yes":"no"))}})};export{c as W};

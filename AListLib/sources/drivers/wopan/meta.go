@@ -18,15 +18,7 @@ type Addition struct {
 
 var config = driver.Config{
 	Name:              "WoPan",
-	LocalSort:         false,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           false,
-	NoUpload:          false,
-	NeedMs:            false,
 	DefaultRoot:       "0",
-	CheckStatus:       false,
-	Alert:             "",
 	NoOverwriteUpload: true,
 }
 

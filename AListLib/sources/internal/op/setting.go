@@ -1,6 +1,7 @@
 package op
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -153,42 +154,36 @@ func GetSettingItemsInGroups(groups []int) ([]model.SettingItem, error) {
 }
 
 func SaveSettingItems(items []model.SettingItem) error {
-	noHookItems := make([]model.SettingItem, 0)
-	errs := make([]error, 0)
 	for i := range items {
-		if ok, err := HandleSettingItemHook(&items[i]); ok {
-			if err != nil {
-				errs = append(errs, err)
-			} else {
-				err = db.SaveSettingItem(&items[i])
-				if err != nil {
-					errs = append(errs, err)
-				}
-			}
-		} else {
-			noHookItems = append(noHookItems, items[i])
+		item := &items[i]
+		if it, ok := MigrationSettingItems[item.Key]; ok &&
+			item.Value == it.MigrationValue {
+			item.Value = it.Value
+		}
+		if ok, err := HandleSettingItemHook(item); ok && err != nil {
+			return fmt.Errorf("failed to execute hook on %s: %+v", item.Key, err)
 		}
 	}
-	if len(noHookItems) > 0 {
-		err := db.SaveSettingItems(noHookItems)
+	err := db.SaveSettingItems(items)
 		if err != nil {
-			errs = append(errs, err)
-		}
+		return fmt.Errorf("failed save setting: %+v", err)
 	}
-	if len(errs) < len(items)-len(noHookItems)+1 {
 		SettingCacheUpdate()
-	}
-	return utils.MergeErrors(errs...)
+	return nil
 }
 
 func SaveSettingItem(item *model.SettingItem) (err error) {
+	if it, ok := MigrationSettingItems[item.Key]; ok &&
+		item.Value == it.MigrationValue {
+		item.Value = it.Value
+	}
 	// hook
 	if _, err := HandleSettingItemHook(item); err != nil {
-		return err
+		return fmt.Errorf("failed to execute hook on %s: %+v", item.Key, err)
 	}
 	// update
 	if err = db.SaveSettingItem(item); err != nil {
-		return err
+		return fmt.Errorf("failed save setting on %s: %+v", item.Key, err)
 	}
 	SettingCacheUpdate()
 	return nil
@@ -205,3 +200,9 @@ func DeleteSettingItemByKey(key string) error {
 	SettingCacheUpdate()
 	return db.DeleteSettingItemByKey(key)
 }
+
+type MigrationValueItem struct {
+	MigrationValue, Value string
+}
+
+var MigrationSettingItems map[string]MigrationValueItem

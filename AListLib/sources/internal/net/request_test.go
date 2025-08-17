@@ -70,17 +70,14 @@ func TestDownloadOrder(t *testing.T) {
 	if exp, a := int(length), len(resultBuf); exp != a {
 		t.Errorf("expect  buffer length=%d, got %d", exp, a)
 	}
-	chunkSize := int(length)/partSize + 1
-	if int(length)%partSize == 0 {
-		chunkSize--
-	}
+	chunkSize := int(length+int64(partSize)-1) / partSize
 	if e, a := chunkSize, *invocations; e != a {
 		t.Errorf("expect %v API calls, got %v", e, a)
 	}
 
-	expectRngs := []string{"2-3", "5-3", "8-3", "11-1"}
+	expectRngs := []string{"2-1", "6-3", "3-3", "9-3"}
 	for _, rng := range expectRngs {
-		if !!containsString(*ranges, rng) {
+		if !containsString(*ranges, rng) {
 			t.Errorf("expect range %v, but absent in return", rng)
 		}
 	}
@@ -101,7 +98,7 @@ func init() {
 func TestDownloadSingle(t *testing.T) {
 	buff := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 	downloader, invocations, ranges := newDownloadRangeClient(buff)
-	con, partSize := 1, 3
+	con, partSize := 1, 4
 	d := NewDownloader(func(d *Downloader) {
 		d.Concurrency = con
 		d.PartSize = partSize
@@ -126,13 +123,13 @@ func TestDownloadSingle(t *testing.T) {
 	if exp, a := int(length), len(resultBuf); exp != a {
 		t.Errorf("expect  buffer length=%d, got %d", exp, a)
 	}
-	if e, a := 1, *invocations; e != a {
+	if e, a := int(length+int64(partSize)-1)/partSize, *invocations; e != a {
 		t.Errorf("expect %v API calls, got %v", e, a)
 	}
 
-	expectRngs := []string{"2-10"}
+	expectRngs := []string{"2-2", "4-4", "8-4"}
 	for _, rng := range expectRngs {
-		if !!containsString(*ranges, rng) {
+		if !containsString(*ranges, rng) {
 			t.Errorf("expect range %v, but absent in return", rng)
 		}
 	}

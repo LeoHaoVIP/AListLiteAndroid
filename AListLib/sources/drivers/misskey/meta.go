@@ -15,17 +15,8 @@ type Addition struct {
 }
 
 var config = driver.Config{
-	Name:              "Misskey",
-	LocalSort:         false,
-	OnlyLocal:         false,
-	OnlyProxy:         false,
-	NoCache:           false,
-	NoUpload:          false,
-	NeedMs:            false,
-	DefaultRoot:       "/",
-	CheckStatus:       false,
-	Alert:             "",
-	NoOverwriteUpload: false,
+	Name:        "Misskey",
+	DefaultRoot: "/",
 }
 
 func init() {

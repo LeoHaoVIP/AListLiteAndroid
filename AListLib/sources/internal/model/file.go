@@ -1,25 +1,32 @@
 package model
 
-import "io"
+import (
+	"errors"
+	"io"
+)
 
 // File is basic file level accessing interface
 type File interface {
 	io.Reader
 	io.ReaderAt
 	io.Seeker
+}
+type FileCloser struct {
+	File
 	io.Closer
 }
 
-type NopMFileIF interface {
-	io.Reader
-	io.ReaderAt
-	io.Seeker
-}
-type NopMFile struct {
-	NopMFileIF
+func (f *FileCloser) Close() error {
+	var errs []error
+	if clr, ok := f.File.(io.Closer); ok {
+		errs = append(errs, clr.Close())
+	}
+	if f.Closer != nil {
+		errs = append(errs, f.Closer.Close())
+	}
+	return errors.Join(errs...)
 }
 
-func (NopMFile) Close() error { return nil }
-func NewNopMFile(r NopMFileIF) File {
-	return NopMFile{r}
+type FileRangeReader struct {
+	RangeReaderIF
 }

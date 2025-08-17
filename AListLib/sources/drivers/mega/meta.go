@@ -18,7 +18,8 @@ type Addition struct {
 var config = driver.Config{
 	Name:      "Mega_nz",
 	LocalSort: true,
-	OnlyLocal: true,
+	OnlyProxy: true,
+	NoLinkURL: true,
 }
 
 func init() {

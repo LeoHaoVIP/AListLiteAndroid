@@ -27,13 +27,20 @@ func (d *AliyundriveOpen) _refreshToken() (string, string, error) {
 			AccessToken  string `json:"access_token"`
 			ErrorMessage string `json:"text"`
 		}
+		
+		// 根据AlipanType选项设置driver_txt
+		driverTxt := "alicloud_qr"
+		if d.AlipanType == "alipanTV" {
+			driverTxt = "alicloud_tv"
+		}
+		
 		_, err := base.RestyClient.R().
 			SetHeader("User-Agent", "Mozilla/5.0 (Macintosh; Apple macOS 15_5) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/138.0.0.0 Openlist/425.6.30").
 			SetResult(&resp).
 			SetQueryParams(map[string]string{
 				"refresh_ui": d.RefreshToken,
 				"server_use": "true",
-				"driver_txt": "alicloud_qr",
+				"driver_txt": driverTxt,
 			}).
 			Get(u)
 		if err != nil {

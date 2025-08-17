@@ -10,14 +10,14 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"mime"
 	"net/http"
-	"path"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/OpenListTeam/OpenList/v4/server/common"
 )
 
@@ -391,7 +391,7 @@ func findLastModified(ctx context.Context, ls LockSystem, name string, fi model.
 	return fi.ModTime().UTC().Format(http.TimeFormat), nil
 }
 func findCreationDate(ctx context.Context, ls LockSystem, name string, fi model.Obj) (string, error) {
-	userAgent := ctx.Value("userAgent").(string)
+	userAgent := ctx.Value(conf.UserAgentKey).(string)
 	if strings.Contains(strings.ToLower(userAgent), "microsoft-webdav") {
 		return fi.CreateTime().UTC().Format(http.TimeFormat), nil
 	}
@@ -432,7 +432,7 @@ func findContentType(ctx context.Context, ls LockSystem, name string, fi model.O
 	//}
 	//defer f.Close()
 	// This implementation is based on serveContent's code in the standard net/http package.
-	ctype := mime.TypeByExtension(path.Ext(name))
+	ctype := utils.GetMimeType(name)
 	return ctype, nil
 	//if ctype != "" {
 	//	return ctype, nil
@@ -475,10 +475,7 @@ func findETag(ctx context.Context, ls LockSystem, name string, fi model.Obj) (st
 			return etag, err
 		}
 	}
-	// The Apache http 2.4 web server by default concatenates the
-	// modification time and size of a file. We replicate the heuristic
-	// with nanosecond granularity.
-	return common.GetEtag(fi), nil
+	return common.GetEtag(fi, fi.GetSize()), nil
 }
 
 func findSupportedLock(ctx context.Context, ls LockSystem, name string, fi model.Obj) (string, error) {

@@ -165,7 +165,7 @@ func (d *AliDrive) Remove(ctx context.Context, obj model.Obj) error {
 }
 
 func (d *AliDrive) Put(ctx context.Context, dstDir model.Obj, streamer model.FileStreamer, up driver.UpdateProgress) error {
-	file := stream.FileStream{
+	file := &stream.FileStream{
 		Obj:      streamer,
 		Reader:   streamer,
 		Mimetype: streamer.GetMimetype(),
@@ -209,7 +209,7 @@ func (d *AliDrive) Put(ctx context.Context, dstDir model.Obj, streamer model.Fil
 				io.Closer
 			}{
 				Reader: io.MultiReader(buf, file),
-				Closer: &file,
+				Closer: file,
 			}
 		}
 	} else {
