@@ -14,3 +14,13 @@ curl -L -k ${URL} -o dist.tar.gz
 rm -rf ../sources/public/dist
 mkdir ../sources/public/dist
 tar xf dist.tar.gz -C ../sources/public/dist
+# Alter Config
+cp ../../app/src/main/res/drawable/alistlite.png ../sources/public/dist/images/logo.png
+sed -i 's#https://github.com/OpenListTeam/OpenList#https://github.com/LeoHaoVIP/AListLiteAndroid#g' ../sources/internal/bootstrap/data/setting.go
+sed -i 's#https://cdn.oplist.org/gh/OpenListTeam/Logo@main/logo.svg#/images/logo.png#g' ../sources/internal/bootstrap/data/setting.go
+sed -i 's#https://res.oplist.org/logo/logo.svg#/images/logo.png#g' ../sources/internal/bootstrap/data/setting.go
+sed -i 's#Key: "pagination_type", Value: "all"#Key: "pagination_type", Value: "pagination"#g' ../sources/internal/bootstrap/data/setting.go
+sed -i 's#Key: conf.SearchIndex, Value: "none"#Key: conf.SearchIndex, Value: "database"#g' ../sources/internal/bootstrap/data/setting.go
+sed -i 's#Key: conf.AutoUpdateIndex, Value: "false"#Key: conf.AutoUpdateIndex, Value: "true"#g' ../sources/internal/bootstrap/data/setting.go
+sed -i 's#Permission: 0x31FF#Permission: 0xFFFF#g' ../sources/internal/bootstrap/data/user.go
+sed -i -z 's#Disabled:   true#Disabled:   false#g' ../sources/internal/bootstrap/data/user.go
