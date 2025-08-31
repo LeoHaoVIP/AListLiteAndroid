@@ -132,7 +132,7 @@ func (d *Terabox) Remove(ctx context.Context, obj model.Obj) error {
 func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, up driver.UpdateProgress) error {
 	resp, err := base.RestyClient.R().
 		SetContext(ctx).
-		Get("https://d.terabox.com/rest/2.0/pcs/file?method=locateupload")
+		Get("https://" + d.url_domain_prefix + "-data.terabox.com/rest/2.0/pcs/file?method=locateupload")
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	}
 
 	// upload chunks
-	tempFile, err := stream.CacheFullInTempFile()
+	tempFile, err := stream.CacheFullAndWriter(&up, nil)
 	if err != nil {
 		return err
 	}

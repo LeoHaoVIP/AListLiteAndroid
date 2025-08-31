@@ -2,6 +2,7 @@ package op
 
 import (
 	"context"
+	stderrors "errors"
 	stdpath "path"
 	"slices"
 	"strings"
@@ -250,6 +251,7 @@ func GetUnwrap(ctx context.Context, storage driver.Driver, path string) (model.O
 
 var linkCache = cache.NewMemCache(cache.WithShards[*model.Link](16))
 var linkG = singleflight.Group[*model.Link]{Remember: true}
+var errLinkMFileCache = stderrors.New("ErrLinkMFileCache")
 
 // Link get link, if is an url. should have an expiry time
 func Link(ctx context.Context, storage driver.Driver, path string, args model.LinkArgs) (*model.Link, model.Obj, error) {
@@ -291,16 +293,21 @@ func Link(ctx context.Context, storage driver.Driver, path string, args model.Li
 		return link, file, nil
 	}
 
-	var forget utils.CloseFunc
+	var forget any
+	var linkM *model.Link
 	fn := func() (*model.Link, error) {
 		link, err := storage.Link(ctx, file, args)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed get link")
 		}
+		if link.MFile != nil && forget != nil {
+			linkM = link
+			return nil, errLinkMFileCache
+		}
 		if link.Expiration != nil {
 			linkCache.Set(key, link, cache.WithEx[*model.Link](*link.Expiration))
 		}
-		link.Add(forget)
+		link.AddIfCloser(forget)
 		return link, nil
 	}
 
@@ -312,13 +319,13 @@ func Link(ctx context.Context, storage driver.Driver, path string, args model.Li
 		return link, file, err
 	}
 
-	forget = func() error {
+	forget = utils.CloseFunc(func() error {
 		if forget != nil {
 			forget = nil
 			linkG.Forget(key)
 		}
 		return nil
-	}
+	})
 	link, err, _ := linkG.Do(key, fn)
 	if err == nil && !link.AcquireReference() {
 		link, err, _ = linkG.Do(key, fn)
@@ -326,11 +333,19 @@ func Link(ctx context.Context, storage driver.Driver, path string, args model.Li
 			link.AcquireReference()
 		}
 	}
+
+	if err == errLinkMFileCache {
+		if linkM != nil {
+			return linkM, file, nil
+		}
+		forget = nil
+		link, err = fn()
+	}
+
 	if err != nil {
 		return nil, nil, err
 	}
-
-	return link, file, err
+	return link, file, nil
 }
 
 // Other api

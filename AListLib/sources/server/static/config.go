@@ -19,6 +19,13 @@ func getSiteConfig() SiteConfig {
 	}
 	if siteConfig.BasePath != "" {
 		siteConfig.BasePath = utils.FixAndCleanPath(siteConfig.BasePath)
+		// Keep consistent with frontend: trim trailing slash unless it's root
+		if siteConfig.BasePath != "/" && strings.HasSuffix(siteConfig.BasePath, "/") {
+			siteConfig.BasePath = strings.TrimSuffix(siteConfig.BasePath, "/")
+		}
+	}
+	if siteConfig.BasePath == "" {
+		siteConfig.BasePath = "/"
 	}
 	if siteConfig.Cdn == "" {
 		siteConfig.Cdn = strings.TrimSuffix(siteConfig.BasePath, "/")

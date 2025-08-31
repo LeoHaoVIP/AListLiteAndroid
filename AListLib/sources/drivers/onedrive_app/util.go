@@ -1,7 +1,6 @@
 package onedrive_app
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"github.com/OpenListTeam/OpenList/v4/internal/errs"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/op"
+	streamPkg "github.com/OpenListTeam/OpenList/v4/internal/stream"
 	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
@@ -152,26 +152,29 @@ func (d *OnedriveAPP) upBig(ctx context.Context, dstDir model.Obj, stream model.
 	if err != nil {
 		return err
 	}
+	DEFAULT := d.ChunkSize * 1024 * 1024
+	ss, err := streamPkg.NewStreamSectionReader(stream, int(DEFAULT), &up)
+	if err != nil {
+		return err
+	}
+
 	uploadUrl := jsoniter.Get(res, "uploadUrl").ToString()
 	var finish int64 = 0
-	DEFAULT := d.ChunkSize * 1024 * 1024
 	for finish < stream.GetSize() {
 		if utils.IsCanceled(ctx) {
 			return ctx.Err()
 		}
 		left := stream.GetSize() - finish
 		byteSize := min(left, DEFAULT)
+		utils.Log.Debugf("[OnedriveAPP] upload range: %d-%d/%d", finish, finish+byteSize-1, stream.GetSize())
+		rd, err := ss.GetSectionReader(finish, byteSize)
+		if err != nil {
+			return err
+		}
 		err = retry.Do(
 			func() error {
-				utils.Log.Debugf("[OnedriveAPP] upload range: %d-%d/%d", finish, finish+byteSize-1, stream.GetSize())
-				byteData := make([]byte, byteSize)
-				n, err := io.ReadFull(stream, byteData)
-				utils.Log.Debug(err, n)
-				if err != nil {
-					return err
-				}
-				req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadUrl,
-					driver.NewLimitedUploadStream(ctx, bytes.NewReader(byteData)))
+				rd.Seek(0, io.SeekStart)
+				req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadUrl, driver.NewLimitedUploadStream(ctx, rd))
 				if err != nil {
 					return err
 				}
@@ -197,6 +200,7 @@ func (d *OnedriveAPP) upBig(ctx context.Context, dstDir model.Obj, stream model.
 			retry.DelayType(retry.BackOffDelay),
 			retry.Delay(time.Second),
 		)
+		ss.FreeSectionReader(rd)
 		if err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package LenovoNasShare
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -71,7 +72,23 @@ func (d *LenovoNasShare) List(ctx context.Context, dir model.Obj, args model.Lis
 	files = append(files, resp.Data.List...)
 
 	return utils.SliceConvert(files, func(src File) (model.Obj, error) {
-		return src, nil
+		if src.IsDir() {
+			return src, nil
+		}
+		return &model.ObjThumb{
+			Object: model.Object{
+				Name:     src.GetName(),
+				Size:     src.GetSize(),
+				Modified: src.ModTime(),
+				IsFolder: src.IsDir(),
+			},
+			Thumbnail: model.Thumbnail{
+				Thumbnail: func() string {
+					thumbUrl := d.Host + "/oneproxy/api/share/v1/file/thumb?code=" + d.ShareId + "&stoken=" + d.stoken + "&path=" + url.QueryEscape(src.GetPath())
+					return thumbUrl
+				}(),
+			},
+		}, nil
 	})
 }
 

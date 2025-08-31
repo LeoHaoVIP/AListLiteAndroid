@@ -1,6 +1,8 @@
 package handles
 
 import (
+	"strings"
+	
 	_115 "github.com/OpenListTeam/OpenList/v4/drivers/115"
 	_115_open "github.com/OpenListTeam/OpenList/v4/drivers/115_open"
 	"github.com/OpenListTeam/OpenList/v4/drivers/pikpak"
@@ -406,8 +408,14 @@ func AddOfflineDownload(c *gin.Context) {
 	}
 	var tasks []task.TaskExtensionInfo
 	for _, url := range req.Urls {
+		// Filter out empty lines and whitespace-only strings
+		trimmedUrl := strings.TrimSpace(url)
+		if trimmedUrl == "" {
+			continue
+		}
+		
 		t, err := tool.AddURL(c, &tool.AddURLArgs{
-			URL:          url,
+			URL:          trimmedUrl,
 			DstDirPath:   reqPath,
 			Tool:         req.Tool,
 			DeletePolicy: tool.DeletePolicy(req.DeletePolicy),

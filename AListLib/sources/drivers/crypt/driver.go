@@ -292,10 +292,10 @@ func (d *Crypt) Link(ctx context.Context, file model.Obj, args model.LinkArgs) (
 
 		if offset == 0 && limit > 0 {
 			fileHeader = make([]byte, fileHeaderSize)
-			n, _ := io.ReadFull(remoteReader, fileHeader)
+			n, err := io.ReadFull(remoteReader, fileHeader)
 			if n != fileHeaderSize {
 				fileHeader = nil
-				return nil, fmt.Errorf("can't read data, expected=%d, got=%d", fileHeaderSize, n)
+				return nil, fmt.Errorf("failed to read all data: (expect =%d, actual =%d) %w", fileHeaderSize, n, err)
 			}
 			if limit <= fileHeaderSize {
 				remoteReader.Close()
@@ -401,7 +401,6 @@ func (d *Crypt) Put(ctx context.Context, dstDir model.Obj, streamer model.FileSt
 		},
 		Reader:            wrappedIn,
 		Mimetype:          "application/octet-stream",
-		WebPutAsTask:      streamer.NeedStore(),
 		ForceStreamUpload: true,
 		Exist:             streamer.GetExist(),
 	}

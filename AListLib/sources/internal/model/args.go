@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"time"
@@ -38,13 +37,6 @@ type Link struct {
 	ContentLength int64 `json:"-"` // 转码视频、缩略图
 
 	utils.SyncClosers `json:"-"`
-}
-
-func (l *Link) Close() error {
-	if clr, ok := l.MFile.(io.Closer); ok {
-		return errors.Join(clr.Close(), l.SyncClosers.Close())
-	}
-	return l.SyncClosers.Close()
 }
 
 type OtherArgs struct {

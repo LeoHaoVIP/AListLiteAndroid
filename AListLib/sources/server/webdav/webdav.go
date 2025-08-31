@@ -233,6 +233,11 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusNotFound, err
 	}
 	if fi.IsDir() {
+		if r.Method == http.MethodHead {
+			w.Header().Set("Content-Type", "httpd/unix-directory")
+			w.Header().Set("Content-Length", "0")
+			return http.StatusOK, nil
+		}
 		return http.StatusMethodNotAllowed, nil
 	}
 	// Let ServeContent determine the Content-Type header.
