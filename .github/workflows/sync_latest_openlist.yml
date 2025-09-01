@@ -3,7 +3,7 @@ name: sync_latest_openlist
 on:
   # 支持手动触发
   workflow_dispatch:
-  # 每小时执行一次
+  # 每小时执行一次（整点 UTC Time）
   schedule:
     - cron: "0 0 * * *"
 
@@ -16,7 +16,7 @@ jobs:
 
       - name: check_openlist_has_new_version
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
           export CURRENT_OPENLIST_VERSION=$(sed -n 's/.*OPENLIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)
