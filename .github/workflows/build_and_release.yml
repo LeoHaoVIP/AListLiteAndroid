@@ -30,14 +30,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: 4-BuildOpenListArtifacts
-        run: |
-          cd $GITHUB_WORKSPACE/AListLib/scripts
-          sh install_alist.sh
-          sh install_gomobile.sh
-          sh build_aar.sh
-
-      - name: 5-GetLatestTag
+      - name: 4-GetLatestTag
         id: get_latest_tag
         run: |
           LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -v ^.*-auto$ | head -n 1)
@@ -46,10 +39,7 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           echo "::set-output name=new_tag::$NEW_TAG"
 
-      - name: 6-GrantGradlew
-        run: chmod +x gradlew
-
-      - name: 7-UpdateVersionInfo
+      - name: 5-UpdateVersionInfo
         run: |
           # 从新标签中提取版本号（去除v前缀和-auto后缀）
           VERSION_NAME=$(echo "${{ env.NEW_TAG }}" | sed 's/^v//; s/-auto$//')
@@ -61,10 +51,20 @@ jobs:
           echo "SET OPENLIST VERSION TO" ${LATEST_OPENLIST_VERSION}
           sed -i "s/\(public static String OPENLIST_VERSION = \"\)\([^\";]*\)\(\";\)/\1${LATEST_OPENLIST_VERSION}\3/" app/src/main/java/com/leohao/android/alistlite/util/Constants.java
 
+      - name: 6-BuildOpenListArtifacts
+        run: |
+          cd $GITHUB_WORKSPACE/AListLib/scripts
+          sh install_alist.sh
+          sh install_gomobile.sh
+          sh build_aar.sh
+
+      - name: 7-GrantGradlew
+        run: chmod +x gradlew
+
       - name: 8-BuildAPK
         run: ./gradlew assembleRelease
 
-      - name: 9-SetupAndroid SDK
+      - name: 9-SetupAndroidSDK
         uses: android-actions/setup-android@v3
         with:
           build-tools-version: "29.0.3"
