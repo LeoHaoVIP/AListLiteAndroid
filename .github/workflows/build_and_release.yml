@@ -40,7 +40,7 @@ jobs:
       - name: 5-GetLatestTag
         id: get_latest_tag
         run: |
-          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -vE "-auto$" | head -n 1)
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -v ^.*-auto$ | head -n 1)
           echo "Latest tag: $LATEST_TAG"
           NEW_TAG="${LATEST_TAG}-auto"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
@@ -64,7 +64,13 @@ jobs:
       - name: 8-BuildAPK
         run: ./gradlew assembleRelease
 
-      - name: 9-SignAPK
+      - name: 9-SetupAndroid SDK
+        uses: android-actions/setup-android@v3
+        with:
+          build-tools-version: "29.0.3"
+          platform-tools-version: "34.0.4"
+
+      - name: 10-SignAPK
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -73,14 +79,14 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: 10-CreateNewTag
+      - name: 11-CreateNewTag
         run: |
           git config --global user.email "2867555086@github.com"
           git config --global user.name "LeoHaoVIP"
           git tag ${{ env.NEW_TAG }}
           git push origin ${{ env.NEW_TAG }}
 
-      - name: 11-CreateNewRelease
+      - name: 12-CreateNewRelease
         uses: softprops/action-gh-release@v2
         with:
           draft: true
