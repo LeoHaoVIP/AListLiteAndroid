@@ -14,12 +14,30 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - name: Checkout code
+      - name: 1-CheckoutCode
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Get latest release tag
+      - name: 2-SetupGoEnv
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24.1
+          cache-dependency-path: ${{ github.workspace }}/AListLib/go.sum
+
+      - name: 3-SetupJDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: 4-BuildOpenListArtifacts
+        run: |
+          cd $GITHUB_WORKSPACE/AListLib/scripts
+          sh install_alist.sh
+          sh install_gomobile.sh
+          sh build_aar.sh
+
+      - name: 5-GetLatestTag
         id: get_latest_tag
         run: |
           LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -vE "-auto$" | head -n 1)
@@ -28,17 +46,10 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           echo "::set-output name=new_tag::$NEW_TAG"
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          java-version: '11'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Grant execute permission for gradlew
+      - name: 6-GrantGradlew
         run: chmod +x gradlew
 
-      - name: Update app version in build.gradle
+      - name: 7-UpdateVersionInfo
         run: |
           # 从新标签中提取版本号（去除v前缀和-auto后缀）
           VERSION_NAME=$(echo "${{ env.NEW_TAG }}" | sed 's/^v//; s/-auto$//')
@@ -50,10 +61,10 @@ jobs:
           echo "SET OPENLIST VERSION TO" ${LATEST_OPENLIST_VERSION}
           sed -i "s/\(public static String OPENLIST_VERSION = \"\)\([^\";]*\)\(\";\)/\1${LATEST_OPENLIST_VERSION}\3/" app/src/main/java/com/leohao/android/alistlite/util/Constants.java
 
-      - name: Build release APK
+      - name: 8-BuildAPK
         run: ./gradlew assembleRelease
 
-      - name: Sign APK
+      - name: 9-SignAPK
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -62,14 +73,14 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: Create new tag
+      - name: 10-CreateNewTag
         run: |
           git config --global user.email "2867555086@github.com"
           git config --global user.name "LeoHaoVIP"
           git tag ${{ env.NEW_TAG }}
           git push origin ${{ env.NEW_TAG }}
 
-      - name: Create GitHub Release
+      - name: 11-CreateNewRelease
         uses: softprops/action-gh-release@v2
         with:
           draft: true
