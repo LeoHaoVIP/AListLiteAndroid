@@ -23,10 +23,9 @@ jobs:
           export LATEST_OPENLIST_VERSION=$(curl -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
           echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
-          gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
-#          if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
-#              echo "OpenList Need to Be Updated!"
-#              gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
-#          else
-#              echo "No Need to Update."
-#          fi
+          if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
+              echo "OpenList Need to Be Updated!"
+              gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
+          else
+              echo "No Need to Update."
+          fi
