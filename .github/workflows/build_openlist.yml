@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/setup-go@v4
         with:
@@ -23,5 +25,3 @@ jobs:
           sh install_gomobile.sh
           sh build_aar.sh
           gh workflow run release.yml -R LeoHaoVIP/AListLiteAndroid
-        env:
-          GH_TOKEN: ${{ github.token }}

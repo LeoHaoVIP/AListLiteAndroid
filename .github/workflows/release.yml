@@ -10,6 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: "!contains(github.ref, '-auto')"
+    env:
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout code

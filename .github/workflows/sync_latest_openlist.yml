@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: checkout_code
         uses: actions/checkout@v4
@@ -27,5 +29,3 @@ jobs:
           else
               echo "No Need to Update."
           fi
-        env:
-          GH_TOKEN: ${{ github.token }}
