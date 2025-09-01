@@ -44,7 +44,8 @@ jobs:
           VERSION_NAME=$(echo "${{ env.NEW_TAG }}" | sed 's/^v//; s/-auto$//')
           echo "Updating version name to: $VERSION_NAME"
           # 更新app模块的build.gradle中的版本号
-          sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME-auto\"/" app/build.gradle
+          LATEST_OPENLIST_VERSION=$VERSION_NAME-auto
+          sed -i "s/versionName \".*\"/versionName \"$LATEST_OPENLIST_VERSION\"/" app/build.gradle
           # 更新 OpenList 版本号
           echo "SET OPENLIST VERSION TO" ${LATEST_OPENLIST_VERSION}
           sed -i "s/\(public static String OPENLIST_VERSION = \"\)\([^\";]*\)\(\";\)/\1${LATEST_OPENLIST_VERSION}\3/" app/src/main/java/com/leohao/android/alistlite/util/Constants.java
