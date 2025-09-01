@@ -17,11 +17,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: build openlist aar
-        env:
-          GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           cd $GITHUB_WORKSPACE/AListLib/scripts
           sh install_alist.sh
           sh install_gomobile.sh
           sh build_aar.sh
           gh workflow run release.yml -R LeoHaoVIP/AListLiteAndroid
+        env:
+          GH_TOKEN: ${{ github.token }}
