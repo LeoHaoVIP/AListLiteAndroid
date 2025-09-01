@@ -14,7 +14,7 @@ jobs:
           cache-dependency-path: ${{ github.workspace }}/AListLib/go.sum
 
       - name: checkout_code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: build openlist aar
         run: |
@@ -22,5 +22,4 @@ jobs:
           sh install_alist.sh
           sh install_gomobile.sh
           sh build_aar.sh
-          cp -f $GITHUB_WORKSPACE/AListLib/sources/alistlib.aar $GITHUB_WORKSPACE/app/libs          
-          
+          gh workflow run release.yml -R LeoHaoVIP/AListLiteAndroid

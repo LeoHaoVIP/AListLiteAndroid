@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout_code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: check_openlist_has_new_version
         env:
@@ -23,9 +23,10 @@ jobs:
           export LATEST_OPENLIST_VERSION=$(curl -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
           echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
-          if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
-              echo "OpenList Need to Be Updated!"
-              gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
-          else
-              echo "No Need to Update."
-          fi
+          gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
+#          if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
+#              echo "OpenList Need to Be Updated!"
+#              gh workflow run build_openlist.yml -R LeoHaoVIP/AListLiteAndroid
+#          else
+#              echo "No Need to Update."
+#          fi
