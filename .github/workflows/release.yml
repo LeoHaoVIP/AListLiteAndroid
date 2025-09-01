@@ -47,7 +47,7 @@ jobs:
           sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME-auto\"/" app/build.gradle
           # 更新 OpenList 版本号
           echo "SET OPENLIST VERSION TO" ${LATEST_OPENLIST_VERSION}
-          sed -i "s/\(public static String OPENLIST_VERSION = \"\)\([^\";]*\)\(\";\)/\1${LATEST_OPENLIST_VERSION}\3/" ../../app/src/main/java/com/leohao/android/alistlite/util/Constants.java
+          sed -i "s/\(public static String OPENLIST_VERSION = \"\)\([^\";]*\)\(\";\)/\1${LATEST_OPENLIST_VERSION}\3/" app/src/main/java/com/leohao/android/alistlite/util/Constants.java
 
       - name: Build release APK
         run: ./gradlew assembleRelease
