@@ -1,16 +1,21 @@
 package com.leohao.android.alistlite;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Looper;
 import android.service.quicksettings.TileService;
+import android.text.TextUtils;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.util.TypedValue;
@@ -18,6 +23,7 @@ import android.view.*;
 import android.webkit.*;
 import android.widget.*;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -74,6 +80,12 @@ public class MainActivity extends AppCompatActivity {
     public TextView appInfoTextView;
     private PopupMenuWindow popupMenuWindow;
     private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
+    /**
+     * 文件上传回调变量
+     */
+    private ValueCallback<Uri[]> mFilePathCallback;
+    private ValueCallback<Uri> mUploadMessage;
+    private static final int FILE_CHOOSER_REQUEST_CODE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,11 +241,55 @@ public class MainActivity extends AppCompatActivity {
     private void initWebview() {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
+        webView.getSettings().setAllowFileAccess(true);
+        webView.getSettings().setAllowContentAccess(true);
         webView.removeJavascriptInterface("searchBoxJavaBredge_");
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
             final FrameLayout videoContainer = findViewById(R.id.video_container);
+
+            /**
+             * 处理Android 5.0及以上的文件选择
+             */
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                // 确保之前的回调已处理
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                }
+                mFilePathCallback = filePathCallback;
+                // 创建文件选择意图
+                Intent intent = fileChooserParams.createIntent();
+                try {
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE);
+                } catch (Exception e) {
+                    mFilePathCallback = null;
+                    showToast("无法打开文件选择器");
+                    return false;
+                }
+                return true;
+            }
+
+            /**
+             * 处理Android 3.0到4.4的文件选择
+             */
+            public void openFileChooser(ValueCallback<Uri> uploadMsg) {
+                mUploadMessage = uploadMsg;
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("*/*");
+                startActivityForResult(Intent.createChooser(intent, "选择文件"), FILE_CHOOSER_REQUEST_CODE);
+            }
+
+            /**
+             * 处理早期Android版本的文件选择
+             */
+            public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
+                mUploadMessage = uploadMsg;
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType(acceptType);
+                startActivityForResult(Intent.createChooser(intent, "选择文件"), FILE_CHOOSER_REQUEST_CODE);
+            }
 
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
@@ -288,6 +344,10 @@ public class MainActivity extends AppCompatActivity {
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.startsWith("blob:")) {
+                    handleBlobUrl(view, url);
+                    return true;
+                }
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
                         openExternalUrl(url);
@@ -296,6 +356,32 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
                 return super.shouldOverrideUrlLoading(view, url);
+            }
+
+            /**
+             * 处理 Blob 类型 URL
+             * @param view webView
+             * @param blobUrl URL
+             */
+            private void handleBlobUrl(WebView view, String blobUrl) {
+                // 使用JavaScript获取blob数据并转换为Base64
+                String js = "javascript:(function() {" +
+                        "fetch('" + blobUrl + "')" +
+                        ".then(response => response.blob())" +
+                        ".then(blob => {" +
+                        "  const reader = new FileReader();" +
+                        "  reader.onloadend = function() {" +
+                        "    const base64data = reader.result;" +
+                        "    window.android.onBlobDataReceived(base64data, blob.type);" +
+                        "  };" +
+                        "  reader.readAsDataURL(blob);" +
+                        "})" +
+                        ".catch(error => console.error('Error handling blob:', error));" +
+                        "})()";
+                // 在UI线程执行JavaScript
+                view.post(() -> {
+                    view.evaluateJavascript(js, null);
+                });
             }
 
             @TargetApi(Build.VERSION_CODES.N)
@@ -309,6 +395,59 @@ public class MainActivity extends AppCompatActivity {
                 sslErrorHandler.proceed();
             }
         });
+        // 设置下载监听器以支持文件下载
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            //删除 blob 前缀，防止下载失败 TODO 备份文件下载失败 不是有效的 json 文件夹
+            url = url.replaceFirst("blob:", "");
+            // 使用系统下载管理器
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+            request.setMimeType(mimetype);
+            // 获取文件名
+            String fileName = MyHttpUtil.guessFileName(contentDisposition);
+            // 从文件名中提取扩展名（如果有）
+            String extensionFromName = MimeTypeMap.getFileExtensionFromUrl(fileName);
+            if (!TextUtils.isEmpty(extensionFromName)) {
+                // 文件名已包含扩展名，直接使用
+                fileName = fileName.replace("." + extensionFromName, "") + "." + extensionFromName;
+            } else {
+                // 否则使用MIME类型生成的扩展名
+                fileName += MyHttpUtil.getFileExtension(mimetype);
+            }
+            request.setTitle(fileName);
+            // 显示下载通知
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            // 设置下载路径
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+            // 获取下载服务并开始下载
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            dm.enqueue(request);
+            Toast.makeText(getApplicationContext(), "开始下载: " + fileName, Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            // 处理Android 5.0及以上的回调
+            if (mFilePathCallback != null) {
+                Uri[] results = null;
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    String dataString = data.getDataString();
+                    if (dataString != null) {
+                        results = new Uri[]{Uri.parse(dataString)};
+                    }
+                }
+                mFilePathCallback.onReceiveValue(results);
+                mFilePathCallback = null;
+            }
+            // 处理旧版本Android的回调
+            if (mUploadMessage != null) {
+                Uri result = (resultCode == Activity.RESULT_OK && data != null) ? data.getData() : null;
+                mUploadMessage.onReceiveValue(result);
+                mUploadMessage = null;
+            }
+        }
     }
 
     /**
@@ -503,7 +642,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     textView.setText(Alist.ALIST_LOGS);
                     //日志更新时，滚动到底部最新日志
-                    if(!Alist.ALIST_LOGS.toString().equals(textView.getText().toString())){
+                    if (!Alist.ALIST_LOGS.toString().equals(textView.getText().toString())) {
                         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
                     }
                 });
