@@ -1,1 +1,0 @@
-System.register(["./index-legacy-B4yRbF0f.js"],function(r,t){"use strict";var e;return{setters:[r=>{e=r.cq}],execute:function(){const t="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";r("r",()=>Array.from({length:5},()=>t[Math.floor(62*Math.random())]).join("")),r("m",(r,t)=>({base_url:location.origin+e,...r,...t}))}}});

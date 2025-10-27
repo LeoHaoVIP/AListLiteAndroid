@@ -66,6 +66,13 @@ func (y *Cloud189TV) AppKeySignatureHeader(url, method string) map[string]string
 }
 
 func (y *Cloud189TV) request(url, method string, callback base.ReqCallback, params map[string]string, resp interface{}, isFamily ...bool) ([]byte, error) {
+	return y.requestWithRetry(url, method, callback, params, resp, 0, isFamily...)
+}
+
+func (y *Cloud189TV) requestWithRetry(url, method string, callback base.ReqCallback, params map[string]string, resp interface{}, retryCount int, isFamily ...bool) ([]byte, error) {
+	if y.tokenInfo == nil {
+		return nil, fmt.Errorf("login failed")
+	}
 	req := y.client.R().SetQueryParams(clientSuffix())
 
 	if params != nil {
@@ -91,7 +98,22 @@ func (y *Cloud189TV) request(url, method string, callback base.ReqCallback, para
 
 	if strings.Contains(res.String(), "userSessionBO is null") ||
 		strings.Contains(res.String(), "InvalidSessionKey") {
-		return nil, errors.New("session expired")
+		// 限制重试次数，避免无限递归
+		if retryCount >= 3 {
+			y.Addition.AccessToken = ""
+			op.MustSaveDriverStorage(y)
+			return nil, errors.New("session expired after retry")
+		}
+
+		// 尝试刷新会话
+		if err := y.refreshSession(); err != nil {
+			// 如果刷新失败，说明AccessToken也已过期，需要重新登录
+			y.Addition.AccessToken = ""
+			op.MustSaveDriverStorage(y)
+			return nil, errors.New("session expired")
+		}
+		// 如果刷新成功，则重试原始请求（增加重试计数）
+		return y.requestWithRetry(url, method, callback, params, resp, retryCount+1, isFamily...)
 	}
 
 	// 处理错误
@@ -154,6 +176,7 @@ func (y *Cloud189TV) put(ctx context.Context, url string, headers map[string]str
 	}
 	return body, nil
 }
+
 func (y *Cloud189TV) getFiles(ctx context.Context, fileId string, isFamily bool) ([]model.Obj, error) {
 	fullUrl := ApiUrl
 	if isFamily {
@@ -211,7 +234,7 @@ func (y *Cloud189TV) login() (err error) {
 	var erron RespErr
 	var tokenInfo AppSessionResp
 	if y.Addition.AccessToken == "" {
-		if y.Addition.TempUuid == "" {
+		if y.TempUuid == "" {
 			// 获取登录参数
 			var uuidInfo UuidInfoResp
 			req.SetResult(&uuidInfo).SetError(&erron)
@@ -219,9 +242,8 @@ func (y *Cloud189TV) login() (err error) {
 			req.SetHeaders(y.AppKeySignatureHeader(ApiUrl+"/family/manage/getQrCodeUUID.action",
 				http.MethodGet))
 			_, err = req.Execute(http.MethodGet, ApiUrl+"/family/manage/getQrCodeUUID.action")
-
 			if err != nil {
-				return
+				return err
 			}
 			if erron.HasError() {
 				return &erron
@@ -230,7 +252,7 @@ func (y *Cloud189TV) login() (err error) {
 			if uuidInfo.Uuid == "" {
 				return errors.New("uuidInfo is empty")
 			}
-			y.Addition.TempUuid = uuidInfo.Uuid
+			y.TempUuid = uuidInfo.Uuid
 			op.MustSaveDriverStorage(y)
 
 			// 展示二维码
@@ -258,10 +280,10 @@ func (y *Cloud189TV) login() (err error) {
 			// Signature
 			req.SetHeaders(y.AppKeySignatureHeader(ApiUrl+"/family/manage/qrcodeLoginResult.action",
 				http.MethodGet))
-			req.SetQueryParam("uuid", y.Addition.TempUuid)
+			req.SetQueryParam("uuid", y.TempUuid)
 			_, err = req.Execute(http.MethodGet, ApiUrl+"/family/manage/qrcodeLoginResult.action")
 			if err != nil {
-				return
+				return err
 			}
 			if erron.HasError() {
 				return &erron
@@ -270,7 +292,6 @@ func (y *Cloud189TV) login() (err error) {
 				return errors.New("E189AccessToken is empty")
 			}
 			y.Addition.AccessToken = accessTokenResp.E189AccessToken
-			y.Addition.TempUuid = ""
 		}
 	}
 	// 获取SessionKey 和 SessionSecret
@@ -282,7 +303,7 @@ func (y *Cloud189TV) login() (err error) {
 	reqb.SetQueryParam("e189AccessToken", y.Addition.AccessToken)
 	_, err = reqb.Execute(http.MethodGet, ApiUrl+"/family/manage/loginFamilyMerge.action")
 	if err != nil {
-		return
+		return err
 	}
 
 	if erron.HasError() {
@@ -291,7 +312,45 @@ func (y *Cloud189TV) login() (err error) {
 
 	y.tokenInfo = &tokenInfo
 	op.MustSaveDriverStorage(y)
-	return
+	return err
+}
+
+// refreshSession 尝试使用现有的 AccessToken 刷新会话
+func (y *Cloud189TV) refreshSession() (err error) {
+	var erron RespErr
+	var tokenInfo AppSessionResp
+	reqb := y.client.R().SetQueryParams(clientSuffix())
+	reqb.SetResult(&tokenInfo).SetError(&erron)
+	// Signature
+	reqb.SetHeaders(y.AppKeySignatureHeader(ApiUrl+"/family/manage/loginFamilyMerge.action",
+		http.MethodGet))
+	reqb.SetQueryParam("e189AccessToken", y.Addition.AccessToken)
+	_, err = reqb.Execute(http.MethodGet, ApiUrl+"/family/manage/loginFamilyMerge.action")
+	if err != nil {
+		return err
+	}
+
+	if erron.HasError() {
+		return &erron
+	}
+
+	y.tokenInfo = &tokenInfo
+	return nil
+}
+
+func (y *Cloud189TV) keepAlive() {
+	_, err := y.get(ApiUrl+"/keepUserSession.action", func(r *resty.Request) {
+		r.SetQueryParams(clientSuffix())
+	}, nil)
+	if err != nil {
+		utils.Log.Warnf("189tv: Failed to keep user session alive: %v", err)
+		// 如果keepAlive失败，尝试刷新session
+		if refreshErr := y.refreshSession(); refreshErr != nil {
+			utils.Log.Errorf("189tv: Failed to refresh session after keepAlive error: %v", refreshErr)
+		}
+	} else {
+		utils.Log.Debugf("189tv: User session kept alive successfully.")
+	}
 }
 
 func (y *Cloud189TV) RapidUpload(ctx context.Context, dstDir model.Obj, stream model.FileStreamer, isFamily bool, overwrite bool) (model.Obj, error) {
@@ -315,7 +374,7 @@ func (y *Cloud189TV) RapidUpload(ctx context.Context, dstDir model.Obj, stream m
 // 旧版本上传，家庭云不支持覆盖
 func (y *Cloud189TV) OldUpload(ctx context.Context, dstDir model.Obj, file model.FileStreamer, up driver.UpdateProgress, isFamily bool, overwrite bool) (model.Obj, error) {
 	fileMd5 := file.GetHash().GetHash(utils.MD5)
-	var tempFile = file.GetFile()
+	tempFile := file.GetFile()
 	var err error
 	if len(fileMd5) != utils.MD5.Width {
 		tempFile, fileMd5, err = stream.CacheFullAndHash(file, &up, utils.MD5)
@@ -418,7 +477,6 @@ func (y *Cloud189TV) OldUploadCreate(ctx context.Context, parentID string, fileM
 			})
 		}
 	}, &uploadInfo, isFamily)
-
 	if err != nil {
 		return nil, err
 	}
@@ -571,4 +629,16 @@ func (y *Cloud189TV) WaitBatchTask(aType string, taskID string, t time.Duration)
 		}
 		time.Sleep(t)
 	}
+}
+
+func (y *Cloud189TV) getCapacityInfo(ctx context.Context) (*CapacityResp, error) {
+	fullUrl := ApiUrl + "/portal/getUserSizeInfo.action"
+	var resp CapacityResp
+	_, err := y.get(fullUrl, func(req *resty.Request) {
+		req.SetContext(ctx)
+	}, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
