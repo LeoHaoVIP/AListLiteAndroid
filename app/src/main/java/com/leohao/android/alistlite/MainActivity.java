@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
@@ -38,6 +39,7 @@ import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.kyleduo.switchbutton.SwitchButton;
+import com.leohao.android.alistlite.interfaces.DownloadBlobFileJsInterface;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.service.AlistTileService;
@@ -238,12 +240,15 @@ public class MainActivity extends AppCompatActivity {
         serviceSwitch.setChecked(true);
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void initWebview() {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setAllowFileAccess(true);
         webView.getSettings().setAllowContentAccess(true);
         webView.removeJavascriptInterface("searchBoxJavaBredge_");
+        // 添加JavascriptInterface
+        webView.addJavascriptInterface(new DownloadBlobFileJsInterface(this), "Android");
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
@@ -344,10 +349,6 @@ public class MainActivity extends AppCompatActivity {
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith("blob:")) {
-                    handleBlobUrl(view, url);
-                    return true;
-                }
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
                         openExternalUrl(url);
@@ -356,32 +357,6 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
                 return super.shouldOverrideUrlLoading(view, url);
-            }
-
-            /**
-             * 处理 Blob 类型 URL
-             * @param view webView
-             * @param blobUrl URL
-             */
-            private void handleBlobUrl(WebView view, String blobUrl) {
-                // 使用JavaScript获取blob数据并转换为Base64
-                String js = "javascript:(function() {" +
-                        "fetch('" + blobUrl + "')" +
-                        ".then(response => response.blob())" +
-                        ".then(blob => {" +
-                        "  const reader = new FileReader();" +
-                        "  reader.onloadend = function() {" +
-                        "    const base64data = reader.result;" +
-                        "    window.android.onBlobDataReceived(base64data, blob.type);" +
-                        "  };" +
-                        "  reader.readAsDataURL(blob);" +
-                        "})" +
-                        ".catch(error => console.error('Error handling blob:', error));" +
-                        "})()";
-                // 在UI线程执行JavaScript
-                view.post(() -> {
-                    view.evaluateJavascript(js, null);
-                });
             }
 
             @TargetApi(Build.VERSION_CODES.N)
@@ -397,8 +372,11 @@ public class MainActivity extends AppCompatActivity {
         });
         // 设置下载监听器以支持文件下载
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
-            //删除 blob 前缀，防止下载失败 TODO 备份文件下载失败 不是有效的 json 文件夹
-            url = url.replaceFirst("blob:", "");
+            if (url.startsWith("blob")) {
+                String base64Data = DownloadBlobFileJsInterface.getBase64StringFromBlobUrl(url);
+                webView.loadUrl(base64Data);
+                return;
+            }
             // 使用系统下载管理器
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
             request.setMimeType(mimetype);

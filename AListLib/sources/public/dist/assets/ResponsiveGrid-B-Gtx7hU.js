@@ -1,1 +1,0 @@
-import{D as r,dn as i,V as a}from"./index-Bm6_Y9sI.js";const o=e=>{const n=a("settings_layout");let t;return n==="responsive"&&(t="repeat(auto-fill, minmax(424px, 1fr))"),r(i,{w:"$full",gap:"$2",templateColumns:{"@initial":"1fr","@lg":t},get children(){return e.children}})};export{o as R};

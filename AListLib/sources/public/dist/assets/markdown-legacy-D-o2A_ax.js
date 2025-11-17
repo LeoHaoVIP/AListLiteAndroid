@@ -1,1 +1,0 @@
-System.register(["./index-legacy-BnW9yB9Z.js"],function(e,t){"use strict";var n,r,c,u,a,i;return{setters:[e=>{n=e.e0,r=e.D,c=e.ap,u=e.cZ,a=e.a4,i=e.ao}],execute:function(){e("default",()=>{const[e]=n();return r(i,{get loading(){return e.loading},get children(){return r(c,{get children(){return e()?.content},get ext(){return u(a.obj.name)},toc:!0})}})})}}});

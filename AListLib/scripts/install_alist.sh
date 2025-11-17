@@ -22,5 +22,5 @@ sed -i 's#https://res.oplist.org/logo/logo.svg#/images/logo.png#g' ../sources/in
 sed -i 's#Key: "pagination_type", Value: "all"#Key: "pagination_type", Value: "pagination"#g' ../sources/internal/bootstrap/data/setting.go
 sed -i 's#Key: conf.SearchIndex, Value: "none"#Key: conf.SearchIndex, Value: "database"#g' ../sources/internal/bootstrap/data/setting.go
 sed -i 's#Key: conf.AutoUpdateIndex, Value: "false"#Key: conf.AutoUpdateIndex, Value: "true"#g' ../sources/internal/bootstrap/data/setting.go
-sed -i 's#Permission: 0x31FF#Permission: 0xFFFF#g' ../sources/internal/bootstrap/data/user.go
+sed -i 's#Permission: 0x71FF#Permission: 0xFFFF#g' ../sources/internal/bootstrap/data/user.go
 sed -i -z 's#Disabled:   true#Disabled:   false#g' ../sources/internal/bootstrap/data/user.go
