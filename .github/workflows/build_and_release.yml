@@ -2,7 +2,6 @@ name: build_and_release
 
 on:
   push:
-    tags: [ 'v*' ]
     branches-ignore: [ '*' ]
   workflow_dispatch:  # 支持手动触发
 
@@ -16,6 +15,8 @@ jobs:
     steps:
       - name: 1-CheckoutCode
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 拉取所有历史以获取标签
 
       - name: 2-SetupGoEnv
         uses: actions/setup-go@v4
@@ -33,22 +34,37 @@ jobs:
       - name: 4-GetLatestTag
         id: get_latest_tag
         run: |
-          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | grep -v ^.*-auto$ | head -n 1)
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]+)?(-auto[0-9]+)?$' | head -n 1)
           echo "Latest tag: $LATEST_TAG"
-          NEW_TAG="${LATEST_TAG}-auto"
+          # 正则匹配：提取基础版本（不含 auto 后缀）和 auto 编号
+          if [[ $LATEST_TAG =~ ^(v[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]+)?)(-auto([0-9]+))?$ ]]; then
+            base_version="${BASH_REMATCH[1]}"  # 基础版本（如 v1.3.4-beta4 或 v1.0.0）
+            auto_num="${BASH_REMATCH[3]}"      # auto 编号（如 1、2，无则为空）
+          fi
+          # 计算下一版本
+          if [[ -n "$auto_num" ]]; then
+            # 已有 auto 后缀，递增编号
+            next_auto=$((auto_num + 1))
+            NEW_TAG="${base_version}-auto${next_auto}"
+          else
+            # 无 auto 后缀，新增 auto1
+            NEW_TAG="${base_version}-auto1"
+          fi
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "::set-output name=new_tag::$NEW_TAG"
 
       - name: 5-UpdateVersionInfo
         run: |
-          # 从新标签中提取版本号（去除v前缀和-auto后缀）
-          VERSION_NAME=$(echo "${{ env.NEW_TAG }}" | sed 's/^v//; s/-auto$//')
-          echo "Updating version name to: $VERSION_NAME"
-          # 更新app模块的build.gradle中的版本号
-          LATEST_OPENLIST_VERSION=$VERSION_NAME-auto
-          sed -i "s/versionName \".*\"/versionName \"$LATEST_OPENLIST_VERSION\"/" app/build.gradle
-          # 更新 OpenList 版本号
-          echo "SET OPENLIST VERSION TO" ${LATEST_OPENLIST_VERSION}
+          # 从新标签中提取版本号（去除v前缀）
+          APP_VERSION=$(echo "${{ env.NEW_TAG }}" | sed 's/^v//')
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
+          echo "Updating App version to: ${APP_VERSION}"
+          # 更新 app 模块的 build.gradle 中的版本号
+          sed -i "s/versionName \".*\"/versionName \"${APP_VERSION}\"/" app/build.gradle
+          # OPENLIST 最新版本
+          LATEST_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
+          echo "LATEST_OPENLIST_VERSION=${LATEST_OPENLIST_VERSION}" >> $GITHUB_ENV
+          echo "Set OpenList version to" ${LATEST_OPENLIST_VERSION}
+          # 更新 Constants.java 中定义的 OpenList 版本号
           sed -i "s/\(public static String OPENLIST_VERSION = \"\)\([^\";]*\)\(\";\)/\1${LATEST_OPENLIST_VERSION}\3/" app/src/main/java/com/leohao/android/alistlite/util/Constants.java
 
       - name: 6-BuildOpenListArtifacts
@@ -58,19 +74,38 @@ jobs:
           sh install_gomobile.sh
           sh build_aar.sh
 
-      - name: 7-GrantGradlew
+      - name: 7-CommitChanges
+        run: |
+          git config --global user.email "2867555086@github.com"
+          git config --global user.name "LeoHaoVIP"
+          git add .
+          # 检查是否有修改（避免空提交）
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            # 提交修改
+            git commit -m "Auto Commit by GitHub Actions"
+            git push
+          fi
+
+      -name: 8-ReplaceBuglyAppID
+        run: |
+          # 替换 BUGLY APP ID
+          sed -i 's/YOUR_BUGLY_APP_ID/${{ secrets.BUGLY_APP_ID }}/g' $GITHUB_WORKSPACE/app/src/main/AndroidManifest.xml
+
+      - name: 9-GrantGradlew
         run: chmod +x gradlew
 
-      - name: 8-BuildAPK
+      - name: 10-BuildAPK
         run: ./gradlew assembleRelease
 
-      - name: 9-SetupAndroidSDK
+      - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
         with:
           build-tools-version: "29.0.3"
           platform-tools-version: "34.0.4"
 
-      - name: 10-SignAPK
+      - name: 12-SignAPK
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -79,19 +114,19 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: 11-CreateNewTag
+      - name: 13-CreateNewTag
         run: |
           git config --global user.email "2867555086@github.com"
           git config --global user.name "LeoHaoVIP"
           git tag ${{ env.NEW_TAG }}
           git push origin ${{ env.NEW_TAG }}
 
-      - name: 12-CreateNewRelease
+      - name: 14-CreateNewRelease
         uses: softprops/action-gh-release@v2
         with:
           draft: true
           tag_name: ${{ env.NEW_TAG }}
-          release_name: Auto Release ${{ env.NEW_TAG }}
+          release_name: From OpenList v${{ env.LATEST_OPENLIST_VERSION }}
           body: |
             Auto-generated release based on ${{ env.NEW_TAG }}
           files: app/build/outputs/apk/release/*${{ env.NEW_TAG }}*.apk
