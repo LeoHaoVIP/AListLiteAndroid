@@ -102,7 +102,7 @@ jobs:
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
         with:
-          build-tools-version: "29.0.2"
+          build-tools-version: "34.0.0"
           platform-tools-version: "34.0.4"
 
       - name: 12-SignAPK
@@ -114,7 +114,7 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
         env:
-          BUILD_TOOLS_VERSION: "29.0.2"
+          BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: 13-CreateNewTag
         run: |
