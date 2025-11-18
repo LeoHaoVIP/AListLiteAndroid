@@ -102,7 +102,7 @@ jobs:
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
         with:
-          build-tools-version: "29.0.3"
+          build-tools-version: "29.0.2"
           platform-tools-version: "34.0.4"
 
       - name: 12-SignAPK
