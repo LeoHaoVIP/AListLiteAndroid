@@ -88,7 +88,7 @@ jobs:
             git push
           fi
 
-      -name: 8-ReplaceBuglyAppID
+      - name: 8-ReplaceBuglyAppID
         run: |
           # 替换 BUGLY APP ID
           sed -i 's/YOUR_BUGLY_APP_ID/${{ secrets.BUGLY_APP_ID }}/g' $GITHUB_WORKSPACE/app/src/main/AndroidManifest.xml
