@@ -36,10 +36,10 @@ jobs:
         run: |
           LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]+)?(-auto[0-9]+)?$' | head -n 1)
           echo "Latest tag: $LATEST_TAG"
-          # 正则匹配：提取基础版本（不含 auto 后缀）和 auto 编号
+          # 正则匹配：明确分组（分组1=基础版本，分组4=auto编号）
           if [[ $LATEST_TAG =~ ^(v[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]+)?)(-auto([0-9]+))?$ ]]; then
             base_version="${BASH_REMATCH[1]}"  # 基础版本（如 v1.3.4-beta4 或 v1.0.0）
-            auto_num="${BASH_REMATCH[3]}"      # auto 编号（如 1、2，无则为空）
+            auto_num="${BASH_REMATCH[4]}"      # 提取分组4（仅数字部分，如 1、2）
           fi
           # 计算下一版本
           if [[ -n "$auto_num" ]]; then
