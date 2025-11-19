@@ -125,7 +125,7 @@ jobs:
       - name: 14-CreateNewRelease
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          draft: false
           tag_name: ${{ env.NEW_TAG }}
           name: From OpenList v${{ env.LATEST_OPENLIST_VERSION }}
           body: |
