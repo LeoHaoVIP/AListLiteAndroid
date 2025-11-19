@@ -103,7 +103,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: 12-SignAPK
-        uses: r0adkll/sign-android-release@v1
+        uses: ilharp/sign-android-release@v2
         with:
           releaseDirectory: app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
