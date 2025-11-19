@@ -116,8 +116,11 @@ jobs:
         run: |
           git config --global user.email "2867555086@github.com"
           git config --global user.name "LeoHaoVIP"
-          git tag ${{ env.NEW_TAG }}
-          git push origin ${{ env.NEW_TAG }}
+          # 检查标签是否存在，不存在则创建并推送
+          if ! git ls-remote --tags origin | grep -q "refs/tags/${{ env.NEW_TAG }}"; then
+            git tag ${{ env.NEW_TAG }}
+            git push origin ${{ env.NEW_TAG }}
+          fi
 
       - name: 14-CreateNewRelease
         uses: softprops/action-gh-release@v2
