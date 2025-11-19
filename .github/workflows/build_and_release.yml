@@ -97,7 +97,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: 10-BuildAPK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -q
 
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
