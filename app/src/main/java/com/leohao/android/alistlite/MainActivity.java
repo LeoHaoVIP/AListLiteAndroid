@@ -697,7 +697,7 @@ public class MainActivity extends AppCompatActivity {
                 //发现新版本
                 if (latestVersion.compareTo(currentAppVersion) > 0) {
                     Looper.prepare();
-                    String dialogTitle = String.format("\uD83C\uDF89 AListLite %s 已发布%s", latestVersion, latestVersion.contains("auto") ? "（自动构建）" : "");
+                    String dialogTitle = String.format("\uD83C\uDF89 AListLite %s 已发布", latestVersion);
                     //弹出更新下载确认
                     AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
                     dialog.setTitle(dialogTitle);

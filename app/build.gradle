@@ -25,7 +25,19 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig null
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                if (variant.buildType.name == 'release') {
+                    variant.outputs.each { output ->
+                        def outputFile = output.outputFile
+                        if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                            def newFileName = outputFile.name.replace("-unsigned", "")
+                            output.outputFileName = newFileName
+                        }
+                    }
+                }
+            }
         }
     }
     compileOptions {

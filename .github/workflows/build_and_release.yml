@@ -124,7 +124,7 @@ jobs:
         with:
           draft: true
           tag_name: ${{ env.NEW_TAG }}
-          release_name: From OpenList v${{ env.LATEST_OPENLIST_VERSION }}
+          name: From OpenList v${{ env.LATEST_OPENLIST_VERSION }}
           body: |
-            Auto-generated release based on ${{ env.NEW_TAG }}
-          files: app/build/outputs/apk/release/*${{ env.NEW_TAG }}*.apk
+            🚀 【自动构建】同步 OpenList v${{ env.LATEST_OPENLIST_VERSION }}
+          files: app/build/outputs/apk/release/*${{ env.NEW_TAG }}-*-release-signed.apk
