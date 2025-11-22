@@ -13,13 +13,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: checkout_code
-        uses: actions/checkout@v4
-
       - name: check_openlist_has_new_version
         run: |
-          cd $GITHUB_WORKSPACE/app/src/main/java/com/leohao/android/alistlite/util
-          export CURRENT_OPENLIST_VERSION=$(sed -n 's/.*OPENLIST_VERSION = "\([^"]*\)".*/\1/p' Constants.java)
+          export CURRENT_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest | grep '"name": "From OpenList v' | cut -d'"' -f4 | cut -d'v' -f2)
           export LATEST_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
           echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
