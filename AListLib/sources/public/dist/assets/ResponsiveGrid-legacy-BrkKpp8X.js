@@ -1,0 +1,1 @@
+System.register(["./index-legacy-D2rKgweC.js"],function(e,t){"use strict";var r,n,i;return{setters:[e=>{r=e.D,n=e.dp,i=e.W}],execute:function(){e("R",e=>{let t;return"responsive"===i("settings_layout")&&(t="repeat(auto-fill, minmax(424px, 1fr))"),r(n,{w:"$full",gap:"$2",templateColumns:{"@initial":"1fr","@lg":t},get children(){return e.children}})})}}});
