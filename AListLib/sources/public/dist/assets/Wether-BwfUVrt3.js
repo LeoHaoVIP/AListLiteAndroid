@@ -1,0 +1,1 @@
+import{E as t,q as s,cE as n}from"./index-BFcje_PK.js";const c=e=>{const r=s();return t(n,{get colorScheme(){return e.yes?"success":"danger"},get children(){return r("global.".concat(e.yes?"yes":"no"))}})};export{c as W};

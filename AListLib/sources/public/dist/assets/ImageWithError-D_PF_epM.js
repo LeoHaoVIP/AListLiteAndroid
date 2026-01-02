@@ -1,1 +1,0 @@
-import{B as n,D as e,aL as o,R as s,S as c}from"./index-BuiRiVor.js";const l=r=>{const[a,t]=n(!1);return e(c,{get when(){return!a()},get fallback(){return r.fallbackErr},get children(){return e(o,s(r,{onError:()=>{t(!0)}}))}})};export{l as I};

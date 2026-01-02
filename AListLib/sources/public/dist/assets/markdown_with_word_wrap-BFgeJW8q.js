@@ -1,1 +1,0 @@
-import{e1 as a,D as r,aq as n,c_ as o,a5 as s,ap as c}from"./index-BuiRiVor.js";const u=()=>{const[e]=a();return r(c,{get loading(){return e.loading},get children(){return r(n,{class:"word-wrap",get children(){var t;return(t=e())==null?void 0:t.content},get ext(){return o(s.obj.name)},toc:!0})}})};export{u as default};
