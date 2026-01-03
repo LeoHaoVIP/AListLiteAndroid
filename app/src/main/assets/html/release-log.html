@@ -70,11 +70,11 @@
                     const year = releaseTime.getFullYear();
                     const month = String(releaseTime.getMonth() + 1).padStart(2, '0');
                     const day = String(releaseTime.getDate()).padStart(2, '0');
-                    const formattedDate = `发布于 ${year}.${month}.${day}`;
+                    const formattedDate = `${year}.${month}.${day} 发布`;
                     //APP 版本号
                     const appVersion = release.tag_name.replaceAll('-', ' ');
                     //基于的 AList 版本号
-                    const alistVersion = `基于 ${release.name.substring(5)} 构建`;
+                    const alistVersion = `${release.name.substring(5)}`;
                     let releaseBody = release.body.replaceAll('**', '');
                     if (releaseBody.length === 0) {
                         releaseBody = '-';
@@ -93,9 +93,20 @@
                     alistImg.src = "https://img.shields.io/badge/" + alistVersion + "-33cccc.svg";
                     alistImg.alt = alistVersion;
                     alistImg.style.marginLeft = '10px';
+                    const downloadImg = document.createElement('img');
+                    downloadImg.src = "https://img.shields.io/badge/下载-orange.svg";
+                    downloadImg.alt = '发布地址';
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = release.html_url;
+                    downloadLink.target = "_blank";
+                    downloadLink.style.marginLeft = '10px';
+                    downloadLink.style.color = 'white';
+                    downloadLink.rel = 'noopener noreferrer';
+                    downloadLink.appendChild(downloadImg);
                     titleP.appendChild(versionImg);
                     titleP.appendChild(dateImg);
                     titleP.appendChild(alistImg);
+                    titleP.appendChild(downloadLink);
                     titleP.style.height = '10px';
                     bodyDiv.innerText = releaseBody;
                     releaseDiv.appendChild(titleP)
