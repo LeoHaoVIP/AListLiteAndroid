@@ -15,13 +15,43 @@ jobs:
     steps:
       - name: check_openlist_has_new_version
         run: |
+          # 定义版本号比较函数
+          version_compare() {
+              if [[ "$1" == "$2" ]]; then
+                  return 0
+              fi
+              local IFS=.
+              local ver1=($1) ver2=($2)
+              local max_len=$(( ${#ver1[@]} > ${#ver2[@]} ? ${#ver1[@]} : ${#ver2[@]} ))
+          
+              for ((i=0; i<max_len; i++)); do
+                  local v1=${ver1[i]:-0}
+                  local v2=${ver2[i]:-0}
+                  if (( v1 > v2 )); then
+                      return 1
+                  elif (( v1 < v2 )); then
+                      return -1
+                  fi
+              done
+              return 0
+          }
+
+          # 获取当前和最新版本号
           export CURRENT_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest | grep '"name": "From OpenList v' | cut -d'"' -f4 | cut -d'v' -f2)
           export LATEST_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
-          echo "CURRENT_OPENLIST_VERSION: " ${CURRENT_OPENLIST_VERSION}
-          echo "LATEST_OPENLIST_VERSION: " ${LATEST_OPENLIST_VERSION}
-          if [ "$LATEST_OPENLIST_VERSION" \> "$CURRENT_OPENLIST_VERSION" ]; then
-              echo "OpenList Need to Be Updated!"
+          
+          # 输出版本号用于调试
+          echo "CURRENT_OPENLIST_VERSION: ${CURRENT_OPENLIST_VERSION}"
+          echo "LATEST_OPENLIST_VERSION: ${LATEST_OPENLIST_VERSION}"
+          
+          # 调用版本比较函数
+          version_compare "$LATEST_OPENLIST_VERSION" "$CURRENT_OPENLIST_VERSION"
+          compare_result=$?
+          
+          # 根据比较结果执行逻辑
+          if [[ $compare_result -eq 1 ]]; then
+              echo "OpenList Need to Be Updated! (${LATEST_OPENLIST_VERSION} > ${CURRENT_OPENLIST_VERSION})"
               gh workflow run build_and_release.yml -R LeoHaoVIP/AListLiteAndroid
           else
-              echo "No Need to Update."
+              echo "No Need to Update. (${LATEST_OPENLIST_VERSION} <= ${CURRENT_OPENLIST_VERSION})"
           fi
