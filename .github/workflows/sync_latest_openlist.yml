@@ -15,70 +15,16 @@ jobs:
     steps:
       - name: check_openlist_has_new_version
         run: |
-          # 版本比较函数
-          version_compare() {
-              local ORIGINAL_IFS="$IFS"
-              local ver1=$(echo "$1" | sed 's/^v//')
-              local ver2=$(echo "$2" | sed 's/^v//')
+          # 1. 获取版本号（保留原始带v格式）
+          CURRENT=$(curl -k -sL --max-time 10 --retry 3 https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest | grep '"name": "From OpenList v' | cut -d'"' -f4 | cut -d'v' -f2 || echo "v0.0.0")
+          LATEST=$(curl -k -sL --max-time 10 --retry 3 https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 || echo "v0.0.0")
           
-              ver1=${ver1:-0.0.0}
-              ver2=${ver2:-0.0.0}
-              ver1=$(echo "$ver1" | tr -cd '0-9.')
-              ver2=$(echo "$ver2" | tr -cd '0-9.')
-              ver1=${ver1:-0.0.0}
-              ver2=${ver2:-0.0.0}
-
-              if [[ "$ver1" == "$ver2" ]]; then
-                  IFS="$ORIGINAL_IFS"
-                  return 0
-              fi
-          
-              IFS='.'
-              local arr1=($ver1)
-              local arr2=($ver2)
-              IFS="$ORIGINAL_IFS"
-          
-              local max_len=${#arr1[@]}
-              if [[ ${#arr2[@]} -gt $max_len ]]; then
-                  max_len=${#arr2[@]}
-              fi
-          
-              for ((i=0; i<max_len; i++)); do
-                  local v1=${arr1[i]:-0}
-                  local v2=${arr2[i]:-0}
-          
-                  if ! [[ "$v1" =~ ^[0-9]+$ ]]; then
-                      v1=0
-                  fi
-                  if ! [[ "$v2" =~ ^[0-9]+$ ]]; then
-                      v2=0
-                  fi
-          
-                  if (( v1 > v2 )); then
-                      return 1
-                  elif (( v1 < v2 )); then
-                      return -1
-                  fi
-              done
-              return 0
-          }
-
-          # 获取当前和最新版本号
-          export CURRENT_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest | grep '"name": "From OpenList v' | cut -d'"' -f4 | cut -d'v' -f2)
-          export LATEST_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
-          
-          # 输出版本号用于调试
-          echo "CURRENT_OPENLIST_VERSION: ${CURRENT_OPENLIST_VERSION}"
-          echo "LATEST_OPENLIST_VERSION: ${LATEST_OPENLIST_VERSION}"
-          
-          # 调用版本比较函数
-          version_compare "$LATEST_OPENLIST_VERSION" "$CURRENT_OPENLIST_VERSION"
-          compare_result=$?
-          
-          # 根据比较结果执行逻辑
-          if [[ $compare_result -eq 1 ]]; then
-              echo "OpenList Need to Be Updated! (${LATEST_OPENLIST_VERSION} > ${CURRENT_OPENLIST_VERSION})"
+          # 2. 核心：用sort -V比较版本号（最简便的方式）
+          # 原理：将两个版本号写入临时文件，按版本号排序后取最后一行，判断是否是最新版本
+          if [[ $(echo -e "$CURRENT\n$LATEST" | sort -V | tail -n1) == "$LATEST" && "$CURRENT" != "$LATEST" ]]; then
+              echo "OpenList Need to Be Updated! ($LATEST > $CURRENT)"
               gh workflow run build_and_release.yml -R LeoHaoVIP/AListLiteAndroid
           else
-              echo "No Need to Update. (${LATEST_OPENLIST_VERSION} <= ${CURRENT_OPENLIST_VERSION})"
+              echo "No Need to Update. ($LATEST <= $CURRENT)"
           fi
+        shell: bash
