@@ -17,16 +17,32 @@ jobs:
         run: |
           # 定义版本号比较函数
           version_compare() {
-              if [[ "$1" == "$2" ]]; then
+              # 第一步：去掉开头的 v，如 v4.1.9 → 4.1.9
+              local ver1=$(echo "$1" | sed 's/^v//'
+              local ver2=$(echo "$2" | sed 's/^v//')
+          
+              # 第二步：空值兜底 + 过滤非法字符
+              ver1=${ver1:-0.0.0}
+              ver2=${ver2:-0.0.0}
+              ver1=$(echo "$ver1" | tr -cd '0-9.')  # 只保留数字和点
+              ver2=$(echo "$ver2" | tr -cd '0-9.')
+          
+              if [[ "$ver1" == "$ver2" ]]; then
                   return 0
               fi
+          
+              # 第三步：按 . 分割版本号，逐位数值比较
               local IFS=.
-              local ver1=($1) ver2=($2)
-              local max_len=$(( ${#ver1[@]} > ${#ver2[@]} ? ${#ver1[@]} : ${#ver2[@]} ))
+              local arr1=($ver1) arr2=($ver2)
+              local max_len=$(( ${#arr1[@]} > ${#arr2[@]} ? ${#arr1[@]} : ${#arr2[@]} ))
           
               for ((i=0; i<max_len; i++)); do
-                  local v1=${ver1[i]:-0}
-                  local v2=${ver2[i]:-0}
+                  # 空位补 0 + 强制转整数（避免非数字）
+                  local v1=${arr1[i]:-0}
+                  local v2=${arr2[i]:-0}
+                  v1=$((v1)) 2>/dev/null || v1=0
+                  v2=$((v2)) 2>/dev/null || v2=0
+          
                   if (( v1 > v2 )); then
                       return 1
                   elif (( v1 < v2 )); then
