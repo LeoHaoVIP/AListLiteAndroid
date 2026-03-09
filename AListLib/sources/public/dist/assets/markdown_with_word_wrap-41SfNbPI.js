@@ -1,1 +1,0 @@
-import{e2 as a,E as r,ar as n,c$ as o,a6 as s,aq as c}from"./index-BFcje_PK.js";const u=()=>{const[e]=a();return r(c,{get loading(){return e.loading},get children(){return r(n,{class:"word-wrap",get children(){var t;return(t=e())==null?void 0:t.content},get ext(){return o(s.obj.name)},toc:!0})}})};export{u as default};

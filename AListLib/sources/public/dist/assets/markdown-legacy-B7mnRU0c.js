@@ -1,1 +1,0 @@
-System.register(["./index-legacy-C7GeLJzS.js"],function(e,t){"use strict";var r,n,c,u,a,i;return{setters:[e=>{r=e.e2,n=e.E,c=e.ar,u=e.c$,a=e.a6,i=e.aq}],execute:function(){e("default",()=>{const[e]=r();return n(i,{get loading(){return e.loading},get children(){return n(c,{get children(){return e()?.content},get ext(){return u(a.obj.name)},toc:!0})}})})}}});
