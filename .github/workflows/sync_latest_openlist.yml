@@ -15,16 +15,14 @@ jobs:
     steps:
       - name: check_openlist_has_new_version
         run: |
-          # 1. 获取版本号（保留原始带v格式）
-          CURRENT=$(curl -k -sL --max-time 10 --retry 3 https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest | grep '"name": "From OpenList v' | cut -d'"' -f4 | cut -d'v' -f2 || echo "v0.0.0")
-          LATEST=$(curl -k -sL --max-time 10 --retry 3 https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 || echo "v0.0.0")
+          # 1. 获取版本号（去除前缀 v）
+          CURRENT=$(curl -k -sL https://api.github.com/repos/LeoHaoVIP/AListLiteAndroid/releases/latest | grep '"name": "From OpenList v' | cut -d'"' -f4 | cut -d'v' -f2 || echo "0.0.0")
+          LATEST=$(curl -k -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2 || echo "0.0.0")
           
-          # 2. 核心：用sort -V比较版本号（最简便的方式）
-          # 原理：将两个版本号写入临时文件，按版本号排序后取最后一行，判断是否是最新版本
+          # 2. 核心：用 sort -V 比较版本号
           if [[ $(echo -e "$CURRENT\n$LATEST" | sort -V | tail -n1) == "$LATEST" && "$CURRENT" != "$LATEST" ]]; then
               echo "OpenList Need to Be Updated! ($LATEST > $CURRENT)"
               gh workflow run build_and_release.yml -R LeoHaoVIP/AListLiteAndroid
           else
               echo "No Need to Update. ($LATEST <= $CURRENT)"
           fi
-        shell: bash
