@@ -101,6 +101,8 @@ jobs:
 
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
+        with:
+          build-tools: "30.0.2"
 
       - name: 12-SignAPK
         uses: ilharp/sign-android-release@v2
