@@ -1,1 +1,0 @@
-const c=e=>(e==null?void 0:e.total_space)>0,r=e=>{let t=e.total_space,o=t-e.free_space;const n=["B","K","M","G","T","P","E"],s=1024;let a=0;for(;a<n.length-1&&(o>=s||t>=s);)o/=s,t/=s,a++;return"".concat(o.toFixed(2)," / ").concat(t.toFixed(2)," ").concat(n[a])},u=e=>(e.total_space-e.free_space)/e.total_space*100,p=e=>e.free_space/e.total_space<.1;export{p as n,c as s,r as t,u};
