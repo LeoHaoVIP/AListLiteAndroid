@@ -101,11 +101,9 @@ jobs:
 
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
-        with:
-          build-tools: "30.0.2"
 
       - name: 12-SignAPK
-        uses: ilharp/sign-android-release@v2
+        uses: ilharp/sign-android-release@nightly
         with:
           releaseDir: app/build/outputs/apk/release
           signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
