@@ -30,6 +30,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
+          android-sdk-build-tools-version: '30.0.2'
+          android-sdk-platforms: 'android-34'
 
       - name: 4-GetLatestTag
         id: get_latest_tag
@@ -103,14 +105,13 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: 12-SignAPK
-        uses: ilharp/sign-android-release@nightly
+        uses: ilharp/sign-android-release@v2
         with:
           releaseDir: app/build/outputs/apk/release
           signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
           keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: 30.0.2
 
       - name: 13-CreateNewTag
         run: |
