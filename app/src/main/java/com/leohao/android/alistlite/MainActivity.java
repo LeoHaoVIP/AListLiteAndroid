@@ -698,7 +698,7 @@ public class MainActivity extends AppCompatActivity {
                 //新版本APK下载地址（Github）
                 String downloadLinkGitHub = (String) release.getByPath("assets[0].browser_download_url");
                 //镜像加速地址
-                String downloadLinkFast = String.format("%s/v%s/AListLite-v%s-%s-release.apk", Constants.QUICK_DOWNLOAD_ADDRESS, latestVersion, latestVersion, abiName);
+                String downloadLinkFast = String.format("%s/%s", Constants.QUICK_DOWNLOAD_ADDRESS_GH_PROXY_PREFIX, downloadLinkGitHub);
                 //发现新版本
                 if (latestVersion.compareTo(currentAppVersion) > 0) {
                     Looper.prepare();
