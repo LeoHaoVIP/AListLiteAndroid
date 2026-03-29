@@ -4,8 +4,9 @@ package com.leohao.android.alistlite.broadcast;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
+import android.util.Log;
 import android.widget.Toast;
+import androidx.core.content.ContextCompat;
 import com.leohao.android.alistlite.service.AlistService;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
@@ -24,10 +25,12 @@ public class BootCompleteReceiver extends BroadcastReceiver {
         if (intent.getAction().equals(ACTION_BOOT_COMPLETED)) {
             //启动 AList 服务
             Intent serviceIntent = new Intent(context, AlistService.class).setAction(AlistService.ACTION_STARTUP);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent);
-            } else {
-                context.startService(serviceIntent);
+            try {
+                // 使用 ContextCompat 来启动服务，确保兼容性
+                ContextCompat.startForegroundService(context, serviceIntent);
+            } catch (Exception e) {
+                // 捕获前台服务启动异常，避免崩溃
+                Log.e("BootCompleteReceiver", "onReceive: " + e.getLocalizedMessage());
             }
         }
     }
