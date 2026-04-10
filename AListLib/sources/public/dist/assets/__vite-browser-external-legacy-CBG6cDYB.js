@@ -1,0 +1,1 @@
+System.register(["./chunk-legacy-D5ZT36tR.js"],function(t,e){var n;return{setters:[function(t){n=t.t}],execute:function(){t("t",n((t,e)=>{e.exports={}}))}}});
