@@ -1,0 +1,1 @@
+import{Xi as e,Zr as t,wn as n}from"./store-lTnl42_k.js";import r from"./Upload-QzPlqf5D.js";var i=()=>e(t,{justifyContent:`center`,h:`100vh`,get children(){return e(n,{w:`$md`,get children(){return e(r,{})}})}});export{i as default};

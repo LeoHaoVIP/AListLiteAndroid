@@ -1,0 +1,1 @@
+System.register([],function(e,t){return{setters:[],execute:function(){e("t","简体中文"),e("n",{lang:"简体中文"})}}});

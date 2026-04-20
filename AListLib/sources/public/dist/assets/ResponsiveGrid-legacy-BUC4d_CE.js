@@ -1,0 +1,1 @@
+System.register(["./store-legacy-CkphUmT4.js"],function(e,t){var n,r,i;return{setters:[function(e){n=e.Wn,r=e.Xi,i=e.h}],execute:function(){e("t",e=>{let t;return"responsive"===i("settings_layout")&&(t="repeat(auto-fill, minmax(424px, 1fr))"),r(n,{w:"$full",gap:"$2",templateColumns:{"@initial":"1fr","@lg":t},get children(){return e.children}})})}}});
