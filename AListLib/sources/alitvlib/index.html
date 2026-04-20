@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>扫码登录</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #ffde59;
+        }
+
+        img {
+            width: 100%;
+            max-width: 280px;
+            /* height: auto; */
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 2px solid #00f0ff;
+            aspect-ratio: 1;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 14px;
+            resize: none;
+            background: rgba(0, 0, 0, 0.1);
+            color: #fff;
+            outline: none;
+            cursor: pointer;
+        }
+
+        textarea::placeholder {
+            color: #ccc;
+        }
+        .tip{
+            word-break: break-all;
+            font-size: 14px
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            textarea {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>请用阿里云盘APP扫码登录</h2>
+        <img id="qr" alt="二维码加载中..." />
+        <textarea id="token" readonly placeholder="用阿里云盘APP扫码登录，这里会出现刷新令牌，点击复制"></textarea>
+        <div class="tip">令牌刷新地址<br><script>
+            document.write(window.location.origin + "/token");
+        </script></div>
+    </div>
+
+    <script>
+        async function getQr() {
+            const qrData = await fetch("/qr")
+            const res = await qrData.json()
+            document.querySelector("#qr").src = res.qr_link;
+            trackLogin(res.sid);
+        }
+
+        async function trackLogin(sid) {
+            while (true) {
+                const statusData = await fetch("/check?sid=" + sid)
+                const status = await statusData.json()
+                if (status.refresh_token) {
+                    document.querySelector("#token").value = status.refresh_token;
+                    break
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        getQr();
+    </script>
+
+
+<script>
+    const textarea = document.getElementById("token");
+
+    textarea.addEventListener("click", () => {
+        if(!textarea.value) {
+            return
+        }
+        textarea.select(); // 选中内容
+        textarea.setSelectionRange(0, 99999); // 兼容 iOS
+
+        try {
+            const success = document.execCommand('copy');
+            if (success) {
+                alert("已复制到剪贴板！");
+            } else {
+                alert("复制失败，请手动复制");
+            }
+        } catch (err) {
+            console.error("复制异常:", err);
+            alert("复制异常，请手动复制");
+        }
+
+        // 可选：取消选中状态
+        window.getSelection().removeAllRanges();
+    });
+</script>
+</body>
+</html>

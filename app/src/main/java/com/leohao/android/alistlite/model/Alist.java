@@ -2,6 +2,7 @@ package com.leohao.android.alistlite.model;
 
 import alistlib.Alistlib;
 import alistlib.Event;
+import alitvlib.Alitvlib;
 import android.content.Intent;
 import android.os.Looper;
 import android.util.Log;
@@ -144,6 +145,10 @@ public class Alist {
     public void shutdown(Long timeout) {
         try {
             Alistlib.shutdown(timeout);
+            //同步关闭阿里云盘 TV API 接口
+            if (Alitvlib.isRunning()) {
+                Alitvlib.stopServer();
+            }
             ALIST_LOGS.append("------ 服务已关闭 ------\r\n\r\n");
         } catch (Exception e) {
             showToast("Alist服务关闭失败");
@@ -161,6 +166,10 @@ public class Alist {
         }
         init();
         Alistlib.start();
+        //同步开启阿里云盘 TV API 接口
+        if (!Alitvlib.isRunning()) {
+            Alitvlib.startServer();
+        }
         notifyStatusChanged();
     }
 

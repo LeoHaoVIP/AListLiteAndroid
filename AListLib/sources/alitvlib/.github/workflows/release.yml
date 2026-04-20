@@ -1,0 +1,42 @@
+name: Release Go Binary
+
+on:
+  push:
+    tags:
+      - 'v*'  # 仅在发布 tag（如 v1.0.0）时触发
+
+jobs:
+  build:
+    name: Build Go Binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p dist/
+          BIN_NAME=app-${GOOS}-${GOARCH}
+          if [ "$GOOS" == "windows" ]; then
+            BIN_NAME="${BIN_NAME}.exe"
+          fi
+          CGO_ENABLED=0 go build -o dist/$BIN_NAME .
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

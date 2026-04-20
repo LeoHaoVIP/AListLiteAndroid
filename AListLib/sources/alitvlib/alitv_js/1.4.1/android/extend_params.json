@@ -1,0 +1,5 @@
+{
+    "imServerUrl": "https://api.cedock.net",
+    "usePush": true,
+    "useIm": true
+}
