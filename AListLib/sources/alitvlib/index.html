@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>扫码登录</title>
     <style>
         * {
@@ -67,9 +67,10 @@
         textarea::placeholder {
             color: #ccc;
         }
-        .tip{
+
+        .tip {
             word-break: break-all;
-            font-size: 14px
+            font-size: 12px;
         }
 
         @media (max-width: 400px) {
@@ -88,44 +89,52 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>请用阿里云盘APP扫码登录</h2>
-        <img id="qr" alt="二维码加载中..." />
-        <textarea id="token" readonly placeholder="用阿里云盘APP扫码登录，这里会出现刷新令牌，点击复制"></textarea>
-        <div class="tip">令牌刷新地址<br><script>
+<div class="container">
+    <h2>阿里云盘扫码登录</h2>
+    <img id="qr" alt="二维码加载中..."/>
+    <textarea id="token" readonly
+              placeholder="请使用阿里云盘扫码登录，若您已开通阿里云盘会员，强烈建议您使用此方式获取令牌，可带来流畅观影体验。【点击复制】"></textarea>
+    <div class="tip">令牌刷新地址<br>
+        <script>
             document.write(window.location.origin + "/token");
-        </script></div>
+        </script>
     </div>
+    <div class="tip">开源项目地址<br>
+        <a href="https://github.com/lilu0826/alitv_openlist" target="_blank" rel="noopener noreferrer" style="color: white">
+            https://github.com/lilu0826/alitv_openlist
+        </a>
+    </div>
+</div>
 
-    <script>
-        async function getQr() {
-            const qrData = await fetch("/qr")
-            const res = await qrData.json()
-            document.querySelector("#qr").src = res.qr_link;
-            trackLogin(res.sid);
-        }
+<script>
+    async function getQr() {
+        const qrData = await fetch("/qr")
+        const res = await qrData.json()
+        document.querySelector("#qr").src = res.qr_link;
+        trackLogin(res.sid);
+    }
 
-        async function trackLogin(sid) {
-            while (true) {
-                const statusData = await fetch("/check?sid=" + sid)
-                const status = await statusData.json()
-                if (status.refresh_token) {
-                    document.querySelector("#token").value = status.refresh_token;
-                    break
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000));
+    async function trackLogin(sid) {
+        while (true) {
+            const statusData = await fetch("/check?sid=" + sid)
+            const status = await statusData.json()
+            if (status.refresh_token) {
+                document.querySelector("#token").value = status.refresh_token;
+                break
             }
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
+    }
 
-        getQr();
-    </script>
+    getQr();
+</script>
 
 
 <script>
     const textarea = document.getElementById("token");
 
     textarea.addEventListener("click", () => {
-        if(!textarea.value) {
+        if (!textarea.value) {
             return
         }
         textarea.select(); // 选中内容

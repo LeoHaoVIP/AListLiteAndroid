@@ -55,6 +55,11 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             MainActivity.getInstance().checkUpdates(view);
         });
+        //进入阿里云盘 TV 版 Token 获取页面（该 Token 对于开通阿里云盘会员的用户暂不限速）
+        popupView.findViewById(R.id.btn_showAliTvTokenGetPage).setOnClickListener((view) -> {
+            dismiss();
+            MainActivity.getInstance().showAliTvTokenGetPage(view);
+        });
         //关于 AList
         popupView.findViewById(R.id.btn_showSystemInfo).setOnClickListener((view) -> {
             dismiss();

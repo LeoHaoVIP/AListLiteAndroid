@@ -489,6 +489,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * 进入阿里云盘 TV 版 Token 获取页面
+     */
+    public void showAliTvTokenGetPage(View view) {
+        webView.loadUrl("http://127.0.0.1:4015");
+    }
+
+    /**
      * 设定管理员密码
      */
     public void setAdminPassword(View view) {

@@ -21,6 +21,7 @@
     <string name="popup_menu_item_advanced_config">高级配置</string>
     <string name="popup_menu_item_service_logs">服务日志</string>
     <string name="popup_menu_item_check_updates">检查更新</string>
+    <string name="popup_menu_item_alitv_token_get">阿里云盘令牌</string>
     <string name="popup_menu_item_about">关于 AListLite</string>
     <string name="activity_title_permission_check">AListlite 权限配置</string>
     <string name="config_view">|&#160;高级配置&#160;</string>

@@ -72,6 +72,16 @@
                 android:clickable="true"
                 android:text="@string/popup_menu_item_check_updates"/>
         <TextView
+                android:id="@+id/btn_showAliTvTokenGetPage"
+                android:focusable="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:textSize="17sp"
+                android:textColor="@color/menu_text_color"
+                android:clickable="true"
+                android:text="@string/popup_menu_item_alitv_token_get"/>
+        <TextView
                 android:id="@+id/btn_showSystemInfo"
                 android:focusable="true"
                 android:layout_width="wrap_content"
