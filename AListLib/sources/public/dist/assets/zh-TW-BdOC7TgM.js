@@ -1,1 +1,0 @@
-var e=`繁體中文`,t={lang:e};export{t as n,e as t};

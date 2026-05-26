@@ -1,0 +1,1 @@
+import{Do as e,En as t,Hn as n,at as r,en as i,li as a}from"./index-qF4sv01e.js";var o=()=>{let[o]=n();return e(i,{get loading(){return o.loading},get children(){return e(r,{class:`word-wrap`,get children(){return o()?.content},get ext(){return a(t.obj.name)},toc:!0})}})};export{o as default};
