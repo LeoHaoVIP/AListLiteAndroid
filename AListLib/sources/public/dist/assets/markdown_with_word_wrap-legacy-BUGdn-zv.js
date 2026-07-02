@@ -1,1 +1,0 @@
-System.register(["./index-legacy-B4E-5rff.js"],function(e,t){var n,r,c,o,u,i;return{setters:[function(e){n=e.Do,r=e.En,c=e.Hn,o=e.at,u=e.en,i=e.li}],execute:function(){e("default",()=>{const[e]=c();return n(u,{get loading(){return e.loading},get children(){return n(o,{class:"word-wrap",get children(){return e()?.content},get ext(){return i(r.obj.name)},toc:!0})}})})}}});

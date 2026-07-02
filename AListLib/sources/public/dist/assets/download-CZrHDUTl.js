@@ -1,1 +1,0 @@
-import{t as e}from"./File-QnAPsNBq.js";export{e as Download,e as default};
