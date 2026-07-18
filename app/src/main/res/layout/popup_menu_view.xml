@@ -1,131 +1,254 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:orientation="horizontal"
-                android:fitsSystemWindows="true"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-    <LinearLayout
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:fitsSystemWindows="true">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="vertical"
             android:background="@drawable/popup_menu_border"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="8dp">
 
-        <!-- 服务管理 -->
+        <!-- 服务管理 分组 -->
         <TextView
-                android:id="@+id/btn_showQrCode"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_qrcode"/>
-        <TextView
-                android:id="@+id/btn_serviceLogs"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_service_logs"/>
+            android:id="@+id/menu_section_service"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="2dp"
+            android:text="服务管理"
+            android:textSize="11sp"
+            android:textColor="@color/ios_text_secondary"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.05"/>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-              android:background="#33FFFFFF" android:layout_marginVertical="4dp"/>
+        <TextView
+            android:id="@+id/btn_showQrCode"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_qrcode"/>
 
-        <!-- 安全设置 -->
         <TextView
-                android:id="@+id/btn_setAdminPassword"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_password"/>
-        <TextView
-                android:id="@+id/btn_toggleHttps"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_https"/>
+            android:id="@+id/btn_serviceLogs"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_service_logs"/>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-              android:background="#33FFFFFF" android:layout_marginVertical="4dp"/>
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp"
+            android:background="@color/ios_separator"/>
 
-        <!-- 系统配置 -->
+        <!-- 安全设置 分组 -->
         <TextView
-                android:id="@+id/btn_startPermissionCheckActivity"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_permission"/>
-        <TextView
-                android:id="@+id/btn_manageConfigData"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_advanced_config"/>
-        <TextView
-                android:id="@+id/btn_showAliTvTokenGetPage"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_alitv_token_get"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="2dp"
+            android:text="安全设置"
+            android:textSize="11sp"
+            android:textColor="@color/ios_text_secondary"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.05"/>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-              android:background="#33FFFFFF" android:layout_marginVertical="4dp"/>
+        <TextView
+            android:id="@+id/btn_setAdminPassword"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_password"/>
 
-        <!-- 关于 -->
         <TextView
-                android:id="@+id/btn_checkUpdates"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_check_updates"/>
+            android:id="@+id/btn_toggleHttps"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_https"/>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp"
+            android:background="@color/ios_separator"/>
+
+        <!-- 系统配置 分组 -->
         <TextView
-                android:id="@+id/btn_showSystemInfo"
-                android:focusable="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textSize="15sp"
-                android:textColor="@color/menu_text_color"
-                android:clickable="true"
-                android:text="@string/popup_menu_item_about"/>
-    </LinearLayout>
-</RelativeLayout>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="2dp"
+            android:text="系统配置"
+            android:textSize="11sp"
+            android:textColor="@color/ios_text_secondary"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.05"/>
+
+        <TextView
+            android:id="@+id/btn_startPermissionCheckActivity"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_permission"/>
+
+        <TextView
+            android:id="@+id/btn_manageConfigData"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_advanced_config"/>
+
+        <TextView
+            android:id="@+id/btn_showAliTvTokenGetPage"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_alitv_token_get"/>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp"
+            android:background="@color/ios_separator"/>
+
+        <!-- 关于 分组 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="2dp"
+            android:text="关于"
+            android:textSize="11sp"
+            android:textColor="@color/ios_text_secondary"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.05"/>
+
+        <TextView
+            android:id="@+id/btn_checkUpdates"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_check_updates"/>
+
+        <TextView
+            android:id="@+id/btn_showSystemInfo"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="15sp"
+            android:textColor="@color/menu_text_color"
+            android:fontFamily="sans-serif"
+            android:clickable="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/popup_menu_item_about"/>
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

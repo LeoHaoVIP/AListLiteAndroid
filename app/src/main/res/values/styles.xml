@@ -1,11 +1,52 @@
 <resources>
 
+    <!-- iOS 风格文本外观（基础样式） -->
+    <style name="IOSTextAppearance">
+        <item name="android:textColor">@color/ios_text_primary</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="IOSTextAppearance.Title">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/ios_text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="IOSTextAppearance.Headline">
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">@color/ios_text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="IOSTextAppearance.Body">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/ios_text_primary</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="IOSTextAppearance.Caption">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/ios_text_secondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- iOS 风格卡片容器 -->
+    <style name="IOSCardStyle">
+        <item name="android:background">@color/ios_surface</item>
+        <item name="android:elevation">1dp</item>
+        <item name="android:outlineProvider">background</item>
+    </style>
+
+    <!-- SwitchButton 样式（保持兼容） -->
     <style name="SwitchButtonStyle">
         <item name="android:paddingLeft">10dp</item>
         <item name="android:paddingRight">10dp</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
     </style>
+
+    <!-- 弹出菜单动画 -->
     <style name="PopupMenuWindowStyle" parent="android:Animation">
         <item name="android:windowEnterAnimation">@anim/pop_add_show</item>
         <item name="android:windowExitAnimation">@anim/pop_add_hide</item>

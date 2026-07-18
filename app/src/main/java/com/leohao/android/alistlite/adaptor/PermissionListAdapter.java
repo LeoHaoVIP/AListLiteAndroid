@@ -1,11 +1,11 @@
 package com.leohao.android.alistlite.adaptor;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+import androidx.core.content.ContextCompat;
 import com.leohao.android.alistlite.R;
 import com.leohao.android.alistlite.model.PermissionItem;
 
@@ -62,11 +62,13 @@ public class PermissionListAdapter extends BaseAdapter {
         PermissionItem item = permissionList.get(position);
         //控件赋值
         holder.permissionShortNameTextView.setText(item.getPermissionShortName());
-        //根据是否授权分别显示
+        //根据是否授权分别显示（使用 iOS 主题色）
         String statusText = item.getIsGranted() ? "已设置" : "未设置";
-        String statusColor = item.getIsGranted() ? "#FF444444" : "#FFCC00";
+        int statusColor = item.getIsGranted()
+                ? ContextCompat.getColor(context, R.color.ios_accent)
+                : ContextCompat.getColor(context, R.color.ios_destructive);
         holder.permissionStatusTextView.setText(statusText);
-        holder.permissionStatusTextView.setTextColor(Color.parseColor(statusColor));
+        holder.permissionStatusTextView.setTextColor(statusColor);
         holder.permissionDescriptionTextView.setText(item.getPermissionDescription());
         return convertView;
     }

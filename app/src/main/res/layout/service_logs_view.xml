@@ -1,36 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-    />
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/ios_background"
+    android:padding="12dp">
+
+    <!-- 标题区域 -->
     <TextView
-            android:id="@+id/tv_config_view_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:textSize="20sp"
-            android:padding="5dp"
-            android:textStyle="bold"
-            android:text="@string/popup_menu_item_service_logs"
-    />
+        android:id="@+id/tv_config_view_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:textSize="18sp"
+        android:textColor="@color/ios_text_primary"
+        android:fontFamily="sans-serif-medium"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp"
+        android:text="@string/popup_menu_item_service_logs"/>
+
+    <!-- 日志内容卡片 -->
     <ScrollView
-            android:id="@+id/tv_logs_scroll_view"
-            android:layout_below="@id/tv_config_view_title"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="10dp"
-            android:fillViewport="true"
-            android:orientation="vertical">
+        android:id="@+id/tv_logs_scroll_view"
+        android:layout_below="@id/tv_config_view_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
         <TextView
-                android:id="@+id/tv_service_logs"
-                android:layout_centerHorizontal="true"
-                android:maxLines="10000"
-                android:textSize="14sp"
-                android:padding="5dp"
-                android:text="@string/popup_menu_item_service_logs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+            android:id="@+id/tv_service_logs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="10000"
+            android:textSize="12sp"
+            android:textColor="@color/ios_text_primary"
+            android:fontFamily="monospace"
+            android:lineSpacingExtra="2dp"
+            android:padding="12dp"
+            android:background="@drawable/popup_menu_border"
+            android:text="@string/popup_menu_item_service_logs"/>
     </ScrollView>
 </RelativeLayout>

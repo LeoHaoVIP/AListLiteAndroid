@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="menu_text_color">#B5FFFFFF</color>
-    <color name="menu_background_color">#3D3A3A</color>
+    <!-- iOS 暗黑模式色板 -->
+    <color name="ios_background">#000000</color>
+    <color name="ios_surface">#1C1C1E</color>
+    <color name="ios_accent">#0A84FF</color>
+    <color name="ios_success">#30D158</color>
+    <color name="ios_destructive">#FF453A</color>
+
+    <!-- iOS 暗黑文字色 -->
+    <color name="ios_text_primary">#FFFFFF</color>
+    <color name="ios_text_secondary">#8E8E93</color>
+    <color name="ios_text_tertiary">#48484A</color>
+
+    <!-- iOS 暗黑分割线 -->
+    <color name="ios_separator">#38383A</color>
+    <color name="ios_separator_opaque">#48484A</color>
+
+    <!-- iOS 暗黑开关色 -->
+    <color name="ios_switch_off">#3A3A3C</color>
+    <color name="ios_switch_thumb">#FFFFFF</color>
+
+    <!-- 基础颜色 -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray">#8E8E93</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- 菜单专用色 -->
+    <color name="menu_text_color">#FFFFFF</color>
+    <color name="menu_background_color">#2C2C2E</color>
 </resources>

@@ -1,14 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- iOS 基础色板 -->
+    <color name="ios_background">#F2F2F7</color>
+    <color name="ios_surface">#FFFFFF</color>
+    <color name="ios_accent">#007AFF</color>
+    <color name="ios_success">#34C759</color>
+    <color name="ios_destructive">#FF3B30</color>
+
+    <!-- iOS 文字色 -->
+    <color name="ios_text_primary">#1C1C1E</color>
+    <color name="ios_text_secondary">#8E8E93</color>
+    <color name="ios_text_tertiary">#C7C7CC</color>
+
+    <!-- iOS 分割线 -->
+    <color name="ios_separator">#E5E5EA</color>
+    <color name="ios_separator_opaque">#C6C6C8</color>
+
+    <!-- iOS 开关色 -->
+    <color name="ios_switch_off">#E9E9E9</color>
+    <color name="ios_switch_thumb">#FFFFFF</color>
+
+    <!-- 基础颜色（保留兼容） -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="gray">#BBBBBB</color>
+    <color name="gray">#8E8E93</color>
     <color name="transparent">#00000000</color>
-    <color name="menu_text_color">#434141</color>
-    <color name="menu_background_color">#EEEEEE</color>
+
+    <!-- 菜单专用色（引用 iOS 色板） -->
+    <color name="menu_text_color">#1C1C1E</color>
+    <color name="menu_background_color">#FFFFFF</color>
 </resources>

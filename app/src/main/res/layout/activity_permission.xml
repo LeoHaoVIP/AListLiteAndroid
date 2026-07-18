@@ -1,23 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ios_background"
+    android:orientation="vertical">
+
+    <!-- iOS 风格导航栏 -->
     <TextView
-            android:id="@+id/activity_title"
-            android:layout_centerHorizontal="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/activity_title_permission_check"
-            android:textSize="20sp"
-            android:textStyle="bold"/>
+        android:id="@+id/activity_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:text="@string/activity_title_permission_check"
+        android:textSize="18sp"
+        android:textColor="@color/ios_text_primary"
+        android:fontFamily="sans-serif-medium"
+        android:background="@color/ios_background"/>
 
+    <!-- iOS 风格列表 -->
     <ListView
-            android:id="@+id/permission_list"
-            android:layout_below="@id/activity_title"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="5dp"/>
-
+        android:id="@+id/permission_list"
+        android:layout_below="@id/activity_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="@color/ios_separator"
+        android:dividerHeight="0.5dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:clipToPadding="false"
+        android:scrollbars="none"/>
 </RelativeLayout>

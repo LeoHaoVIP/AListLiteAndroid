@@ -1,138 +1,181 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".MainActivity">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ios_background"
+    tools:context=".MainActivity">
+
+    <!-- iOS 风格导航栏 -->
     <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:focusable="false"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-        <RelativeLayout android:orientation="horizontal"
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent">
+        android:id="@+id/toolbar"
+        android:focusable="false"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@color/ios_surface"
+        android:elevation="0.5dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- 左侧导航按钮组 -->
             <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:orientation="horizontal">
-                <TextView
-                        android:id="@+id/tv_app_info"
-                        android:focusable="true"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="19sp"
-                        android:clickable="true"
-                        android:tooltipText="@string/tooltip_homepage"
-                        android:onClick="jumpToHomepage"
-                        android:text="@string/app_name_ext"/>
-                <TextView
-                        android:id="@+id/tv_ssl_indicator"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:textColor="#4CAF50"
-                        android:text="HTTPS"
-                        android:layout_marginStart="10dp"
-                        android:layout_gravity="center_vertical"
-                        android:visibility="gone"/>
-            </LinearLayout>
-            <ImageButton
+                android:id="@+id/nav_buttons_left"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:orientation="horizontal"
+                android:paddingStart="8dp">
+
+                <ImageButton
                     android:id="@+id/btn_refresh"
                     android:focusable="true"
-                    android:background="@null"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:scaleType="centerInside"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginRight="13dp"
+                    android:layout_gravity="center_vertical"
                     android:tooltipText="@string/tooltip_refresh"
                     android:onClick="refreshWebPage"
                     android:src="@drawable/refresh"/>
-            <ImageButton
+
+                <ImageButton
                     android:id="@+id/btn_webViewGoBack"
                     android:focusable="true"
-                    android:background="@null"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:elevation="16dp"
-                    android:layout_toRightOf="@id/btn_refresh"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:scaleType="centerInside"
-                    android:layout_centerVertical="true"
-                    android:layout_marginRight="13dp"
+                    android:layout_gravity="center_vertical"
                     android:tooltipText="@string/tooltip_go_back"
                     android:onClick="webViewGoBackOrForward"
-                    android:src="@drawable/go_back"
-            />
-            <ImageButton
+                    android:src="@drawable/go_back"/>
+
+                <ImageButton
                     android:id="@+id/btn_webViewGoForward"
                     android:focusable="true"
-                    android:background="@null"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:elevation="16dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:scaleType="centerInside"
-                    android:layout_centerVertical="true"
-                    android:layout_toRightOf="@id/btn_webViewGoBack"
+                    android:layout_gravity="center_vertical"
                     android:tooltipText="@string/tooltip_go_forward"
                     android:onClick="webViewGoBackOrForward"
-                    android:src="@drawable/go_forward"
-            />
-            <ImageButton
+                    android:src="@drawable/go_forward"/>
+            </LinearLayout>
+
+            <!-- 标题独立居中 -->
+            <TextView
+                android:id="@+id/tv_app_info"
+                android:focusable="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textSize="18sp"
+                android:textColor="@color/ios_text_primary"
+                android:fontFamily="sans-serif-medium"
+                android:clickable="true"
+                android:tooltipText="@string/tooltip_homepage"
+                android:onClick="jumpToHomepage"
+                android:text="@string/app_name_ext"/>
+
+            <!-- HTTPS 浮动在标题右侧 -->
+            <TextView
+                android:id="@+id/tv_ssl_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/ios_success"
+                android:fontFamily="sans-serif-medium"
+                android:text="HTTPS"
+                android:layout_toEndOf="@id/tv_app_info"
+                android:layout_alignTop="@id/tv_app_info"
+                android:layout_alignBottom="@id/tv_app_info"
+                android:layout_marginStart="5dp"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:gravity="center_vertical"
+                android:visibility="gone"/>
+
+            <!-- 右侧按钮组 -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:orientation="horizontal"
+                android:paddingEnd="4dp">
+
+                <ImageButton
                     android:id="@+id/btn_showPopupMenu"
                     android:focusable="true"
-                    android:background="@null"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_toLeftOf="@id/switchButton"
-                    android:gravity="end"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:scaleType="centerInside"
-                    android:layout_centerVertical="true"
+                    android:layout_gravity="center_vertical"
                     android:tooltipText="@string/tooltip_more"
                     android:onClick="showPopupMenu"
-                    android:src="@drawable/more"
-            />
-            <com.kyleduo.switchbutton.SwitchButton
+                    android:src="@drawable/more"/>
+
+                <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/switchButton"
                     android:focusable="true"
                     style="@style/SwitchButtonStyle"
-                    android:layout_width="70dp"
-                    android:layout_height="35dp"
+                    android:layout_width="56dp"
+                    android:layout_height="28dp"
                     android:checked="false"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentRight="true"
-                    app:kswAnimationDuration="300"
+                    android:layout_gravity="center_vertical"
+                    app:kswAnimationDuration="250"
                     app:kswBackDrawable="@drawable/ios_back_drawable"
                     app:kswThumbDrawable="@drawable/ios_thumb_selector"
                     app:kswThumbMarginLeft="2dp"
-                    app:kswThumbMarginBottom="0dp"
+                    app:kswThumbMarginBottom="1dp"
                     app:kswThumbMarginTop="3dp"/>
+            </LinearLayout>
         </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
+
+    <!-- iOS 风格状态指示卡片 -->
     <TextView
-            android:id="@+id/tv_alist_status"
-            android:text="@string/alist_service_not_running"
-            android:textSize="15sp"
-            android:layout_below="@id/toolbar"
-            android:layout_marginLeft="15dp"
-            android:gravity="left"
-            android:clickable="true"
-            android:onClick="copyAddressToClipboard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+        android:id="@+id/tv_alist_status"
+        android:text="@string/alist_service_not_running"
+        android:textSize="14sp"
+        android:textColor="@color/ios_text_secondary"
+        android:fontFamily="sans-serif"
+        android:layout_below="@id/toolbar"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="8dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:onClick="copyAddressToClipboard"
+        android:background="@drawable/popup_menu_border"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <!-- WebView 内容区域 -->
     <WebView
-            android:id="@+id/webview_alist"
-            android:layout_below="@id/tv_alist_status"
-            android:layout_marginTop="5dp"
-            android:background="@color/gray"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+        android:id="@+id/webview_alist"
+        android:layout_below="@id/tv_alist_status"
+        android:layout_marginTop="6dp"
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="6dp"
+        android:background="@color/ios_surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <!-- 全屏视频容器 -->
     <FrameLayout
-            android:id="@+id/video_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+        android:id="@+id/video_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </RelativeLayout>

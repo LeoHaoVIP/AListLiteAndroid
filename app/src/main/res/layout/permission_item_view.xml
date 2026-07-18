@@ -1,41 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="5dp"
-                tools:context=".PermissionActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/ios_surface"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:minHeight="48dp"
+    tools:context=".PermissionActivity">
+
+    <!-- 标题行：权限名称 + 状态 -->
     <RelativeLayout
-            android:id="@+id/layout_item_title"
-            android:layout_width="match_parent"
+        android:id="@+id/layout_item_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="30dp">
+
+        <TextView
+            android:id="@+id/tv_permission_short_name"
+            android:text="权限名称"
+            android:textColor="@color/ios_text_primary"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@+id/tv_permission_status"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:minHeight="30dp">
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
         <TextView
-                android:id="@+id/tv_permission_short_name"
-                android:text="权限名称"
-                android:textStyle="bold"
-                android:layout_marginStart="10dp"
-                android:layout_alignParentStart="true"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:textSize="17sp"/>
-        <TextView
-                android:id="@+id/tv_permission_status"
-                android:text="已设置/去设置"
-                android:textStyle="bold"
-                android:layout_marginEnd="10dp"
-                android:layout_alignParentEnd="true"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:textSize="17sp"/>
+            android:id="@+id/tv_permission_status"
+            android:text="已设置"
+            android:textColor="@color/ios_accent"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
     </RelativeLayout>
+
+    <!-- 权限描述 -->
     <TextView
-            android:id="@+id/tv_permission_description"
-            android:layout_below="@id/layout_item_title"
-            android:text="权限内容及应用场景描述"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"/>
+        android:id="@+id/tv_permission_description"
+        android:layout_below="@id/layout_item_title"
+        android:text="权限内容及应用场景描述"
+        android:textColor="@color/ios_text_secondary"
+        android:textSize="13sp"
+        android:fontFamily="sans-serif"
+        android:layout_marginTop="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 </RelativeLayout>

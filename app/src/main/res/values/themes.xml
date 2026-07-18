@@ -1,12 +1,19 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.AList" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
+        <!-- iOS 风格状态栏与导航栏 -->
         <item name="android:statusBarColor">#00000000</item>
         <item name="android:navigationBarColor">#00000000</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
-        <!-- Customize your theme here. -->
+        <item name="android:navigationBarDividerColor">#00000000</item>
+        <!-- iOS 风格窗口背景 -->
+        <item name="android:windowBackground">@color/ios_background</item>
+        <!-- 主题强调色 -->
+        <item name="colorPrimary">@color/ios_accent</item>
+        <item name="colorPrimaryDark">@color/ios_accent</item>
+        <item name="colorAccent">@color/ios_accent</item>
+        <!-- 无标题栏 -->
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowActionBarOverlay">false</item>

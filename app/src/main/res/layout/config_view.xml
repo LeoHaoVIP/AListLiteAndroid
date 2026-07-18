@@ -1,51 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-    />
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/ios_background"
+    android:padding="12dp">
+
+    <!-- 标题区域 -->
     <TextView
-            android:id="@+id/tv_config_view_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:textSize="20sp"
-            android:padding="5dp"
-            android:textStyle="bold"
-            android:text="@string/current_alist_config"
-    />
-    <HorizontalScrollView
-            android:layout_below="@id/tv_config_view_title"
+        android:id="@+id/tv_config_view_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:textSize="18sp"
+        android:textColor="@color/ios_text_primary"
+        android:fontFamily="sans-serif-medium"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp"
+        android:text="@string/current_alist_config"/>
+
+    <!-- 配置内容卡片 -->
+    <RelativeLayout
+        android:id="@+id/config_content_card"
+        android:layout_below="@id/tv_config_view_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/popup_menu_border"
+        android:padding="4dp">
+
+        <HorizontalScrollView
+            android:id="@+id/config_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="10dp"
             android:fillViewport="true"
-            android:orientation="vertical">
+            android:scrollbars="none">
 
-        <com.yuyh.jsonviewer.library.JsonRecyclerView
+            <com.yuyh.jsonviewer.library.JsonRecyclerView
                 android:id="@+id/json_view_config"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
-    </HorizontalScrollView>
-    <EditText
+        </HorizontalScrollView>
+
+        <EditText
             android:id="@+id/edit_text_config"
-            android:layout_below="@id/tv_config_view_title"
-            android:visibility="invisible"
-            android:textSize="15sp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-    <ImageButton
-            android:id="@+id/btn_edit_config"
+            android:layout_height="match_parent"
+            android:visibility="invisible"
+            android:textSize="13sp"
+            android:textColor="@color/ios_text_primary"
+            android:fontFamily="monospace"
             android:background="@null"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:alpha="0.8"
-            android:scaleType="centerInside"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginRight="10dp"
-            android:layout_marginBottom="20dp"
-            android:src="@drawable/edit"
-    />
+            android:gravity="top|start"
+            android:padding="8dp"
+            android:scrollbars="vertical"/>
+    </RelativeLayout>
+
+    <!-- iOS 风格编辑/保存浮动按钮 -->
+    <ImageButton
+        android:id="@+id/btn_edit_config"
+        android:background="@drawable/ios_fab_background"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:scaleType="centerInside"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="24dp"
+        android:elevation="6dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/edit"/>
 </RelativeLayout>
