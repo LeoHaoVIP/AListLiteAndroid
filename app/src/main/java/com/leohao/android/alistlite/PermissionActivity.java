@@ -62,7 +62,7 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
         PermissionItem item = (PermissionItem) parent.getAdapter().getItem(position);
         //已授权的权限：提示是否撤销
         if (item.getIsGranted()) {
-            new AlertDialog.Builder(this)
+            new AlertDialog.Builder(this, R.style.IOSAlertDialog)
                     .setTitle("撤销授权")
                     .setMessage(String.format("是否撤销「%s」权限？\n\n确定后将前往系统设置页面，请手动关闭该权限。",
                             item.getPermissionShortName()))

@@ -51,4 +51,11 @@
         <item name="android:windowEnterAnimation">@anim/pop_add_show</item>
         <item name="android:windowExitAnimation">@anim/pop_add_hide</item>
     </style>
+
+    <!-- iOS 风格圆角弹框 -->
+    <style name="IOSAlertDialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.4</item>
+    </style>
 </resources>

@@ -554,7 +554,7 @@ public class MainActivity extends AppCompatActivity {
         currentIpText.setPadding(0, 10, 0, 0);
 
         // 对话框（需在 switchButton 之前创建，供 lambda 引用）
-        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this, R.style.IOSAlertDialog);
         final AlertDialog alertDialog = dialog.create();
         alertDialog.setTitle("远程访问");
         alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s，点击右侧按钮可切换", allLabels.get(currentIndex.get())));
@@ -662,15 +662,25 @@ public class MainActivity extends AppCompatActivity {
         //设置密码不可见
         editText.setTransformationMethod(PasswordTransformationMethod.getInstance());
         editText.setSingleLine();
-        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        editText.setHint("请输入密码");
+        // 包裹输入框，20dp 水平边距 → 约 80% 弹框宽度
+        FrameLayout inputWrapper = new FrameLayout(MainActivity.this);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT);
+        int marginH = (int) (20 * getResources().getDisplayMetrics().density);
+        params.setMargins(marginH, 0, marginH, 0);
+        editText.setLayoutParams(params);
+        inputWrapper.addView(editText);
+        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this, R.style.IOSAlertDialog);
         dialog.setTitle("设置管理员密码");
-        dialog.setView(editText);
+        dialog.setView(inputWrapper);
         dialog.setCancelable(true);
         dialog.setPositiveButton("确定", (dialog1, which) -> {
             try {
                 //去除前后空格后的密码
                 String pwd = editText.getText().toString().trim();
-                if (!"".equals(pwd)) {
+                if (!pwd.isEmpty()) {
                     alistServer.setAdminPassword(pwd);
                     String adminUsername = alistServer.getAdminUser();
                     showToast(String.format("管理员密码已更新：%s | %s", adminUsername, pwd), Toast.LENGTH_LONG);
@@ -692,7 +702,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isHttpsEnabled = alistServer.isHttpsEnabled();
         if (isHttpsEnabled) {
             // 已启用 → 确认关闭
-            new AlertDialog.Builder(this)
+            new AlertDialog.Builder(this, R.style.IOSAlertDialog)
                     .setTitle("关闭 HTTPS")
                     .setMessage("关闭后将使用 HTTP 协议访问，是否确认？")
                     .setPositiveButton("确定关闭", (d, w) -> {
@@ -710,10 +720,19 @@ public class MainActivity extends AppCompatActivity {
             final EditText portInput = new EditText(this);
             portInput.setHint("5245");
             portInput.setSingleLine();
-            AlertDialog enableDialog = new AlertDialog.Builder(this)
+            // 包裹输入框，20dp 水平边距 → 约 80% 弹框宽度
+            FrameLayout inputWrapper = new FrameLayout(this);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT);
+            int marginH = (int) (20 * getResources().getDisplayMetrics().density);
+            params.setMargins(marginH, 0, marginH, 0);
+            portInput.setLayoutParams(params);
+            inputWrapper.addView(portInput);
+            AlertDialog enableDialog = new AlertDialog.Builder(this, R.style.IOSAlertDialog)
                     .setTitle("启用 HTTPS")
                     .setMessage("将生成自签名证书，浏览器访问时会提示不安全，请手动信任。\n请输入 HTTPS 端口：")
-                    .setView(portInput)
+                    .setView(inputWrapper)
                     .setPositiveButton("启用", null)
                     .setNegativeButton("取消", null)
                     .create();
@@ -753,7 +772,7 @@ public class MainActivity extends AppCompatActivity {
      * 管理(查看/修改) AList 配置文件
      */
     public void manageConfigData(View view) {
-        AlertDialog configDataDialog = new AlertDialog.Builder(this).create();
+        AlertDialog configDataDialog = new AlertDialog.Builder(this, R.style.IOSAlertDialog).create();
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.config_view, null);
         JsonRecyclerView jsonView = dialogView.findViewById(R.id.json_view_config);
@@ -829,7 +848,7 @@ public class MainActivity extends AppCompatActivity {
      * 查看服务日志
      */
     public void showServiceLogs(View view) {
-        AlertDialog configDataDialog = new AlertDialog.Builder(this).create();
+        AlertDialog configDataDialog = new AlertDialog.Builder(this, R.style.IOSAlertDialog).create();
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.service_logs_view, null);
         TextView textView = dialogView.findViewById(R.id.tv_service_logs);
@@ -930,7 +949,7 @@ public class MainActivity extends AppCompatActivity {
                     Looper.prepare();
                     String dialogTitle = String.format("\uD83C\uDF89 AListLite %s 已发布", latestVersion);
                     //弹出更新下载确认
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this, R.style.IOSAlertDialog);
                     dialog.setTitle(dialogTitle);
                     dialog.setMessage(updateJournal);
                     dialog.setCancelable(true);
