@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         //初始化广播定时发送定时器
         broadcastScheduler = Executors.newSingleThreadScheduledExecutor();
         //定时向 TileService 发送服务开启状态
-        broadcastScheduler.scheduleAtFixedRate(() -> {
+        broadcastScheduler.scheduleWithFixedDelay(() -> {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                 //请求监听状态
                 TileService.requestListeningState(this, new ComponentName(this, AlistTileService.class));
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent tileServiceIntent = new Intent(this, AlistTileService.class).setAction(actionName);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(tileServiceIntent);
             }
-        }, 2, 1, TimeUnit.SECONDS);
+        }, 2, 3, TimeUnit.SECONDS);
     }
 
     /**
@@ -725,9 +725,10 @@ public class MainActivity extends AppCompatActivity {
         }
         //滚动到底部最新日志
         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
-        //日志实时刷新
+        //日志实时刷新（弹窗关闭时自动停止）
+        final AtomicBoolean logRefreshRunning = new AtomicBoolean(true);
         new Thread(() -> {
-            while (true) {
+            while (logRefreshRunning.get()) {
                 runOnUiThread(() -> {
                     synchronized (Alist.ALIST_LOGS) {
                         String logs = Alist.ALIST_LOGS.toString();
@@ -741,10 +742,11 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    Log.i(TAG, "fail to print logs: " + e.getLocalizedMessage());
+                    break;
                 }
             }
         }).start();
+        configDataDialog.setOnDismissListener(d -> logRefreshRunning.set(false));
         configDataDialog.setView(dialogView);
         configDataDialog.show();
         int width = getResources().getDisplayMetrics().widthPixels;

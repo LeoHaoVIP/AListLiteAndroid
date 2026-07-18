@@ -200,6 +200,7 @@ public class AlistService extends Service {
         //初始化电源管理器
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AlistService.class.getName());
+        wakeLock.setReferenceCounted(false);
         wakeLock.acquire();
         // 立即调用 startForeground() 以防止 Android 8.0+ 的 5 秒 ANR 限制
         // 后续在 onStartCommand 中会更新通知内容
