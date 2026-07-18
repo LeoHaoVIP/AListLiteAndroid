@@ -103,6 +103,8 @@ public class AlistService extends Service {
                     MainActivity.getInstance().webView.loadUrl(serverAddress);
                     //隐藏服务未开启提示
                     MainActivity.getInstance().runningInfoTextView.setVisibility(View.GONE);
+                    //更新 SSL 标识
+                    MainActivity.getInstance().updateSslIndicator();
                 }
                 //创建 Intent，用于复制服务器地址到剪贴板
                 Intent copyIntent = new Intent(this, CopyReceiver.class);
@@ -120,9 +122,10 @@ public class AlistService extends Service {
                         copyPendingIntent)
                         .build();
                 //更新消息内容里的服务地址，同时添加服务地址复制入口
+                String contentText = alistServer.isHttpsEnabled() ? "[HTTPS] " + serverAddress : serverAddress;
                 Notification updatedNotification = new NotificationCompat.Builder(this, channelId)
                         .setContentTitle(getString(R.string.alist_service_is_running))
-                        .setContentText(serverAddress)
+                        .setContentText(contentText)
                         .setSmallIcon(R.drawable.ic_launcher)
                         .addAction(addressCopyAction)
                         .setContentIntent(pendingIntent).build();
@@ -135,7 +138,8 @@ public class AlistService extends Service {
                 }
                 // 仅在服务实际被启动时提示，避免重复 Toast
                 if (justStarted) {
-                    showToast("AList 服务已开启");
+                    String toastMsg = alistServer.isHttpsEnabled() ? "AList 服务已开启（HTTPS 加密）" : "AList 服务已开启";
+                    showToast(toastMsg);
                 }
             } catch (Exception e) {
                 Log.e(TAG, e.getLocalizedMessage());

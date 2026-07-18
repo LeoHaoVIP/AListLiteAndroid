@@ -40,6 +40,11 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             MainActivity.getInstance().setAdminPassword(view);
         });
+        //HTTPS 设置
+        popupView.findViewById(R.id.btn_toggleHttps).setOnClickListener((view) -> {
+            dismiss();
+            MainActivity.getInstance().toggleHttps(view);
+        });
         //高级配置
         popupView.findViewById(R.id.btn_manageConfigData).setOnClickListener((view) -> {
             dismiss();

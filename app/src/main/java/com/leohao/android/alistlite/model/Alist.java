@@ -10,9 +10,12 @@ import android.util.Log;
 import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.jayway.jsonpath.JsonPath;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.SelfSignedCertGenerator;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -20,6 +23,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Enumeration;
@@ -34,7 +38,7 @@ import static com.leohao.android.alistlite.AlistLiteApplication.applicationConte
 public class Alist {
     public static String ACTION_STATUS_CHANGED = "com.leohao.android.alistlite.ACTION_STATUS_CHANGED";
     public static final StringBuilder ALIST_LOGS = new StringBuilder();
-    private static final int MAX_LOG_ENTRIES = 10;
+    private static final int MAX_LOG_ENTRIES = 50;
     private static final String LOG_SEPARATOR = "\r\n\r\n";
     final String TYPE_HTTP = "http";
     final String TYPE_HTTPS = "https";
@@ -164,6 +168,83 @@ public class Alist {
         File configFile = new File(getConfigPath());
         String configString = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
         return JsonPath.read(configString, jsonPath).toString();
+    }
+
+    private JSONObject readConfig() throws IOException {
+        File configFile = new File(getConfigPath());
+        String configString = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+        return JSONUtil.parseObj(configString);
+    }
+
+    private void writeConfig(JSONObject config) throws IOException {
+        File configFile = new File(getConfigPath());
+        FileUtils.write(configFile, config.toStringPretty(), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 是否为 HTTPS 模式
+     */
+    public boolean isHttpsEnabled() {
+        try {
+            String httpsPort = getConfigValue("scheme.https_port");
+            return httpsPort != null && !"-1".equals(httpsPort);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 检查端口是否可用
+     */
+    public static boolean isPortAvailable(int port) {
+        try {
+            ServerSocket ss = new ServerSocket(port);
+            ss.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * 启用 HTTPS（自签名证书）
+     *
+     * @param port HTTPS 端口号
+     */
+    public void enableHttps(int port) throws Exception {
+        if (!isPortAvailable(port)) {
+            throw new IOException("端口 " + port + " 已被占用");
+        }
+        String dataDir = getDataPath();
+        String certPath = dataDir + File.separator + "cert.pem";
+        String keyPath = dataDir + File.separator + "key.pem";
+        // 证书已存在则复用，避免用户重复信任
+        File certFile = new File(certPath);
+        File keyFile = new File(keyPath);
+        if (!certFile.exists() || !keyFile.exists()) {
+            SelfSignedCertGenerator.generate(certPath, keyPath, getBindingIP());
+        }
+        // 修改配置
+        JSONObject config = readConfig();
+        JSONObject scheme = config.getJSONObject("scheme");
+        scheme.set("force_https", true);
+        scheme.set("https_port", port);
+        scheme.set("cert_file", certPath);
+        scheme.set("key_file", keyPath);
+        writeConfig(config);
+    }
+
+    /**
+     * 禁用 HTTPS
+     */
+    public void disableHttps() throws IOException {
+        JSONObject config = readConfig();
+        JSONObject scheme = config.getJSONObject("scheme");
+        scheme.set("force_https", false);
+        scheme.set("https_port", -1);
+        scheme.set("cert_file", "");
+        scheme.set("key_file", "");
+        writeConfig(config);
     }
 
     public void setAdminPassword(String pwd) throws Exception {

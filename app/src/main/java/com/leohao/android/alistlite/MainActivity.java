@@ -15,6 +15,7 @@ import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Looper;
 import android.service.quicksettings.TileService;
 import android.text.TextUtils;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     public String serverAddress = Constants.URL_ABOUT_BLANK;
     private Alist alistServer;
     public TextView appInfoTextView;
+    private TextView sslIndicator;
     private PopupMenuWindow popupMenuWindow;
     private final ClipBoardHelper clipBoardHelper = ClipBoardHelper.getInstance();
     /**
@@ -193,6 +195,17 @@ public class MainActivity extends AppCompatActivity {
                 serviceSwitch.setCheckedNoEvent(isRunning);
             }
         }
+        updateSslIndicator();
+    }
+
+    /**
+     * 更新标题栏 SSL 加密标识
+     */
+    public void updateSslIndicator() {
+        if (sslIndicator != null && alistServer != null) {
+            boolean show = alistServer.isHttpsEnabled() && alistServer.hasRunning();
+            sslIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void readyToStartService() {
@@ -226,6 +239,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 重启 AList 服务（用于配置变更后生效）
+     */
+    private void restartService() {
+        showToast("正在重启服务");
+        if (alistServer.hasRunning()) {
+            readyToShutdownService();
+        }
+        // 等待 shutdown 完成后再启动
+        new Handler(getMainLooper()).postDelayed(() -> {
+            try {
+                readyToStartService();
+                updateSslIndicator();
+            } catch (RuntimeException e) {
+                showToast("服务重启失败: " + e.getMessage());
+                Log.e(TAG, "restartService: " + e.getMessage());
+            }
+        }, 1500);
+    }
+
     private void initWidgets() {
         // 设置标题栏
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -234,6 +267,7 @@ public class MainActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         serviceSwitch = findViewById(R.id.switchButton);
         appInfoTextView = findViewById(R.id.tv_app_info);
+        sslIndicator = findViewById(R.id.tv_ssl_indicator);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         webView = findViewById(R.id.webview_alist);
         //初始化菜单栏弹框
@@ -628,6 +662,59 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dialog.show();
+    }
+
+    /**
+     * HTTPS 开关设置
+     */
+    public void toggleHttps(View view) {
+        boolean isHttpsEnabled = alistServer.isHttpsEnabled();
+        if (isHttpsEnabled) {
+            // 已启用 → 确认关闭
+            new AlertDialog.Builder(this)
+                    .setTitle("关闭 HTTPS")
+                    .setMessage("关闭后将使用 HTTP 协议访问，是否确认？")
+                    .setPositiveButton("确定关闭", (d, w) -> {
+                        try {
+                            alistServer.disableHttps();
+                            restartService();
+                        } catch (IOException e) {
+                            showToast("操作失败: " + e.getMessage());
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        } else {
+            // 未启用 → 输入端口并启用
+            final EditText portInput = new EditText(this);
+            portInput.setHint("5245");
+            portInput.setSingleLine();
+            AlertDialog enableDialog = new AlertDialog.Builder(this)
+                    .setTitle("启用 HTTPS")
+                    .setMessage("将生成自签名证书，浏览器访问时会提示不安全，请手动信任。\n请输入 HTTPS 端口：")
+                    .setView(portInput)
+                    .setPositiveButton("启用", null)
+                    .setNegativeButton("取消", null)
+                    .create();
+            enableDialog.show();
+            // 覆写按钮点击行为：校验通过才关闭对话框
+            enableDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String portStr = portInput.getText().toString().trim();
+                int port = portStr.isEmpty() ? 5245 : Integer.parseInt(portStr);
+                if (!Alist.isPortAvailable(port)) {
+                    showToast("端口 " + port + " 已被占用，请更换");
+                    return;
+                }
+                try {
+                    alistServer.enableHttps(port);
+                    enableDialog.dismiss();
+                    restartService();
+                } catch (Exception e) {
+                    showToast("操作失败: " + e.getMessage());
+                    Log.e(TAG, "toggleHttps enable: " + e.getMessage());
+                }
+            });
+        }
     }
 
     /**
