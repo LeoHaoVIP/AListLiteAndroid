@@ -48,7 +48,7 @@ public class AlistService extends Service {
         String channelId;
         // 8.0 以上需要特殊处理
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            channelId = createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
+            channelId = CHANNEL_ID;
         } else {
             channelId = "";
         }
@@ -74,9 +74,7 @@ public class AlistService extends Service {
         }
         if (ACTION_STARTUP.equals(intent.getAction())) {
             try {
-                //创建消息以维持后台（此处必须先执行，否则可能产生由于未及时调用 startForeground 导致的 ANR 异常）
-                Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle(getString(R.string.alist_service_is_running)).setContentText("服务正在初始化").setSmallIcon(R.drawable.ic_launcher).setContentIntent(pendingIntent).build();
-                startForeground(startId, notification);
+                // startForeground 已在 onCreate() 中调用，此处更新通知内容
                 //若服务未运行则开启
                 if (!alistServer.hasRunning()) {
                     //开启AList服务端
@@ -120,13 +118,15 @@ public class AlistService extends Service {
                         copyPendingIntent)
                         .build();
                 //更新消息内容里的服务地址，同时添加服务地址复制入口
-                notification = new NotificationCompat.Builder(this, channelId)
+                Notification updatedNotification = new NotificationCompat.Builder(this, channelId)
                         .setContentTitle(getString(R.string.alist_service_is_running))
                         .setContentText(serverAddress)
                         .setSmallIcon(R.drawable.ic_launcher)
                         .addAction(addressCopyAction)
                         .setContentIntent(pendingIntent).build();
-                startForeground(startId, notification);
+                NotificationManager notificationManager =
+                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.notify(1, updatedNotification);
                 //更新磁贴状态
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     updateAlistTileServiceState(AlistTileService.ACTION_TILE_ON);
@@ -141,7 +141,7 @@ public class AlistService extends Service {
                 showToast(String.format("AList 服务开启失败: %s", e.getLocalizedMessage()));
             }
         }
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     /**
@@ -196,6 +196,28 @@ public class AlistService extends Service {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AlistService.class.getName());
         wakeLock.acquire();
+        // 立即调用 startForeground() 以防止 Android 8.0+ 的 5 秒 ANR 限制
+        // 后续在 onStartCommand 中会更新通知内容
+        String channelId;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            channelId = createNotificationChannel(CHANNEL_ID, CHANNEL_NAME);
+        } else {
+            channelId = "";
+        }
+        Intent clickIntent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_IMMUTABLE);
+        } else {
+            pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_ONE_SHOT);
+        }
+        Notification initialNotification = new NotificationCompat.Builder(this, channelId)
+                .setContentTitle(getString(R.string.alist_service_is_running))
+                .setContentText("服务正在初始化…")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(1, initialNotification);
     }
 
     @Nullable

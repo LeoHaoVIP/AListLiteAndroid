@@ -183,10 +183,19 @@ public class MainActivity extends AppCompatActivity {
         //Service启动Intent
         Intent intent = new Intent(this, AlistService.class).setAction(AlistService.ACTION_STARTUP);
         //调用服务
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else {
-            startService(intent);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
+        } catch (RuntimeException e) {
+            // Android 12+ 可能因后台启动限制导致前台服务启动失败
+            // 回退开关状态并提示用户
+            serviceSwitch.setCheckedNoEvent(false);
+            showToast("服务启动失败，请检查系统权限设置或重启应用");
+            Log.e(TAG, "readyToStartService: 前台服务启动失败", e);
+            throw e;
         }
     }
 
@@ -232,8 +241,9 @@ public class MainActivity extends AppCompatActivity {
             try {
                 //准备开启AList服务
                 readyToStartService();
-            } catch (Exception e) {
-                Log.d(TAG, e.getLocalizedMessage());
+            } catch (RuntimeException e) {
+                // readyToStartService 内部已将开关回退，此处不再处理
+                Log.e(TAG, "服务启动失败: " + e.getLocalizedMessage());
             }
         });
         //默认开启服务
