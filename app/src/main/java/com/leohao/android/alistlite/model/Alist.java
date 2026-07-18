@@ -3,6 +3,7 @@ package com.leohao.android.alistlite.model;
 import alistlib.Alistlib;
 import alistlib.Event;
 import alitvlib.Alitvlib;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Looper;
 import android.util.Log;
@@ -31,13 +32,13 @@ public class Alist {
     final String TYPE_HTTPS = "https";
     final String TYPE_UNIX = "unix";
     /**
-     * 应用数据存储目录
+     * 应用数据存储目录（懒加载，避免 applicationContext 未初始化导致 NPE）
      */
-    String dataPath = applicationContext.getExternalFilesDir("data").getAbsolutePath();
+    private String dataPath;
     /**
      * 配置数据存储目录
      */
-    String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
+    private String configPath;
 
     private static class SingletonHolder {
         private static final Alist INSTANCE = new Alist();
@@ -51,6 +52,52 @@ public class Alist {
     }
 
     /**
+     * 获取应用数据目录，带空安全保护
+     * 当外部存储不可用时回退到内部存储
+     */
+    private String getDataPath() {
+        if (dataPath == null) {
+            synchronized (this) {
+                if (dataPath == null) {
+                    Context ctx = applicationContext;
+                    if (ctx == null) {
+                        // 极端情况：applicationContext 尚未初始化，使用 /data/data/<pkg>/files/data
+                        Log.w("Alist", "applicationContext is null, this should not happen normally");
+                        return null;
+                    }
+                    File extDir = ctx.getExternalFilesDir("data");
+                    if (extDir != null) {
+                        dataPath = extDir.getAbsolutePath();
+                    } else {
+                        // 外置存储不可用，回退到内置存储
+                        File intDir = new File(ctx.getFilesDir(), "data");
+                        if (!intDir.exists()) {
+                            intDir.mkdirs();
+                        }
+                        dataPath = intDir.getAbsolutePath();
+                        Log.w("Alist", "外部存储不可用，回退到内部存储: " + dataPath);
+                    }
+                }
+            }
+        }
+        return dataPath;
+    }
+
+    /**
+     * 获取配置文件路径
+     */
+    private String getConfigPath() {
+        if (configPath == null) {
+            String dp = getDataPath();
+            if (dp == null) {
+                return null;
+            }
+            configPath = String.format("%s%s%s", dp, File.separator, Constants.ALIST_CONFIG_FILENAME);
+        }
+        return configPath;
+    }
+
+    /**
      * 获取当前服务运行状态
      */
     public Boolean hasRunning() {
@@ -58,7 +105,7 @@ public class Alist {
     }
 
     public void init() throws Exception {
-        Alistlib.setConfigData(dataPath);
+        Alistlib.setConfigData(getDataPath());
         Alistlib.setConfigLogStd(true);
         Alistlib.init(new Event() {
             @Override
@@ -106,7 +153,7 @@ public class Alist {
      * @param jsonPath 配置项路径 如 scheme.http_port
      */
     public String getConfigValue(String jsonPath) throws IOException {
-        File configFile = new File(configPath);
+        File configFile = new File(getConfigPath());
         String configString = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
         return JsonPath.read(configString, jsonPath).toString();
     }
