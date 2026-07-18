@@ -24,7 +24,6 @@ import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.Constants;
 
 import java.io.IOException;
-import java.util.Locale;
 
 /**
  * AList 服务
@@ -169,9 +168,10 @@ public class AlistService extends Service {
         boolean isHttpPortLegal = !"-1".equals(alistServer.getConfigValue("scheme.https_port"));
         boolean isHttpsMode = isForceHttps && isHttpPortLegal;
         //读取 AList 服务运行端口
-        String serverPort = alistServer.getConfigValue(isHttpsMode ? "scheme.https_port" : "scheme.http_port");
-        //AList 服务前端访问地址
-        return String.format(Locale.CHINA, "%s://%s:%s", isHttpsMode ? "https" : "http", alistServer.getBindingIP(), serverPort);
+        String serverPortStr = alistServer.getConfigValue(isHttpsMode ? "scheme.https_port" : "scheme.http_port");
+        int serverPort = Integer.parseInt(serverPortStr);
+        //AList 服务前端访问地址（IPv6 自动加中括号）
+        return Alist.formatServerUrl(alistServer.getBindingIP(), serverPort, isHttpsMode);
     }
 
     @Override

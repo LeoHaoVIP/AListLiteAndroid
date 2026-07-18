@@ -526,12 +526,14 @@ public class MainActivity extends AppCompatActivity {
         LinkedHashMap<String, String> ipMap = alistServer.getAllLocalIPs();
         // 从 serverAddress 提取端口和协议
         String protocol = serverAddress.startsWith("https") ? "https" : "http";
-        String port = serverAddress.substring(serverAddress.lastIndexOf(":") + 1);
+        String portStr = serverAddress.substring(serverAddress.lastIndexOf(":") + 1);
+        int port = Integer.parseInt(portStr);
+        boolean isHttps = "https".equals(protocol);
         // 构建所有完整地址列表和对应的网卡名称列表
         List<String> allAddresses = new ArrayList<>();
         List<String> allLabels = new ArrayList<>();
         for (Map.Entry<String, String> entry : ipMap.entrySet()) {
-            String address = String.format("%s://%s:%s", protocol, entry.getKey(), port);
+            String address = Alist.formatServerUrl(entry.getKey(), port, isHttps);
             allAddresses.add(address);
             allLabels.add(entry.getValue());
         }
@@ -541,59 +543,117 @@ public class MainActivity extends AppCompatActivity {
 
         // 二维码 ImageView
         final ImageView qrImageView = new ImageView(MainActivity.this);
-        qrImageView.setImageBitmap(generateQrBitmap(allAddresses.get(0), 500));
         qrImageView.setAdjustViewBounds(true);
         qrImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         qrImageView.setOnClickListener(v -> openExternalUrl(allAddresses.get(currentIndex.get())));
 
-        // 当前 IP 文字（需在 switchButton 之前声明，供 lambda 引用）
+        // 当前 IP 文字（需在按钮之前声明，供 lambda 引用）
         final TextView currentIpText = new TextView(MainActivity.this);
-        currentIpText.setText(allAddresses.get(0));
         currentIpText.setGravity(Gravity.CENTER);
         currentIpText.setTextSize(14);
         currentIpText.setPadding(0, 10, 0, 0);
 
-        // 对话框（需在 switchButton 之前创建，供 lambda 引用）
+        // 对话框（需在按钮之前创建，供 lambda 引用）
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this, R.style.IOSAlertDialog);
         final AlertDialog alertDialog = dialog.create();
         alertDialog.setTitle("远程访问");
-        alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s，点击右侧按钮可切换", allLabels.get(currentIndex.get())));
 
-        // 切换按钮（简约圆形）
+        // 统一刷新视图的辅助方法
+        final Runnable refreshView = () -> {
+            int idx = currentIndex.get();
+            String newAddress = allAddresses.get(idx);
+            // IPv6 地址 URL 包含 "://["，据此判断协议类型
+            String ipType = newAddress.contains("://[") ? "IPv6" : "IPv4";
+            qrImageView.setImageBitmap(generateQrBitmap(newAddress, 500));
+            currentIpText.setText(String.format("(%d/%d) %s", idx + 1, totalCount, newAddress));
+            alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s（%s），点击按钮可切换", allLabels.get(idx), ipType));
+        };
+
+        // 初始化视图
+        refreshView.run();
+
+        // 圆形按钮尺寸和样式
         int btnSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 36, getResources().getDisplayMetrics());
-        TextView switchButton = new TextView(MainActivity.this);
-        switchButton.setText("▶");
-        switchButton.setTextSize(12);
-        switchButton.setTextColor(0xFFFFFFFF);
-        switchButton.setGravity(Gravity.CENTER);
-        switchButton.setIncludeFontPadding(false);
+        int btnMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         GradientDrawable circleBg = new GradientDrawable();
         circleBg.setShape(GradientDrawable.OVAL);
         circleBg.setColor(0x99000000);
-        switchButton.setBackground(circleBg);
-        switchButton.setOnClickListener(v -> {
-            currentIndex.set((currentIndex.get() + 1) % totalCount);
-            String newAddress = allAddresses.get(currentIndex.get());
-            qrImageView.setImageBitmap(generateQrBitmap(newAddress, 500));
-            currentIpText.setText(newAddress);
-            alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s，点击右侧按钮可切换", allLabels.get(currentIndex.get())));
-        });
-        if (totalCount <= 1) {
-            switchButton.setVisibility(View.GONE);
-        }
-        // 将 circleSize 用于布局参数
 
-        // FrameLayout：二维码居中，切换按钮浮动在右下角
+        // 左切换按钮（◀）
+        TextView leftButton = new TextView(MainActivity.this);
+        leftButton.setText("◀");
+        leftButton.setTextSize(12);
+        leftButton.setTextColor(0xFFFFFFFF);
+        leftButton.setGravity(Gravity.CENTER);
+        leftButton.setIncludeFontPadding(false);
+        leftButton.setBackground(circleBg);
+        leftButton.setOnClickListener(v -> {
+            currentIndex.set((currentIndex.get() - 1 + totalCount) % totalCount);
+            refreshView.run();
+        });
+
+        // 右切换按钮（▶），复用圆角样式需新建 Drawable 实例
+        GradientDrawable circleBgRight = new GradientDrawable();
+        circleBgRight.setShape(GradientDrawable.OVAL);
+        circleBgRight.setColor(0x99000000);
+        TextView rightButton = new TextView(MainActivity.this);
+        rightButton.setText("▶");
+        rightButton.setTextSize(12);
+        rightButton.setTextColor(0xFFFFFFFF);
+        rightButton.setGravity(Gravity.CENTER);
+        rightButton.setIncludeFontPadding(false);
+        rightButton.setBackground(circleBgRight);
+        rightButton.setOnClickListener(v -> {
+            currentIndex.set((currentIndex.get() + 1) % totalCount);
+            refreshView.run();
+        });
+
+        // 浮动复制按钮（底部居中，圆角胶囊形）
+        GradientDrawable pillBg = new GradientDrawable();
+        pillBg.setShape(GradientDrawable.RECTANGLE);
+        pillBg.setCornerRadius(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics()));
+        pillBg.setColor(0xCC000000);
+        TextView copyButton = new TextView(MainActivity.this);
+        copyButton.setText("复制地址");
+        copyButton.setTextSize(12);
+        copyButton.setTextColor(0xFFFFFFFF);
+        copyButton.setGravity(Gravity.CENTER);
+        copyButton.setIncludeFontPadding(false);
+        int copyBtnPaddingH = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
+        int copyBtnPaddingV = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics());
+        copyButton.setPadding(copyBtnPaddingH, copyBtnPaddingV, copyBtnPaddingH, copyBtnPaddingV);
+        copyButton.setBackground(pillBg);
+        copyButton.setOnClickListener(v -> {
+            clipBoardHelper.copyText(allAddresses.get(currentIndex.get()));
+            showToast("地址已复制");
+        });
+
+        // 二维码容器（仅包裹二维码图片）
         FrameLayout qrContainer = new FrameLayout(MainActivity.this);
         FrameLayout.LayoutParams qrParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         qrParams.gravity = Gravity.CENTER;
         qrContainer.addView(qrImageView, qrParams);
-        FrameLayout.LayoutParams btnParams = new FrameLayout.LayoutParams(btnSize, btnSize);
-        btnParams.gravity = Gravity.BOTTOM | Gravity.END;
-        int btnMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
-        btnParams.setMargins(0, 0, btnMargin, btnMargin);
-        qrContainer.addView(switchButton, btnParams);
+
+        // 按钮行：◀ 靠左 | 复制地址 居中 | ▶ 靠右
+        FrameLayout buttonRow = new FrameLayout(MainActivity.this);
+        int btnRowPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, getResources().getDisplayMetrics());
+        buttonRow.setPadding(0, btnRowPadding, 0, btnRowPadding);
+        // 左按钮靠左
+        FrameLayout.LayoutParams leftBtnParams = new FrameLayout.LayoutParams(btnSize, btnSize);
+        leftBtnParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
+        leftBtnParams.setMargins(btnMargin, 0, 0, 0);
+        buttonRow.addView(leftButton, leftBtnParams);
+        // 复制按钮居中
+        FrameLayout.LayoutParams copyBtnParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        copyBtnParams.gravity = Gravity.CENTER;
+        buttonRow.addView(copyButton, copyBtnParams);
+        // 右按钮靠右
+        FrameLayout.LayoutParams rightBtnParams = new FrameLayout.LayoutParams(btnSize, btnSize);
+        rightBtnParams.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
+        rightBtnParams.setMargins(0, 0, btnMargin, 0);
+        buttonRow.addView(rightButton, rightBtnParams);
 
         // 垂直布局
         LinearLayout mainLayout = new LinearLayout(MainActivity.this);
@@ -603,6 +663,7 @@ public class MainActivity extends AppCompatActivity {
         mainLayout.setPadding(padding, padding, padding, padding);
         mainLayout.addView(qrContainer);
         mainLayout.addView(currentIpText);
+        mainLayout.addView(buttonRow);
 
         alertDialog.setView(mainLayout);
         alertDialog.show();

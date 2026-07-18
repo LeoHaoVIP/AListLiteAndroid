@@ -21,14 +21,12 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
@@ -309,17 +307,72 @@ public class Alist {
         notifyStatusChanged();
     }
 
+    /**
+     * 获取首选 IPv4 地址（遍历网卡，返回第一个非回环、已启用的 IPv4）
+     */
     public String getBindingIP() {
-        return Alistlib.getOutboundIPString();
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface ni = interfaces.nextElement();
+                if (ni.isLoopback() || !ni.isUp()) {
+                    continue;
+                }
+                Enumeration<InetAddress> addresses = ni.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
+                        return addr.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w("Alist", "getBindingIP: " + e.getMessage());
+        }
+        return "localhost";
     }
 
     /**
-     * 获取设备所有本地 IPv4 地址与网卡名称的映射（非回环、已启用），出口 IP 排在首位
+     * 获取首选 IPv6 地址（遍历网卡，返回第一个非回环、非 link-local 的全局 IPv6）
+     */
+    public String getBindingIPv6() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface ni = interfaces.nextElement();
+                if (ni.isLoopback() || !ni.isUp()) {
+                    continue;
+                }
+                Enumeration<InetAddress> addresses = ni.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    if (addr instanceof Inet6Address && !addr.isLoopbackAddress()) {
+                        String ip = addr.getHostAddress();
+                        int scopeIdx = ip.indexOf('%');
+                        if (scopeIdx != -1) {
+                            ip = ip.substring(0, scopeIdx);
+                        }
+                        String lower = ip.toLowerCase();
+                        if (!lower.startsWith("fe80:") && !lower.startsWith("fec0:")) {
+                            return ip;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w("Alist", "getBindingIPv6: " + e.getMessage());
+        }
+        return "localhost";
+    }
+
+    /**
+     * 获取设备所有本地 IP 地址与网卡名称的映射（非回环、已启用），同时包含 IPv4 和 IPv6，
+     * 出口 IP 排在首位
+     *
      * @return LinkedHashMap，key=IP地址，value=网卡显示名称（如 wlan0、eth0）
      */
     public LinkedHashMap<String, String> getAllLocalIPs() {
         LinkedHashMap<String, String> ipMap = new LinkedHashMap<>();
-        String outboundIP = Alistlib.getOutboundIPString();
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
@@ -331,27 +384,68 @@ public class Alist {
                 Enumeration<InetAddress> addresses = ni.getInetAddresses();
                 while (addresses.hasMoreElements()) {
                     InetAddress addr = addresses.nextElement();
-                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
+                    if (addr.isLoopbackAddress()) {
+                        continue;
+                    }
+                    if (addr instanceof Inet4Address) {
                         ipMap.put(addr.getHostAddress(), displayName);
+                    } else if (addr instanceof Inet6Address) {
+                        String ip = addr.getHostAddress();
+                        // 去除 scope id（如 %wlan0）
+                        int scopeIdx = ip.indexOf('%');
+                        if (scopeIdx != -1) {
+                            ip = ip.substring(0, scopeIdx);
+                        }
+                        // 过滤 link-local（fe80::/10）和 site-local（fec0::/10，已废弃但保留过滤）
+                        String lower = ip.toLowerCase();
+                        if (lower.startsWith("fe80:") || lower.startsWith("fec0:")) {
+                            continue;
+                        }
+                        ipMap.put(ip, displayName);
                     }
                 }
             }
         } catch (Exception e) {
             Log.w("Alist", "getAllLocalIPs: " + e.getLocalizedMessage());
         }
-        // 将出口 IP 排在首位
-        if (!"localhost".equals(outboundIP) && ipMap.containsKey(outboundIP)) {
-            String outboundName = ipMap.get(outboundIP);
+        // 将出口 IP 排在首位（先尝试 IPv4，再尝试 IPv6）
+        String outboundIPv4 = getBindingIP();
+        String outboundIPv6 = getBindingIPv6();
+        String primaryOutbound = null;
+        if (!"localhost".equals(outboundIPv4) && ipMap.containsKey(outboundIPv4)) {
+            primaryOutbound = outboundIPv4;
+        } else if (!"localhost".equals(outboundIPv6) && ipMap.containsKey(outboundIPv6)) {
+            primaryOutbound = outboundIPv6;
+        }
+        if (primaryOutbound != null) {
+            String outboundName = ipMap.get(primaryOutbound);
             LinkedHashMap<String, String> sorted = new LinkedHashMap<>();
-            sorted.put(outboundIP, outboundName);
+            sorted.put(primaryOutbound, outboundName);
             for (Map.Entry<String, String> entry : ipMap.entrySet()) {
-                if (!entry.getKey().equals(outboundIP)) {
+                if (!entry.getKey().equals(primaryOutbound)) {
                     sorted.put(entry.getKey(), entry.getValue());
                 }
             }
             return sorted;
         }
         return ipMap;
+    }
+
+    /**
+     * 格式化 AList 服务访问 URL，IPv6 地址自动加中括号
+     *
+     * @param ip       IP 地址
+     * @param port     端口号
+     * @param isHttps  是否 HTTPS
+     * @return 格式化后的完整 URL，如 http://[2001:db8::1]:5244
+     */
+    public static String formatServerUrl(String ip, int port, boolean isHttps) {
+        String protocol = isHttps ? "https" : "http";
+        // IPv6 地址需要中括号包裹
+        if (ip.contains(":")) {
+            return String.format(Locale.CHINA, "%s://[%s]:%d", protocol, ip, port);
+        }
+        return String.format(Locale.CHINA, "%s://%s:%d", protocol, ip, port);
     }
 
     private void showToast(String msg) {
