@@ -27,7 +27,9 @@ import static com.leohao.android.alistlite.AlistLiteApplication.applicationConte
  */
 public class Alist {
     public static String ACTION_STATUS_CHANGED = "com.leohao.android.alistlite.ACTION_STATUS_CHANGED";
-    public static StringBuilder ALIST_LOGS = new StringBuilder();
+    public static final StringBuilder ALIST_LOGS = new StringBuilder();
+    private static final int MAX_LOG_ENTRIES = 10;
+    private static final String LOG_SEPARATOR = "\r\n\r\n";
     final String TYPE_HTTP = "http";
     final String TYPE_HTTPS = "https";
     final String TYPE_UNIX = "unix";
@@ -142,7 +144,7 @@ public class Alist {
                     break;
             }
             String log = String.format("%s[%s] %s\r\n\r\n", levelName, DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"), msg);
-            ALIST_LOGS.append(log);
+            appendLog(log);
             Log.i(AlistService.TAG, log);
         });
     }
@@ -196,10 +198,10 @@ public class Alist {
             if (Alitvlib.isRunning()) {
                 Alitvlib.stopServer();
             }
-            ALIST_LOGS.append("------ 服务已关闭 ------\r\n\r\n");
+            appendLog("------ 服务已关闭 ------\r\n\r\n");
         } catch (Exception e) {
             showToast("Alist服务关闭失败");
-            ALIST_LOGS.append("------ 服务关闭失败 ------\r\n\r\n");
+            appendLog("------ 服务关闭失败 ------\r\n\r\n");
         }
     }
 
@@ -226,5 +228,33 @@ public class Alist {
 
     private void showToast(String msg) {
         Toast.makeText(applicationContext, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 追加日志并裁剪至最近 MAX_LOG_ENTRIES 条，防止日志过多导致界面卡顿
+     */
+    private static void appendLog(String log) {
+        synchronized (ALIST_LOGS) {
+            ALIST_LOGS.append(log);
+            // 统计当前日志条数
+            int count = 0;
+            int idx = 0;
+            while ((idx = ALIST_LOGS.indexOf(LOG_SEPARATOR, idx)) != -1) {
+                count++;
+                idx += LOG_SEPARATOR.length();
+            }
+            // 超出上限时删除最旧的日志
+            if (count > MAX_LOG_ENTRIES) {
+                int entriesToRemove = count - MAX_LOG_ENTRIES;
+                idx = 0;
+                for (int i = 0; i < entriesToRemove; i++) {
+                    idx = ALIST_LOGS.indexOf(LOG_SEPARATOR, idx);
+                    if (idx != -1) {
+                        idx += LOG_SEPARATOR.length();
+                    }
+                }
+                ALIST_LOGS.delete(0, idx);
+            }
+        }
     }
 }

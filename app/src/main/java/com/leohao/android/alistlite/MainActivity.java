@@ -633,17 +633,22 @@ public class MainActivity extends AppCompatActivity {
         TextView textView = dialogView.findViewById(R.id.tv_service_logs);
         ScrollView scrollView = dialogView.findViewById(R.id.tv_logs_scroll_view);
         //显示服务日志
-        textView.setText(Alist.ALIST_LOGS);
+        synchronized (Alist.ALIST_LOGS) {
+            textView.setText(Alist.ALIST_LOGS.toString());
+        }
         //滚动到底部最新日志
         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
         //日志实时刷新
         new Thread(() -> {
             while (true) {
                 runOnUiThread(() -> {
-                    textView.setText(Alist.ALIST_LOGS);
-                    //日志更新时，滚动到底部最新日志
-                    if (!Alist.ALIST_LOGS.toString().equals(textView.getText().toString())) {
-                        scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                    synchronized (Alist.ALIST_LOGS) {
+                        String logs = Alist.ALIST_LOGS.toString();
+                        textView.setText(logs);
+                        //日志更新时，滚动到底部最新日志
+                        if (!logs.equals(textView.getText().toString())) {
+                            scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+                        }
                     }
                 });
                 try {
