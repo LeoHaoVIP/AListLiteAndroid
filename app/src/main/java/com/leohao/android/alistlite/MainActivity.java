@@ -398,6 +398,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                // 拦截页面中的 blob 下载，直接捕获 blob 数据发送到 Android
+                view.evaluateJavascript(
+                    "(function(){" +
+                    "  var origClick=HTMLAnchorElement.prototype.click;" +
+                    "  HTMLAnchorElement.prototype.click=function(){" +
+                    "    var u=this.href;" +
+                    "    if(u&&u.startsWith('blob:')){" +
+                    "      fetch(u).then(function(r){return r.blob()}).then(function(b){" +
+                    "        var r=new FileReader();" +
+                    "        r.onloadend=function(){Android.getBase64FromBlobData(r.result);};" +
+                    "        r.readAsDataURL(b);" +
+                    "      }).catch(function(e){});" +
+                    "      return;" +
+                    "    }" +
+                    "    origClick.call(this);" +
+                    "  };" +
+                    "})();", null);
             }
 
             @Override
@@ -414,6 +431,10 @@ public class MainActivity extends AppCompatActivity {
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // blob URL 放行，交由下载监听器处理
+                if (url.startsWith("blob")) {
+                    return false;
+                }
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
                         openExternalUrl(url);
@@ -437,9 +458,9 @@ public class MainActivity extends AppCompatActivity {
         });
         // 设置下载监听器以支持文件下载
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            // blob URL：调用预注入的 JS 辅助函数，通过 fetch 读取并回调 Android 下载
             if (url.startsWith("blob")) {
-                String base64Data = DownloadBlobFileJsInterface.getBase64StringFromBlobUrl(url);
-                webView.loadUrl(base64Data);
+                webView.evaluateJavascript("__blobDownload('" + url + "')", null);
                 return;
             }
             // 使用系统下载管理器

@@ -122,7 +122,7 @@ public class AlistService extends Service {
                         copyPendingIntent)
                         .build();
                 //更新消息内容里的服务地址，同时添加服务地址复制入口
-                String contentText = alistServer.isHttpsEnabled() ? "[HTTPS] " + serverAddress : serverAddress;
+                String contentText = alistServer.isHttpsEnabled() ? "【HTTPS】" + serverAddress : serverAddress;
                 Notification updatedNotification = new NotificationCompat.Builder(this, channelId)
                         .setContentTitle(getString(R.string.alist_service_is_running))
                         .setContentText(contentText)
