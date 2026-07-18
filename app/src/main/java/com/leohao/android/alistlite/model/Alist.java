@@ -17,8 +17,14 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
@@ -224,6 +230,47 @@ public class Alist {
 
     public String getBindingIP() {
         return Alistlib.getOutboundIPString();
+    }
+
+    /**
+     * 获取设备所有本地 IPv4 地址与网卡名称的映射（非回环、已启用），出口 IP 排在首位
+     * @return LinkedHashMap，key=IP地址，value=网卡显示名称（如 wlan0、eth0）
+     */
+    public LinkedHashMap<String, String> getAllLocalIPs() {
+        LinkedHashMap<String, String> ipMap = new LinkedHashMap<>();
+        String outboundIP = Alistlib.getOutboundIPString();
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface ni = interfaces.nextElement();
+                if (ni.isLoopback() || !ni.isUp()) {
+                    continue;
+                }
+                String displayName = ni.getDisplayName();
+                Enumeration<InetAddress> addresses = ni.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
+                        ipMap.put(addr.getHostAddress(), displayName);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w("Alist", "getAllLocalIPs: " + e.getLocalizedMessage());
+        }
+        // 将出口 IP 排在首位
+        if (!"localhost".equals(outboundIP) && ipMap.containsKey(outboundIP)) {
+            String outboundName = ipMap.get(outboundIP);
+            LinkedHashMap<String, String> sorted = new LinkedHashMap<>();
+            sorted.put(outboundIP, outboundName);
+            for (Map.Entry<String, String> entry : ipMap.entrySet()) {
+                if (!entry.getKey().equals(outboundIP)) {
+                    sorted.put(entry.getKey(), entry.getValue());
+                }
+            }
+            return sorted;
+        }
+        return ipMap;
     }
 
     private void showToast(String msg) {

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -30,11 +31,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import cn.hutool.extra.qrcode.QrCodeUtil;
 import cn.hutool.http.Method;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
@@ -54,12 +58,17 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author LeoHao
@@ -451,32 +460,110 @@ public class MainActivity extends AppCompatActivity {
             showToast("AList 服务未启动");
             return;
         }
-        final ImageView imageView = new ImageView(MainActivity.this);
-        //生成二维码
-        imageView.setImageBitmap(bitMatrixToBitmap(QrCodeUtil.encode(serverAddress, 500, 500)));
-        imageView.setAdjustViewBounds(true);
-        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        //点击二维码图片使用浏览器打开
-        imageView.setOnClickListener(v -> {
-            openExternalUrl(serverAddress);
-        });
-        //创建布局
-        FrameLayout layout = new FrameLayout(MainActivity.this);
-        int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics());
-        layout.setPadding(padding, padding, padding, padding);
-        //添加二维码
-        layout.addView(imageView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        // 获取所有本地 IP 地址与网卡名称映射
+        LinkedHashMap<String, String> ipMap = alistServer.getAllLocalIPs();
+        // 从 serverAddress 提取端口和协议
+        String protocol = serverAddress.startsWith("https") ? "https" : "http";
+        String port = serverAddress.substring(serverAddress.lastIndexOf(":") + 1);
+        // 构建所有完整地址列表和对应的网卡名称列表
+        List<String> allAddresses = new ArrayList<>();
+        List<String> allLabels = new ArrayList<>();
+        for (Map.Entry<String, String> entry : ipMap.entrySet()) {
+            String address = String.format("%s://%s:%s", protocol, entry.getKey(), port);
+            allAddresses.add(address);
+            allLabels.add(entry.getValue());
+        }
+        // 当前显示的地址索引
+        final AtomicInteger currentIndex = new AtomicInteger(0);
+        final int totalCount = allAddresses.size();
+
+        // 二维码 ImageView
+        final ImageView qrImageView = new ImageView(MainActivity.this);
+        qrImageView.setImageBitmap(generateQrBitmap(allAddresses.get(0), 500));
+        qrImageView.setAdjustViewBounds(true);
+        qrImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        qrImageView.setOnClickListener(v -> openExternalUrl(allAddresses.get(currentIndex.get())));
+
+        // 当前 IP 文字（需在 switchButton 之前声明，供 lambda 引用）
+        final TextView currentIpText = new TextView(MainActivity.this);
+        currentIpText.setText(allAddresses.get(0));
+        currentIpText.setGravity(Gravity.CENTER);
+        currentIpText.setTextSize(14);
+        currentIpText.setPadding(0, 10, 0, 0);
+
+        // 对话框（需在 switchButton 之前创建，供 lambda 引用）
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
-        AlertDialog alertDialog = dialog.create();
+        final AlertDialog alertDialog = dialog.create();
         alertDialog.setTitle("远程访问");
-        alertDialog.setMessage(String.format("AList 服务地址：%s\r\n\r\n提示：请确保在同一网络环境内操作", serverAddress));
-        alertDialog.setView(layout);
+        alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s，点击右侧按钮可切换", allLabels.get(currentIndex.get())));
+
+        // 切换按钮（简约圆形）
+        int btnSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 36, getResources().getDisplayMetrics());
+        TextView switchButton = new TextView(MainActivity.this);
+        switchButton.setText("▶");
+        switchButton.setTextSize(12);
+        switchButton.setTextColor(0xFFFFFFFF);
+        switchButton.setGravity(Gravity.CENTER);
+        switchButton.setIncludeFontPadding(false);
+        GradientDrawable circleBg = new GradientDrawable();
+        circleBg.setShape(GradientDrawable.OVAL);
+        circleBg.setColor(0x99000000);
+        switchButton.setBackground(circleBg);
+        switchButton.setOnClickListener(v -> {
+            currentIndex.set((currentIndex.get() + 1) % totalCount);
+            String newAddress = allAddresses.get(currentIndex.get());
+            qrImageView.setImageBitmap(generateQrBitmap(newAddress, 500));
+            currentIpText.setText(newAddress);
+            alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s，点击右侧按钮可切换", allLabels.get(currentIndex.get())));
+        });
+        if (totalCount <= 1) {
+            switchButton.setVisibility(View.GONE);
+        }
+        // 将 circleSize 用于布局参数
+
+        // FrameLayout：二维码居中，切换按钮浮动在右下角
+        FrameLayout qrContainer = new FrameLayout(MainActivity.this);
+        FrameLayout.LayoutParams qrParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        qrParams.gravity = Gravity.CENTER;
+        qrContainer.addView(qrImageView, qrParams);
+        FrameLayout.LayoutParams btnParams = new FrameLayout.LayoutParams(btnSize, btnSize);
+        btnParams.gravity = Gravity.BOTTOM | Gravity.END;
+        int btnMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        btnParams.setMargins(0, 0, btnMargin, btnMargin);
+        qrContainer.addView(switchButton, btnParams);
+
+        // 垂直布局
+        LinearLayout mainLayout = new LinearLayout(MainActivity.this);
+        mainLayout.setOrientation(LinearLayout.VERTICAL);
+        mainLayout.setGravity(Gravity.CENTER);
+        int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics());
+        mainLayout.setPadding(padding, padding, padding, padding);
+        mainLayout.addView(qrContainer);
+        mainLayout.addView(currentIpText);
+
+        alertDialog.setView(mainLayout);
         alertDialog.show();
     }
 
     /**
      * 将BitMatrix对象转换为Bitmap对象
      */
+    /**
+     * 使用 ZXing 生成二维码 Bitmap
+     */
+    private Bitmap generateQrBitmap(String content, int size) {
+        try {
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.MARGIN, 1);
+            BitMatrix bitMatrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, size, size, hints);
+            return bitMatrixToBitmap(bitMatrix);
+        } catch (WriterException e) {
+            Log.e(TAG, "generateQrBitmap: " + e.getMessage());
+            return null;
+        }
+    }
+
     private Bitmap bitMatrixToBitmap(BitMatrix bitMatrix) {
         final int width = bitMatrix.getWidth();
         final int height = bitMatrix.getHeight();
