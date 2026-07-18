@@ -1,6 +1,7 @@
 package com.leohao.android.alistlite;
 
 import com.jayway.jsonpath.JsonPath;
+import com.leohao.android.alistlite.util.AppUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
@@ -24,6 +25,13 @@ public class ExampleUnitTest {
     @Test
     public void configReadTest() throws IOException {
         System.out.println(getConfigValue("scheme.http_port"));
+    }
+
+    @Test
+    public void versionCompare() throws IOException {
+        System.out.println(AppUtil.compareVersion("2.0.1","2.1.2"));
+        System.out.println(AppUtil.compareVersion("2.1.10","2.1.9"));
+        System.out.println(AppUtil.compareVersion("2.0.10-beta1","2.0.10-beta20"));
     }
 
     public Object getConfigValue(String jsonPath) throws IOException {

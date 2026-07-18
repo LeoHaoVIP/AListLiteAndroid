@@ -707,7 +707,7 @@ public class MainActivity extends AppCompatActivity {
                 //镜像加速地址
                 String downloadLinkFast = String.format("%s/%s", Constants.QUICK_DOWNLOAD_ADDRESS_GH_PROXY_PREFIX, downloadLinkGitHub);
                 //发现新版本
-                if (latestVersion.compareTo(currentAppVersion) > 0) {
+                if (AppUtil.compareVersion(latestVersion, currentAppVersion) > 0) {
                     Looper.prepare();
                     String dialogTitle = String.format("\uD83C\uDF89 AListLite %s 已发布", latestVersion);
                     //弹出更新下载确认
