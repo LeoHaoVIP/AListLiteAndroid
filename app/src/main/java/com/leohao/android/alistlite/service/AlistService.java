@@ -65,16 +65,17 @@ public class AlistService extends Service {
             if (alistServer.hasRunning()) {
                 //关闭服务
                 exitService();
+                showToast("AList 服务已关闭");
             }
             //更新磁贴状态
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 updateAlistTileServiceState(AlistTileService.ACTION_TILE_OFF);
             }
-            showToast("AList 服务已关闭");
         }
         if (ACTION_STARTUP.equals(intent.getAction())) {
             try {
                 // startForeground 已在 onCreate() 中调用，此处更新通知内容
+                boolean justStarted = false;
                 //若服务未运行则开启
                 if (!alistServer.hasRunning()) {
                     //开启AList服务端
@@ -90,6 +91,7 @@ public class AlistService extends Service {
                         String adminUsername = alistServer.getAdminUser();
                         showToast(String.format("初始登录信息：%s | %s", adminUsername, Constants.ALIST_DEFAULT_PASSWORD), Toast.LENGTH_LONG);
                     }
+                    justStarted = true;
                 }
                 //AList服务前端访问地址
                 String serverAddress = getAlistServerAddress();
@@ -131,7 +133,10 @@ public class AlistService extends Service {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     updateAlistTileServiceState(AlistTileService.ACTION_TILE_ON);
                 }
-                showToast("AList 服务已开启");
+                // 仅在服务实际被启动时提示，避免重复 Toast
+                if (justStarted) {
+                    showToast("AList 服务已开启");
+                }
             } catch (Exception e) {
                 Log.e(TAG, e.getLocalizedMessage());
                 if (MainActivity.getInstance() != null) {
