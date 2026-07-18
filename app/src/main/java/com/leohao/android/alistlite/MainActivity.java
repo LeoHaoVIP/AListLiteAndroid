@@ -186,6 +186,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // 恢复前台时同步开关状态（可能通过磁贴等方式在后台改变了服务状态）
+        if (alistServer != null && serviceSwitch != null) {
+            boolean isRunning = alistServer.hasRunning();
+            if (serviceSwitch.isChecked() != isRunning) {
+                serviceSwitch.setCheckedNoEvent(isRunning);
+            }
+        }
     }
 
     private void readyToStartService() {

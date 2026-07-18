@@ -10,6 +10,7 @@ import android.service.quicksettings.TileService;
 import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import com.leohao.android.alistlite.model.Alist;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
 
@@ -53,6 +54,8 @@ public class AlistTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
+        // 磁贴可见时，同步实际服务运行状态
+        updateTileState(Alist.getInstance().hasRunning() ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
     }
 
     @Override

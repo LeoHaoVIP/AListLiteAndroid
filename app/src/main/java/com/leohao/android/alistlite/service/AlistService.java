@@ -143,6 +143,10 @@ public class AlistService extends Service {
                     //状态开关恢复到关闭状态（不触发监听事件）
                     MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(false);
                 }
+                // 修正磁贴状态（磁贴 onClick 已预先切换为开启）
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    updateAlistTileServiceState(AlistTileService.ACTION_TILE_OFF);
+                }
                 showToast(String.format("AList 服务开启失败: %s", e.getLocalizedMessage()));
             }
         }
@@ -201,6 +205,7 @@ public class AlistService extends Service {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, AlistService.class.getName());
         wakeLock.setReferenceCounted(false);
+        //noinspection AndroidLintWakelockTimeout
         wakeLock.acquire();
         // 立即调用 startForeground() 以防止 Android 8.0+ 的 5 秒 ANR 限制
         // 后续在 onStartCommand 中会更新通知内容
