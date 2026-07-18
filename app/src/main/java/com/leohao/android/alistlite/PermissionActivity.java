@@ -1,9 +1,13 @@
 package com.leohao.android.alistlite;
 
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -56,8 +60,19 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         PermissionItem item = (PermissionItem) parent.getAdapter().getItem(position);
-        //跳过已授权的权限
+        //已授权的权限：提示是否撤销
         if (item.getIsGranted()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("撤销授权")
+                    .setMessage(String.format("是否撤销「%s」权限？\n\n确定后将前往系统设置页面，请手动关闭该权限。",
+                            item.getPermissionShortName()))
+                    .setPositiveButton("前往设置", (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
             return;
         }
         //跳转到对应权限设置页面
