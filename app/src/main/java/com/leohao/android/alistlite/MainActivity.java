@@ -465,23 +465,24 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 .registerReceiver(statusReceiver, new IntentFilter(Alist.ACTION_STATUS_CHANGED));
     }
 
-    private Set<String> lastAddressSet = Collections.emptySet();
+    private String lastPrimaryIP = null;
     private boolean firstNetworkCheck = true;
 
     /**
-     * 网络变化时弹框提示（比较全量 IP 集合，避免遍历顺序导致误判）
+     * 网络变化时弹框提示（仅比较首选 IP，避免临时 IPv6 地址轮换导致误判）
      */
     private void updateServerAddressIfNeeded() {
         if (alistServer == null || !alistServer.hasRunning()) return;
         try {
-            Set<String> currentSet = alistServer.getLocalAddresses().keySet();
+            String currentPrimaryIP = alistServer.getPrimaryIP();
             if (firstNetworkCheck) {
                 firstNetworkCheck = false;
-                lastAddressSet = currentSet;
+                lastPrimaryIP = currentPrimaryIP;
                 return;
             }
-            if (currentSet.equals(lastAddressSet)) return;
-            lastAddressSet = currentSet;
+            // 首选 IP 未变化则无需弹框（临时 IPv6 地址轮换不影响对外服务地址）
+            if (currentPrimaryIP.equals(lastPrimaryIP)) return;
+            lastPrimaryIP = currentPrimaryIP;
             String address = alistServer.getExternalAddress();
             Log.i(TAG, "外部地址已更新为 " + address);
             boolean isLocal = address.contains("localhost") || address.contains("127.0.0.1");
