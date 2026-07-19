@@ -14,14 +14,6 @@ import java.util.List;
  * @author LeoHao
  */
 public class AppUtil {
-    private static SharedDataHelper sharedDataHelper;
-
-    private static SharedDataHelper getSharedDataHelper() {
-        if (sharedDataHelper == null) {
-            sharedDataHelper = SharedDataHelper.getInstance();
-        }
-        return sharedDataHelper;
-    }
 
     /**
      * 判断 AList 是否已初始化
@@ -30,9 +22,10 @@ public class AppUtil {
      */
     public static boolean checkAlistHasInitialized() {
         String key = Constants.ANDROID_SHARED_DATA_KEY_ALIST_INITIALIZED;
-        boolean isInitialized = getSharedDataHelper().getBoolShareData(key, false);
+        SharedDataHelper helper = SharedDataHelper.getInstance();
+        boolean isInitialized = helper.getBoolShareData(key, false);
         if (!isInitialized) {
-            getSharedDataHelper().putSharedData(key, true);
+            helper.putSharedData(key, true);
         }
         return isInitialized;
     }
@@ -105,7 +98,7 @@ public class AppUtil {
      * 从字符串中提取所有连续数字
      */
     private static int[] extractNumbers(String s) {
-        java.util.ArrayList<Integer> list = new java.util.ArrayList<>();
+        ArrayList<Integer> list = new ArrayList<>();
         StringBuilder num = new StringBuilder();
         for (char c : s.toCharArray()) {
             if (Character.isDigit(c)) {

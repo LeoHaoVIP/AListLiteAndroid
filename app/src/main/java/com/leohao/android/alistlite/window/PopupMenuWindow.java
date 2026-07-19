@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.PopupWindow;
-import com.leohao.android.alistlite.MainActivity;
 import com.leohao.android.alistlite.R;
 
 /**
@@ -17,7 +16,7 @@ import com.leohao.android.alistlite.R;
  * @author LeoHao
  */
 public class PopupMenuWindow extends PopupWindow {
-    public PopupMenuWindow(Context context) {
+    public PopupMenuWindow(Context context, OnMenuActionListener listener) {
         super(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         // 获取屏幕尺寸
@@ -66,47 +65,52 @@ public class PopupMenuWindow extends PopupWindow {
         //远程访问（显示二维码）
         popupView.findViewById(R.id.btn_showQrCode).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().showQrCode(view);
+            listener.showQrCode(view);
+        });
+        //浏览器打开
+        popupView.findViewById(R.id.btn_openInBrowser).setOnClickListener((view) -> {
+            dismiss();
+            listener.openInBrowser(view);
         });
         //权限配置
         popupView.findViewById(R.id.btn_startPermissionCheckActivity).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().startPermissionCheckActivity(view);
+            listener.startPermissionCheckActivity(view);
         });
         //密码设置
         popupView.findViewById(R.id.btn_setAdminPassword).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().setAdminPassword(view);
+            listener.setAdminPassword(view);
         });
         //HTTPS 设置
         popupView.findViewById(R.id.btn_toggleHttps).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().toggleHttps(view);
+            listener.toggleHttps(view);
         });
         //高级配置
         popupView.findViewById(R.id.btn_manageConfigData).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().manageConfigData(view);
+            listener.manageConfigData(view);
         });
         //服务日志
         popupView.findViewById(R.id.btn_serviceLogs).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().showServiceLogs(view);
+            listener.showServiceLogs(view);
         });
         //检查更新
         popupView.findViewById(R.id.btn_checkUpdates).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().checkUpdates(view);
+            listener.checkUpdates(view);
         });
         //进入阿里云盘 TV 版 Token 获取页面（该 Token 对于开通阿里云盘会员的用户暂不限速）
         popupView.findViewById(R.id.btn_showAliTvTokenGetPage).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().showAliTvTokenGetPage(view);
+            listener.showAliTvTokenGetPage(view);
         });
         //关于 AList
         popupView.findViewById(R.id.btn_showSystemInfo).setOnClickListener((view) -> {
             dismiss();
-            MainActivity.getInstance().showSystemInfo(view);
+            listener.showSystemInfo(view);
         });
     }
 }

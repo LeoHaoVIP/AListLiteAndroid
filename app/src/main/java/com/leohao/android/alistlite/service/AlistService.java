@@ -5,14 +5,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Build;
-import android.os.Environment;
-import android.os.IBinder;
-import android.os.PowerManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.os.*;
 import android.service.quicksettings.TileService;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -40,7 +40,12 @@ public class AlistService extends Service {
     private final static String CHANNEL_NAME = "AlistService";
     public final static String ACTION_STARTUP = "com.leohao.android.alistlite.ACTION_STARTUP";
     public final static String ACTION_SHUTDOWN = "com.leohao.android.alistlite.ACTION_SHUTDOWN";
+    public final static String ACTION_UPDATE_ADDRESS = "com.leohao.android.alistlite.ACTION_UPDATE_ADDRESS";
     private final Alist alistServer = Alist.getInstance();
+    private ConnectivityManager connectivityManager = null;
+    private ConnectivityManager.NetworkCallback networkCallback = null;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable networkCheckRunnable = this::updateNotificationAddress;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -50,14 +55,6 @@ public class AlistService extends Service {
             channelId = CHANNEL_ID;
         } else {
             channelId = "";
-        }
-        Intent clickIntent = new Intent(getApplicationContext(), MainActivity.class);
-        //用于点击状态栏进入主页面
-        PendingIntent pendingIntent;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_IMMUTABLE);
-        } else {
-            pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_ONE_SHOT);
         }
         //根据action决定是否启动AList服务端
         if (ACTION_SHUTDOWN.equals(intent.getAction())) {
@@ -92,45 +89,14 @@ public class AlistService extends Service {
                     }
                     justStarted = true;
                 }
-                //AList服务前端访问地址
-                String serverAddress = getAlistServerAddress();
-                if (MainActivity.getInstance() != null) {
-                    //状态开关恢复到开启状态（不触发监听事件）
-                    MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(true);
-                    //加载AList前端页面
-                    MainActivity.getInstance().serverAddress = serverAddress;
-                    MainActivity.getInstance().webView.loadUrl(serverAddress);
-                    //隐藏服务未开启提示
-                    MainActivity.getInstance().runningInfoTextView.setVisibility(View.GONE);
-                    //更新 SSL 标识
-                    MainActivity.getInstance().updateSslIndicator();
-                }
-                //创建 Intent，用于复制服务器地址到剪贴板
-                Intent copyIntent = new Intent(this, CopyReceiver.class);
-                copyIntent.putExtra("address", serverAddress);
-                PendingIntent copyPendingIntent;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    copyPendingIntent = PendingIntent.getBroadcast(this, 0, copyIntent, PendingIntent.FLAG_IMMUTABLE);
-                } else {
-                    copyPendingIntent = PendingIntent.getBroadcast(this, 0, copyIntent, PendingIntent.FLAG_ONE_SHOT);
-                }
-                //创建复制服务地址的 Action
-                NotificationCompat.Action addressCopyAction = new NotificationCompat.Action.Builder(
-                        R.drawable.copy,
-                        "复制服务地址",
-                        copyPendingIntent)
-                        .build();
-                //更新消息内容里的服务地址，同时添加服务地址复制入口
-                String contentText = alistServer.isHttpsEnabled() ? "【SSL】" + serverAddress : serverAddress;
-                Notification updatedNotification = new NotificationCompat.Builder(this, channelId)
-                        .setContentTitle(getString(R.string.alist_service_is_running))
-                        .setContentText(contentText)
-                        .setSmallIcon(R.drawable.ic_launcher)
-                        .addAction(addressCopyAction)
-                        .setContentIntent(pendingIntent).build();
-                NotificationManager notificationManager =
-                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.notify(1, updatedNotification);
+                //AList 本地访问地址（WebView 用 127.0.0.1）和外部地址（通知用）
+                String localAddress = getAlistServerAddress();
+                String externalAddress = alistServer.getExternalAddress();
+                alistServer.setCachedServerAddress(externalAddress);
+                //更新通知中的外部服务地址
+                updateNotification(externalAddress, channelId);
+                //通知 Activity 更新 UI（WebView 加载本地地址）
+                sendStatusBroadcast(Alist.STATUS_STARTED, localAddress);
                 //更新磁贴状态
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     updateAlistTileServiceState(AlistTileService.ACTION_TILE_ON);
@@ -142,10 +108,8 @@ public class AlistService extends Service {
                 }
             } catch (Exception e) {
                 Log.e(TAG, e.getLocalizedMessage());
-                if (MainActivity.getInstance() != null) {
-                    //状态开关恢复到关闭状态（不触发监听事件）
-                    MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(false);
-                }
+                // 通知 Activity 启动失败
+                sendStatusBroadcast(Alist.STATUS_STARTUP_ERROR);
                 // 修正磁贴状态（磁贴 onClick 已预先切换为开启）
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     updateAlistTileServiceState(AlistTileService.ACTION_TILE_OFF);
@@ -153,7 +117,73 @@ public class AlistService extends Service {
                 showToast(String.format("AList 服务开启失败: %s", e.getLocalizedMessage()));
             }
         }
+        if (ACTION_UPDATE_ADDRESS.equals(intent.getAction())) {
+            try {
+                String externalAddress = alistServer.getExternalAddress();
+                // 同步更新缓存的外部地址
+                alistServer.setCachedServerAddress(externalAddress);
+                updateNotification(externalAddress, channelId);
+            } catch (IOException e) {
+                Log.e(TAG, "ACTION_UPDATE_ADDRESS: " + e.getMessage());
+            }
+        }
         return START_STICKY;
+    }
+
+    /**
+     * 发送状态变更广播到 MainActivity（解耦：Service 不直接操作 UI）
+     */
+    private void sendStatusBroadcast(String status) {
+        sendStatusBroadcast(status, null);
+    }
+
+    private void sendStatusBroadcast(String status, String address) {
+        Intent intent = new Intent(Alist.ACTION_STATUS_CHANGED);
+        intent.putExtra("status", status);
+        if (address != null) {
+            intent.putExtra("address", address);
+        }
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    /**
+     * 更新通知栏中的服务地址
+     */
+    private void updateNotification(String serverAddress, String channelId) {
+        //创建 Intent，用于复制服务器地址到剪贴板
+        Intent copyIntent = new Intent(this, CopyReceiver.class);
+        copyIntent.putExtra("address", serverAddress);
+        PendingIntent copyPendingIntent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            copyPendingIntent = PendingIntent.getBroadcast(this, 0, copyIntent, PendingIntent.FLAG_IMMUTABLE);
+        } else {
+            copyPendingIntent = PendingIntent.getBroadcast(this, 0, copyIntent, PendingIntent.FLAG_ONE_SHOT);
+        }
+        //创建复制服务地址的 Action
+        NotificationCompat.Action addressCopyAction = new NotificationCompat.Action.Builder(
+                R.drawable.copy,
+                "复制服务地址",
+                copyPendingIntent)
+                .build();
+        //点击通知进入主页面
+        Intent clickIntent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_IMMUTABLE);
+        } else {
+            pendingIntent = PendingIntent.getActivity(this, 0, clickIntent, PendingIntent.FLAG_ONE_SHOT);
+        }
+        //更新消息内容里的服务地址
+        String contentText = alistServer.isHttpsEnabled() ? "【SSL】" + serverAddress : serverAddress;
+        Notification updatedNotification = new NotificationCompat.Builder(this, channelId)
+                .setContentTitle(getString(R.string.alist_service_is_running))
+                .setContentText(contentText)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .addAction(addressCopyAction)
+                .setContentIntent(pendingIntent).build();
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(1, updatedNotification);
     }
 
     /**
@@ -163,20 +193,53 @@ public class AlistService extends Service {
      * @throws IOException
      */
     public String getAlistServerAddress() throws IOException {
-        //判断是否强制开启了 HTTPS
-        boolean isForceHttps = "true".equals(alistServer.getConfigValue("scheme.force_https"));
-        boolean isHttpPortLegal = !"-1".equals(alistServer.getConfigValue("scheme.https_port"));
-        boolean isHttpsMode = isForceHttps && isHttpPortLegal;
-        //读取 AList 服务运行端口
-        String serverPortStr = alistServer.getConfigValue(isHttpsMode ? "scheme.https_port" : "scheme.http_port");
-        int serverPort = Integer.parseInt(serverPortStr);
-        //AList 服务前端访问地址（IPv6 自动加中括号）
-        return Alist.formatServerUrl(alistServer.getBindingIP(), serverPort, isHttpsMode);
+        return alistServer.getServerAddress();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        handler.removeCallbacks(networkCheckRunnable);
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        }
+    }
+
+    private void registerNetworkMonitor() {
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) return;
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                handler.removeCallbacks(networkCheckRunnable);
+                updateNotificationAddress();
+            }
+
+            @Override
+            public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities capabilities) {
+                handler.removeCallbacks(networkCheckRunnable);
+                updateNotificationAddress();
+            }
+
+            @Override
+            public void onLost(@NonNull Network network) {
+                handler.removeCallbacks(networkCheckRunnable);
+                handler.postDelayed(networkCheckRunnable, 500);
+            }
+        };
+        connectivityManager.registerDefaultNetworkCallback(networkCallback);
+    }
+
+    private void updateNotificationAddress() {
+        if (!alistServer.hasRunning()) return;
+        try {
+            String newAddress = alistServer.refreshServerAddress();
+            if (newAddress == null) return; // 地址未变化
+            String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? CHANNEL_ID : "";
+            updateNotification(newAddress, channelId);
+        } catch (IOException e) {
+            Log.e(TAG, "updateNotificationAddress: " + e.getMessage());
+        }
     }
 
     public void exitService() {
@@ -187,14 +250,8 @@ public class AlistService extends Service {
         }
         //关闭服务
         alistServer.shutdown();
-        if (MainActivity.getInstance() != null) {
-            //状态开关恢复到关闭状态（不触发监听事件）
-            MainActivity.getInstance().serviceSwitch.setCheckedNoEvent(false);
-            //刷新 webview
-            MainActivity.getInstance().webView.reload();
-            //显示服务未开启提示
-            MainActivity.getInstance().runningInfoTextView.setVisibility(View.VISIBLE);
-        }
+        // 通知 Activity 服务已停止
+        sendStatusBroadcast(Alist.STATUS_STOPPED);
         if (wakeLock != null) {
             wakeLock.release();
             wakeLock = null;
@@ -233,6 +290,7 @@ public class AlistService extends Service {
                 .setContentIntent(pendingIntent)
                 .build();
         startForeground(1, initialNotification);
+        registerNetworkMonitor();
     }
 
     @Nullable

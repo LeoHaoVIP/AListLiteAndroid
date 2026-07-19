@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
@@ -20,11 +21,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -35,6 +32,18 @@ import static com.leohao.android.alistlite.AlistLiteApplication.applicationConte
  */
 public class Alist {
     public static String ACTION_STATUS_CHANGED = "com.leohao.android.alistlite.ACTION_STATUS_CHANGED";
+    /**
+     * 状态常量: 服务已启动
+     */
+    public static final String STATUS_STARTED = "started";
+    /**
+     * 状态常量: 服务已停止
+     */
+    public static final String STATUS_STOPPED = "stopped";
+    /**
+     * 状态常量: 服务启动失败
+     */
+    public static final String STATUS_STARTUP_ERROR = "startup_error";
     public static final StringBuilder ALIST_LOGS = new StringBuilder();
     private static final int MAX_LOG_ENTRIES = 50;
     private static final String LOG_SEPARATOR = "\r\n\r\n";
@@ -49,6 +58,10 @@ public class Alist {
      * 配置数据存储目录
      */
     private String configPath;
+    /**
+     * 缓存的服务访问地址，网络变化时通过 refreshServerAddress() 更新
+     */
+    private String cachedServerAddress = Constants.URL_ABOUT_BLANK;
 
     private static class SingletonHolder {
         private static final Alist INSTANCE = new Alist();
@@ -220,7 +233,7 @@ public class Alist {
         File certFile = new File(certPath);
         File keyFile = new File(keyPath);
         if (!certFile.exists() || !keyFile.exists()) {
-            SelfSignedCertGenerator.generate(certPath, keyPath, getBindingIP());
+            SelfSignedCertGenerator.generate(certPath, keyPath, getPrimaryIP());
         }
         // 修改配置
         JSONObject config = readConfig();
@@ -308,135 +321,127 @@ public class Alist {
     }
 
     /**
-     * 获取首选 IPv4 地址（遍历网卡，返回第一个非回环、已启用的 IPv4）
+     * 获取 AList 服务本地访问地址（WebView 与服务器在同一设备，始终用 127.0.0.1）
      */
-    public String getBindingIP() {
-        try {
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface ni = interfaces.nextElement();
-                if (ni.isLoopback() || !ni.isUp()) {
-                    continue;
-                }
-                Enumeration<InetAddress> addresses = ni.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress addr = addresses.nextElement();
-                    if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
-                        return addr.getHostAddress();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.w("Alist", "getBindingIP: " + e.getMessage());
-        }
-        return "localhost";
+    public String getServerAddress() throws IOException {
+        return buildUrl("127.0.0.1");
     }
 
     /**
-     * 获取首选 IPv6 地址（遍历网卡，返回第一个非回环、非 link-local 的全局 IPv6）
+     * 获取 AList 服务外部访问地址（供通知栏复制、远程访问等场景使用）
      */
-    public String getBindingIPv6() {
-        try {
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface ni = interfaces.nextElement();
-                if (ni.isLoopback() || !ni.isUp()) {
-                    continue;
-                }
-                Enumeration<InetAddress> addresses = ni.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress addr = addresses.nextElement();
-                    if (addr instanceof Inet6Address && !addr.isLoopbackAddress()) {
-                        String ip = addr.getHostAddress();
-                        int scopeIdx = ip.indexOf('%');
-                        if (scopeIdx != -1) {
-                            ip = ip.substring(0, scopeIdx);
-                        }
-                        String lower = ip.toLowerCase();
-                        if (!lower.startsWith("fe80:") && !lower.startsWith("fec0:")) {
-                            return ip;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.w("Alist", "getBindingIPv6: " + e.getMessage());
-        }
-        return "localhost";
+    public String getExternalAddress() throws IOException {
+        return buildUrl(getPrimaryIP());
+    }
+
+    private String buildUrl(String ip) throws IOException {
+        boolean isForceHttps = "true".equals(getConfigValue("scheme.force_https"));
+        boolean isHttpPortLegal = !"-1".equals(getConfigValue("scheme.https_port"));
+        boolean isHttpsMode = isForceHttps && isHttpPortLegal;
+        String serverPortStr = getConfigValue(isHttpsMode ? "scheme.https_port" : "scheme.http_port");
+        int serverPort = Integer.parseInt(serverPortStr);
+        return formatServerUrl(ip, serverPort, isHttpsMode);
     }
 
     /**
-     * 获取设备所有本地 IP 地址与网卡名称的映射（非回环、已启用），同时包含 IPv4 和 IPv6，
-     * 出口 IP 排在首位
+     * 获取缓存的服务地址（轻量，可频繁调用）
+     */
+    public String getCachedServerAddress() {
+        return cachedServerAddress;
+    }
+
+    /**
+     * 设置缓存的服务地址（供服务启动时初始化用）
+     */
+    public void setCachedServerAddress(String address) {
+        this.cachedServerAddress = address;
+    }
+
+    /**
+     * 刷新服务地址：重新获取当前 IP 并与缓存比较。
+     * 若地址发生变化，更新缓存并返回新地址；否则返回 null。
      *
-     * @return LinkedHashMap，key=IP地址，value=网卡显示名称（如 wlan0、eth0）
+     * @return 变化后的新地址，未变化返回 null
+     * @throws IOException 读取配置文件失败时抛出
      */
-    public LinkedHashMap<String, String> getAllLocalIPs() {
+    @Nullable
+    public String refreshServerAddress() throws IOException {
+        String newAddress = getExternalAddress();
+        if (!newAddress.equals(cachedServerAddress)) {
+            cachedServerAddress = newAddress;
+            return newAddress;
+        }
+        return null;
+    }
+
+    /**
+     * 获取首选 IP 地址（优先 IPv4，无则取 IPv6，均无则回退 127.0.0.1）
+     */
+    public String getPrimaryIP() {
+        for (String ip : getLocalAddresses().keySet()) {
+            if (!"127.0.0.1".equals(ip) && !"localhost".equals(ip)) {
+                return ip;
+            }
+        }
+        return "127.0.0.1";
+    }
+
+    /**
+     * 获取所有外部可用地址（IPv4 + IPv6），一次遍历网卡完成收集。
+     * 首选 IP 排首位，其余按遍历顺序。不含本地回环地址。
+     *
+     * @return LinkedHashMap，key=IP地址，value=网卡显示名称；无可用网络时为空
+     */
+    public LinkedHashMap<String, String> getLocalAddresses() {
         LinkedHashMap<String, String> ipMap = new LinkedHashMap<>();
+        String primaryIP = null;
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 NetworkInterface ni = interfaces.nextElement();
-                if (ni.isLoopback() || !ni.isUp()) {
-                    continue;
-                }
+                if (ni.isLoopback() || !ni.isUp()) continue;
                 String displayName = ni.getDisplayName();
                 Enumeration<InetAddress> addresses = ni.getInetAddresses();
                 while (addresses.hasMoreElements()) {
                     InetAddress addr = addresses.nextElement();
-                    if (addr.isLoopbackAddress()) {
-                        continue;
-                    }
+                    if (addr.isLoopbackAddress()) continue;
                     if (addr instanceof Inet4Address) {
-                        ipMap.put(addr.getHostAddress(), displayName);
+                        String ip = addr.getHostAddress();
+                        if (primaryIP == null) primaryIP = ip;
+                        ipMap.put(ip, displayName);
                     } else if (addr instanceof Inet6Address) {
                         String ip = addr.getHostAddress();
-                        // 去除 scope id（如 %wlan0）
                         int scopeIdx = ip.indexOf('%');
-                        if (scopeIdx != -1) {
-                            ip = ip.substring(0, scopeIdx);
-                        }
-                        // 过滤 link-local（fe80::/10）和 site-local（fec0::/10，已废弃但保留过滤）
+                        if (scopeIdx != -1) ip = ip.substring(0, scopeIdx);
                         String lower = ip.toLowerCase();
-                        if (lower.startsWith("fe80:") || lower.startsWith("fec0:")) {
-                            continue;
-                        }
+                        if (lower.startsWith("fe80:") || lower.startsWith("fec0:")) continue;
                         ipMap.put(ip, displayName);
                     }
                 }
             }
         } catch (Exception e) {
-            Log.w("Alist", "getAllLocalIPs: " + e.getLocalizedMessage());
+            Log.w("Alist", "getLocalAddresses: " + e.getLocalizedMessage());
         }
-        // 将出口 IP 排在首位（先尝试 IPv4，再尝试 IPv6）
-        String outboundIPv4 = getBindingIP();
-        String outboundIPv6 = getBindingIPv6();
-        String primaryOutbound = null;
-        if (!"localhost".equals(outboundIPv4) && ipMap.containsKey(outboundIPv4)) {
-            primaryOutbound = outboundIPv4;
-        } else if (!"localhost".equals(outboundIPv6) && ipMap.containsKey(outboundIPv6)) {
-            primaryOutbound = outboundIPv6;
+        // 首选 IP 排首位，其余按遍历顺序
+        LinkedHashMap<String, String> sorted = new LinkedHashMap<>();
+        if (primaryIP != null) {
+            String name = ipMap.get(primaryIP);
+            sorted.put(primaryIP, name != null ? name : "出口网络");
         }
-        if (primaryOutbound != null) {
-            String outboundName = ipMap.get(primaryOutbound);
-            LinkedHashMap<String, String> sorted = new LinkedHashMap<>();
-            sorted.put(primaryOutbound, outboundName);
-            for (Map.Entry<String, String> entry : ipMap.entrySet()) {
-                if (!entry.getKey().equals(primaryOutbound)) {
-                    sorted.put(entry.getKey(), entry.getValue());
-                }
+        for (Map.Entry<String, String> entry : ipMap.entrySet()) {
+            if (!entry.getKey().equals(primaryIP)) {
+                sorted.put(entry.getKey(), entry.getValue());
             }
-            return sorted;
         }
-        return ipMap;
+        return sorted;
     }
 
     /**
      * 格式化 AList 服务访问 URL，IPv6 地址自动加中括号
      *
-     * @param ip       IP 地址
-     * @param port     端口号
-     * @param isHttps  是否 HTTPS
+     * @param ip      IP 地址
+     * @param port    端口号
+     * @param isHttps 是否 HTTPS
      * @return 格式化后的完整 URL，如 http://[2001:db8::1]:5244
      */
     public static String formatServerUrl(String ip, int port, boolean isHttps) {
