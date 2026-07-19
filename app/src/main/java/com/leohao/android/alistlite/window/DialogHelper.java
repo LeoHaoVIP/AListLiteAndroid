@@ -41,6 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DialogHelper {
     private static final String TAG = "DialogHelper";
+    private static AlertDialog currentDialog = null;
+
+    private static void dismissCurrent() {
+        if (currentDialog != null && currentDialog.isShowing()) {
+            currentDialog.dismiss();
+        }
+    }
 
     /**
      * 显示远程访问二维码弹框
@@ -86,7 +93,9 @@ public class DialogHelper {
         currentIpText.setPadding(0, 10, 0, 0);
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog);
+        dismissCurrent();
         final AlertDialog alertDialog = dialog.create();
+        currentDialog = alertDialog;
         alertDialog.setTitle("远程访问");
 
         final Runnable refreshView = () -> {
@@ -180,7 +189,8 @@ public class DialogHelper {
         params.setMargins(marginH, 0, marginH, 0);
         editText.setLayoutParams(params);
         inputWrapper.addView(editText);
-        new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
+        dismissCurrent();
+        currentDialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
                 .setTitle("设置管理员密码")
                 .setView(inputWrapper)
                 .setCancelable(true)
@@ -199,15 +209,17 @@ public class DialogHelper {
                         Log.e(TAG, "setAdminPassword: ", e);
                     }
                 })
-                .show();
+                .create();
+        currentDialog.show();
     }
 
     /**
      * HTTPS 开关弹框
      */
     public static void showToggleHttps(Activity activity, Alist alistServer, Runnable onRestart) {
+        dismissCurrent();
         if (alistServer.isHttpsEnabled()) {
-            new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
+            currentDialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
                     .setTitle("关闭 HTTPS")
                     .setMessage("关闭后将使用 HTTP 协议访问，是否确认？")
                     .setPositiveButton("确定关闭", (d, w) -> {
@@ -219,7 +231,8 @@ public class DialogHelper {
                         }
                     })
                     .setNegativeButton("取消", null)
-                    .show();
+                    .create();
+            currentDialog.show();
         } else {
             final EditText portInput = new EditText(activity);
             portInput.setHint("5245");
@@ -230,14 +243,15 @@ public class DialogHelper {
             params.setMargins(marginH, 0, marginH, 0);
             portInput.setLayoutParams(params);
             inputWrapper.addView(portInput);
-            AlertDialog enableDialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
+            currentDialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
                     .setTitle("启用 HTTPS")
                     .setMessage("将生成自签名证书，浏览器访问时会提示不安全，请手动信任。\n请输入 HTTPS 端口：")
                     .setView(inputWrapper)
                     .setPositiveButton("启用", null)
                     .setNegativeButton("取消", null)
                     .create();
-            enableDialog.show();
+            currentDialog.show();
+            AlertDialog enableDialog = currentDialog;
             enableDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String portStr = portInput.getText().toString().trim();
                 int port = portStr.isEmpty() ? 5245 : Integer.parseInt(portStr);
@@ -261,7 +275,9 @@ public class DialogHelper {
      * AList 配置查看/编辑弹框
      */
     public static void showConfigEditor(Activity activity) {
+        dismissCurrent();
         AlertDialog dialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog).create();
+        currentDialog = dialog;
         LayoutInflater inflater = LayoutInflater.from(activity);
         View dialogView = inflater.inflate(R.layout.config_view, null);
         JsonRecyclerView jsonView = dialogView.findViewById(R.id.json_view_config);
@@ -327,7 +343,9 @@ public class DialogHelper {
      * 服务日志查看弹框
      */
     public static void showLogViewer(Activity activity) {
+        dismissCurrent();
         AlertDialog dialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog).create();
+        currentDialog = dialog;
         LayoutInflater inflater = LayoutInflater.from(activity);
         View dialogView = inflater.inflate(R.layout.service_logs_view, null);
         TextView textView = dialogView.findViewById(R.id.tv_service_logs);

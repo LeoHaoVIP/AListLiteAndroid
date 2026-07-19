@@ -7,6 +7,9 @@ import android.app.DownloadManager;
 import android.content.*;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -44,7 +47,10 @@ import com.leohao.android.alistlite.window.OnMenuActionListener;
 import com.leohao.android.alistlite.window.PopupMenuWindow;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -92,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         initBroadcastScheduler();
         initNetworkMonitor();
         initStatusReceiver();
+        updateAppShortcuts();
+        handleShortcutIntent(getIntent());
     }
 
     @Override
@@ -117,6 +125,20 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             connectivityManager.unregisterNetworkCallback(networkCallback);
         if (statusReceiver != null)
             LocalBroadcastManager.getInstance(this).unregisterReceiver(statusReceiver);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleShortcutIntent(intent);
+    }
+
+    private void handleShortcutIntent(Intent intent) {
+        if (intent == null) return;
+        if ("remote_access".equals(intent.getStringExtra("shortcut"))) {
+            DialogHelper.showQrCode(this, alistServer);
+        }
     }
 
     @Override
@@ -422,15 +444,18 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                         if (address != null) webView.loadUrl(address);
                         runningInfoTextView.setVisibility(View.GONE);
                         updateSslIndicator();
+                        updateAppShortcuts();
                         break;
                     }
                     case Alist.STATUS_STOPPED:
                         serviceSwitch.setCheckedNoEvent(false);
                         webView.reload();
                         runningInfoTextView.setVisibility(View.VISIBLE);
+                        updateAppShortcuts();
                         break;
                     case Alist.STATUS_STARTUP_ERROR:
                         serviceSwitch.setCheckedNoEvent(false);
+                        updateAppShortcuts();
                         break;
                 }
             }
@@ -439,23 +464,22 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 .registerReceiver(statusReceiver, new IntentFilter(Alist.ACTION_STATUS_CHANGED));
     }
 
-    private String lastShownAddress = null;
+    private Set<String> lastAddressSet = Collections.emptySet();
     private boolean firstNetworkCheck = true;
 
-    /**
-     * 网络变化时弹框提示外部地址变化（WebView 始终用 127.0.0.1 无需重载）
-     */
+    /** 网络变化时弹框提示（比较全量 IP 集合，避免遍历顺序导致误判） */
     private void updateServerAddressIfNeeded() {
         if (alistServer == null || !alistServer.hasRunning()) return;
         try {
-            String address = alistServer.getExternalAddress();
+            Set<String> currentSet = alistServer.getLocalAddresses().keySet();
             if (firstNetworkCheck) {
                 firstNetworkCheck = false;
-                lastShownAddress = address;
-                return; // 首次启动不弹框，仅记录当前地址
+                lastAddressSet = currentSet;
+                return;
             }
-            if (address.equals(lastShownAddress)) return;
-            lastShownAddress = address;
+            if (currentSet.equals(lastAddressSet)) return;
+            lastAddressSet = currentSet;
+            String address = alistServer.getExternalAddress();
             Log.i(TAG, "外部地址已更新为 " + address);
             boolean isLocal = address.contains("localhost") || address.contains("127.0.0.1");
             if (networkChangeDialog != null && networkChangeDialog.isShowing()) {
@@ -479,6 +503,46 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             boolean show = alistServer.isHttpsEnabled() && alistServer.hasRunning();
             sslIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
         }
+    }
+
+    /** 更新桌面图标长按快捷菜单 */
+    private void updateAppShortcuts() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return;
+        ShortcutManager sm = getSystemService(ShortcutManager.class);
+        if (sm == null) return;
+
+        boolean running = alistServer != null && alistServer.hasRunning();
+        boolean https = alistServer != null && alistServer.isHttpsEnabled();
+        List<ShortcutInfo> shortcuts = new ArrayList<>();
+
+        if (running) {
+            shortcuts.add(new ShortcutInfo.Builder(this, "stop_service")
+                    .setShortLabel("关闭服务")
+                    .setIcon(Icon.createWithResource(this, R.drawable.ic_shortcut_stop))
+                    .setIntent(new Intent(this, ShortcutActivity.class)
+                            .setAction(Intent.ACTION_VIEW)
+                            .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                            .putExtra("service_action", AlistService.ACTION_SHUTDOWN))
+                    .build());
+            shortcuts.add(new ShortcutInfo.Builder(this, "remote_access")
+                    .setShortLabel("远程访问")
+                    .setIcon(Icon.createWithResource(this, R.drawable.ic_menu_qrcode))
+                    .setIntent(new Intent(this, MainActivity.class)
+                            .setAction(Intent.ACTION_VIEW)
+                            .putExtra("shortcut", "remote_access"))
+                    .build());
+        } else {
+            shortcuts.add(new ShortcutInfo.Builder(this, "start_service")
+                    .setShortLabel("启动服务")
+                    .setIcon(Icon.createWithResource(this, R.drawable.ic_shortcut_start))
+                    .setIntent(new Intent(this, ShortcutActivity.class)
+                            .setAction(Intent.ACTION_VIEW)
+                            .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                            .putExtra("service_action", AlistService.ACTION_STARTUP))
+                    .build());
+        }
+
+        sm.setDynamicShortcuts(shortcuts);
     }
 
     private void readyToStartService() {
@@ -511,6 +575,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             try {
                 readyToStartService();
                 updateSslIndicator();
+                updateAppShortcuts();
             } catch (RuntimeException e) {
                 showToast("服务重启失败: " + e.getMessage());
                 Log.e(TAG, "restartService: " + e.getMessage());
@@ -532,10 +597,14 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             return;
         }
         try {
-            Intent intent = Intent.parseUri(alistServer.getServerAddress(), Intent.URI_INTENT_SCHEME);
-            startActivity(intent);
-        } catch (Exception e) {
-            showToast("浏览器访问失败");
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(alistServer.getServerAddress()));
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                showToast("未找到可用的浏览器");
+            }
+        } catch (IOException e) {
+            showToast("获取服务地址失败");
         }
     }
 

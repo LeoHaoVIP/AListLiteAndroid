@@ -43,6 +43,14 @@
             </intent-filter>
         </activity>
         <activity
+                android:name=".ShortcutActivity"
+                android:exported="true"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:excludeFromRecents="true"
+                android:launchMode="singleInstance"
+                android:taskAffinity=""/>
+
+        <activity
                 android:name=".PermissionActivity"
                 android:hardwareAccelerated="true"
                 android:launchMode="singleTask"
