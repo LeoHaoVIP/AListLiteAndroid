@@ -33,6 +33,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.http.Method;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
@@ -47,11 +51,7 @@ import com.leohao.android.alistlite.window.OnMenuActionListener;
 import com.leohao.android.alistlite.window.PopupMenuWindow;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -317,6 +317,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                // Blob 下载拦截
                 view.evaluateJavascript(
                         "(function(){" +
                                 "  var origClick=HTMLAnchorElement.prototype.click;" +
@@ -467,7 +468,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private Set<String> lastAddressSet = Collections.emptySet();
     private boolean firstNetworkCheck = true;
 
-    /** 网络变化时弹框提示（比较全量 IP 集合，避免遍历顺序导致误判） */
+    /**
+     * 网络变化时弹框提示（比较全量 IP 集合，避免遍历顺序导致误判）
+     */
     private void updateServerAddressIfNeeded() {
         if (alistServer == null || !alistServer.hasRunning()) return;
         try {
@@ -505,7 +508,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         }
     }
 
-    /** 更新桌面图标长按快捷菜单 */
+    /**
+     * 更新桌面图标长按快捷菜单
+     */
     private void updateAppShortcuts() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) return;
         ShortcutManager sm = getSystemService(ShortcutManager.class);
@@ -597,14 +602,86 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             return;
         }
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(alistServer.getServerAddress()));
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            } else {
-                showToast("未找到可用的浏览器");
-            }
-        } catch (IOException e) {
+            startActivity(Intent.parseUri(alistServer.getServerAddress(), Intent.URI_INTENT_SCHEME));
+        } catch (Exception e) {
             showToast("获取服务地址失败");
+        }
+    }
+
+    @Override
+    public void oneClickLogin(View view) {
+        if (!alistServer.hasRunning()) {
+            showToast("AList 服务未启动");
+            return;
+        }
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("一键登录")
+                .setMessage("一键登录仅在通过 APP 设置管理员密码时有效，若您通过浏览器或其他方式修改了密码，一键登录可能不会成功。是否继续？")
+                .setPositiveButton("继续", (dialog, which) -> performOneClickLogin())
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 执行一键登录：调用 AList 登录 API，获取 token 后注入 WebView localStorage
+     */
+    private void performOneClickLogin() {
+        try {
+            String serverAddress = alistServer.getServerAddress();
+            String username = alistServer.getAdminUser();
+            if (username == null || username.isEmpty()) {
+                showToast("无法获取管理员用户名");
+                return;
+            }
+            String password = SharedDataHelper.getInstance()
+                    .getStringShareData(Constants.ANDROID_SHARED_DATA_KEY_ADMIN_PASSWORD);
+            if (password == null || password.isEmpty()) {
+                password = Constants.ALIST_DEFAULT_PASSWORD;
+            }
+            final String apiUrl = serverAddress + "/api/auth/login";
+            final String finalPassword = password;
+            showToast("正在一键登录");
+            // 在后台线程调用登录 API
+            new Thread(() -> {
+                try {
+                    JSONObject requestBody = JSONUtil.createObj()
+                            .set("username", username)
+                            .set("password", finalPassword);
+                    String response = HttpUtil.createRequest(Method.POST, apiUrl)
+                            .body(requestBody.toString())
+                            .execute()
+                            .body();
+                    JSONObject json = JSONUtil.parseObj(response);
+                    if (json.getInt("code") != 200) {
+                        runOnUiThread(() -> showToast("一键登录失败：" + json.getStr("message", "未知错误")));
+                        return;
+                    }
+                    String token = json.getJSONObject("data").getStr("token");
+                    if (token == null || token.isEmpty()) {
+                        runOnUiThread(() -> showToast("一键登录失败：无法获取登录凭证"));
+                        return;
+                    }
+                    final String escapedToken = token.replace("\\", "\\\\").replace("'", "\\'");
+                    runOnUiThread(() -> {
+                        webView.evaluateJavascript(
+                                "localStorage.setItem('token','" + escapedToken + "');", null);
+                        try {
+                            webView.loadUrl(alistServer.getServerAddress());
+                        } catch (IOException e) {
+                            showToast("获取服务地址失败");
+                        }
+                        showToast("一键登录成功");
+                    });
+                } catch (Exception e) {
+                    runOnUiThread(() -> {
+                        showToast("一键登录失败：" + e.getMessage());
+                        Log.e(TAG, "oneClickLogin: ", e);
+                    });
+                }
+            }).start();
+        } catch (Exception e) {
+            showToast("一键登录失败: " + e.getMessage());
+            Log.e(TAG, "oneClickLogin: ", e);
         }
     }
 

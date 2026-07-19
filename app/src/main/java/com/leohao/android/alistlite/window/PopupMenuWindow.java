@@ -77,6 +77,11 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             listener.startPermissionCheckActivity(view);
         });
+        //一键登录
+        popupView.findViewById(R.id.btn_oneClickLogin).setOnClickListener((view) -> {
+            dismiss();
+            listener.oneClickLogin(view);
+        });
         //密码设置
         popupView.findViewById(R.id.btn_setAdminPassword).setOnClickListener((view) -> {
             dismiss();

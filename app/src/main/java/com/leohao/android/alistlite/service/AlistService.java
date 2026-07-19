@@ -22,6 +22,7 @@ import com.leohao.android.alistlite.broadcast.CopyReceiver;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.AppUtil;
 import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.SharedDataHelper;
 
 import java.io.IOException;
 
@@ -83,6 +84,8 @@ public class AlistService extends Service {
                         alistServer.addLocalStorageDriver(Environment.getExternalStorageDirectory().getAbsolutePath(), Constants.ALIST_STORAGE_DRIVER_MOUNT_PATH);
                         //初始化密码
                         alistServer.setAdminPassword(Constants.ALIST_DEFAULT_PASSWORD);
+                        // 持久化存储默认密码，供一键登录使用
+                        SharedDataHelper.getInstance().putSharedData(Constants.ANDROID_SHARED_DATA_KEY_ADMIN_PASSWORD, Constants.ALIST_DEFAULT_PASSWORD);
                         //管理员用户名
                         String adminUsername = alistServer.getAdminUser();
                         showToast(String.format("初始登录信息：%s | %s", adminUsername, Constants.ALIST_DEFAULT_PASSWORD), Toast.LENGTH_LONG);

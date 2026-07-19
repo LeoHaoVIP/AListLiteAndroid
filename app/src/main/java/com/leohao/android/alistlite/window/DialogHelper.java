@@ -24,6 +24,7 @@ import com.leohao.android.alistlite.R;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.SharedDataHelper;
 import com.yuyh.jsonviewer.library.JsonRecyclerView;
 import org.apache.commons.io.FileUtils;
 
@@ -202,6 +203,8 @@ public class DialogHelper {
                     }
                     try {
                         alistServer.setAdminPassword(pwd);
+                        // 持久化存储密码，供一键登录使用
+                        SharedDataHelper.getInstance().putSharedData(Constants.ANDROID_SHARED_DATA_KEY_ADMIN_PASSWORD, pwd);
                         String adminUsername = alistServer.getAdminUser();
                         Toast.makeText(activity, String.format("管理员密码已更新：%s | %s", adminUsername, pwd), Toast.LENGTH_LONG).show();
                     } catch (Exception e) {

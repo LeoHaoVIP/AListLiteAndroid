@@ -26,5 +26,7 @@ public interface OnMenuActionListener {
 
     void showAliTvTokenGetPage(View view);
 
+    void oneClickLogin(View view);
+
     void showSystemInfo(View view);
 }

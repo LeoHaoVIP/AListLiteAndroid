@@ -113,6 +113,24 @@
                     android:letterSpacing="0.05"/>
 
             <TextView
+                    android:id="@+id/btn_oneClickLogin"
+                    android:drawableStart="@drawable/ic_menu_login"
+                    android:drawablePadding="12dp"
+                    android:focusable="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingBottom="11dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/menu_text_color"
+                    android:fontFamily="sans-serif"
+                    android:clickable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:text="@string/popup_menu_item_one_click_login"/>
+
+            <TextView
                     android:id="@+id/btn_setAdminPassword"
                     android:drawableStart="@drawable/ic_menu_key"
                     android:drawablePadding="12dp"
