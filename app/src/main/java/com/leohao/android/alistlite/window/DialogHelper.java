@@ -287,9 +287,16 @@ public class DialogHelper {
         ImageButton editButton = dialogView.findViewById(R.id.btn_edit_config);
         EditText jsonEditText = dialogView.findViewById(R.id.edit_text_config);
         jsonView.setTextSize(14);
-        String dataPath = activity.getExternalFilesDir("data").getAbsolutePath();
-        String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
+        String dataPath = Alist.getInstance().getDataPath();
         String configJsonData;
+        if (dataPath == null) {
+            configJsonData = Constants.ERROR_MSG_CONFIG_DATA_READ.replace("MSG", "无法获取数据目录");
+            jsonView.bindJson(configJsonData);
+            dialog.setView(dialogView);
+            dialog.show();
+            return;
+        }
+        String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
         File configFile = new File(configPath);
         try {
             configJsonData = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);

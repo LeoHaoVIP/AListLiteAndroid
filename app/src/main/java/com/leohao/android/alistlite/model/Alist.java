@@ -53,7 +53,7 @@ public class Alist {
     /**
      * 应用数据存储目录（懒加载，避免 applicationContext 未初始化导致 NPE）
      */
-    private String dataPath;
+    private volatile String dataPath;
     /**
      * 配置数据存储目录
      */
@@ -75,31 +75,38 @@ public class Alist {
     }
 
     /**
-     * 获取应用数据目录，带空安全保护
-     * 当外部存储不可用时回退到内部存储
+     * 获取应用数据目录，带空安全保护。
+     * 优先使用内部存储（避免原生 Go 代码在外部存储上的 SELinux 权限问题），
+     * 同时兼容旧版本：若外部存储已有数据而内部存储尚无，则自动迁移。
      */
-    private String getDataPath() {
+    public String getDataPath() {
         if (dataPath == null) {
             synchronized (this) {
                 if (dataPath == null) {
                     Context ctx = applicationContext;
                     if (ctx == null) {
-                        // 极端情况：applicationContext 尚未初始化，使用 /data/data/<pkg>/files/data
                         Log.w("Alist", "applicationContext is null, this should not happen normally");
                         return null;
                     }
+                    // 优先使用内部存储，避免原生代码 SELinux 权限问题
+                    File intDir = new File(ctx.getFilesDir(), "data");
+                    // 检查外部存储是否有旧数据需要迁移
                     File extDir = ctx.getExternalFilesDir("data");
-                    if (extDir != null) {
-                        dataPath = extDir.getAbsolutePath();
-                    } else {
-                        // 外置存储不可用，回退到内置存储
-                        File intDir = new File(ctx.getFilesDir(), "data");
-                        if (!intDir.exists()) {
-                            intDir.mkdirs();
+                    if (extDir != null && extDir.exists() && !intDir.exists()) {
+                        // 外部存储存在旧数据，迁移至内部存储
+                        try {
+                            FileUtils.copyDirectory(extDir, intDir);
+                            Log.i("Alist", "数据已从外部存储迁移到内部存储: " + intDir.getAbsolutePath());
+                        } catch (IOException e) {
+                            Log.w("Alist", "数据迁移失败，沿用外部存储作为数据目录: " + e.getMessage());
+                            dataPath = extDir.getAbsolutePath();
+                            return dataPath;
                         }
-                        dataPath = intDir.getAbsolutePath();
-                        Log.w("Alist", "外部存储不可用，回退到内部存储: " + dataPath);
                     }
+                    if (!intDir.exists()) {
+                        intDir.mkdirs();
+                    }
+                    dataPath = intDir.getAbsolutePath();
                 }
             }
         }
