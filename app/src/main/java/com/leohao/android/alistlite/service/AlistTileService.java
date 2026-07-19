@@ -29,6 +29,9 @@ public class AlistTileService extends TileService {
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent == null) {
+                return;
+            }
             //根据接收到的广播消息类型，更新磁贴状态
             updateTileState(ACTION_TILE_ON.equals(intent.getAction()) ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
         }

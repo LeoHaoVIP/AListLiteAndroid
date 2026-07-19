@@ -17,6 +17,9 @@ public class CopyReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String serverAddress = intent.getStringExtra("address");
+        if (serverAddress == null) {
+            return;
+        }
         showToast("AList 服务地址已复制");
         clipBoardHelper.copyText(serverAddress);
     }

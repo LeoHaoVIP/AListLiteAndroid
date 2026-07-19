@@ -29,7 +29,7 @@ public class BootCompleteReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         //处理启动完成的广播消息
-        if (intent.getAction().equals(ACTION_BOOT_COMPLETED)) {
+        if (ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             Intent serviceIntent = new Intent(context, AlistService.class).setAction(AlistService.ACTION_STARTUP);
             try {
                 // Android 12+ (API 31+) 禁止从后台启动前台服务

@@ -50,6 +50,10 @@ public class AlistService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // 当系统因 START_STICKY 重启 Service 时，intent 可能为 null，直接返回避免 NPE
+        if (intent == null) {
+            return START_STICKY;
+        }
         String channelId;
         // 8.0 以上需要特殊处理
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
