@@ -13,6 +13,7 @@ import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.*;
@@ -429,7 +430,14 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 handler.postDelayed(networkCheckRunnable, 2000);
             }
         };
-        connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // API 26+ — registerDefaultNetworkCallback 可用
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        } else {
+            // API 21-25 — 用 registerNetworkCallback 代替（监听所有网络作为回退方案）
+            NetworkRequest request = new NetworkRequest.Builder().build();
+            connectivityManager.registerNetworkCallback(request, networkCallback);
+        }
     }
 
     private void initStatusReceiver() {
