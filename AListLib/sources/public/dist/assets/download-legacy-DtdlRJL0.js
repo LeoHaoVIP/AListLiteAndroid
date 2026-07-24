@@ -1,1 +1,0 @@
-System.register(["./File-legacy-f6C_-Zjn.js"],function(e,t){var n;return{setters:[function(e){n=e.t}],execute:function(){e("Download",n),e("default",n)}}});

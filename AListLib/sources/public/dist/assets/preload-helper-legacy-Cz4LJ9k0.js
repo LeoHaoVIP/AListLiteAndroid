@@ -1,0 +1,1 @@
+(function(){System.register([],function(e,t){return{setters:[],execute:function(){e(`t`,function(e,t,n){let r=Promise.resolve();function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})})}}})})();

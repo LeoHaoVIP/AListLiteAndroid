@@ -1,0 +1,1 @@
+import{Ki as e,Xn as t,Zi as n,aa as r,ca as i}from"./store-DoVBvgh2.js";var a=a=>{let[o,s]=r(!1);return n(e,{get when(){return!o()},get fallback(){return a.fallbackErr},get children(){return n(t,i(a,{onError:()=>{s(!0)}}))}})};export{a as t};

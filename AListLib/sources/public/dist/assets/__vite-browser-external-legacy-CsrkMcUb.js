@@ -1,0 +1,1 @@
+(function(){System.register([`./rolldown-runtime-legacy-DVwFG6gV.js`],function(e,t){var n;return{setters:[function(e){n=e.t}],execute:function(){e(`t`,n((e,t)=>{t.exports={}}))}}})})();

@@ -1,0 +1,1 @@
+var e=[],t=t=>{e=t},n=t=>(t=t.toLowerCase(),e.some(e=>t.endsWith(e)));export{t as n,n as t};

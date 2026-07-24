@@ -1,0 +1,1 @@
+(function(){System.register([],function(e,t){var n;return{setters:[],execute:function(){e(`t`,n=`简体中文`),e(`n`,{lang:n})}}})})();

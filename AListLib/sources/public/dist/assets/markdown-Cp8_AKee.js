@@ -1,1 +1,0 @@
-import{Bo as e,In as t,Qn as n,ft as r,un as i,xi as a}from"./index-CkzJPq2X.js";var o=()=>{let[o]=n();return e(i,{get loading(){return o.loading},get children(){return e(r,{get children(){return o()?.content},get ext(){return a(t.obj.name)},toc:!0})}})};export{o as default};

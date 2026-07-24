@@ -1,0 +1,1 @@
+(function(){System.register([],function(e,t){var n;return{setters:[],execute:function(){n=[],e(`n`,e=>{n=e}),e(`t`,e=>(e=e.toLowerCase(),n.some(t=>e.endsWith(t))))}}})})();

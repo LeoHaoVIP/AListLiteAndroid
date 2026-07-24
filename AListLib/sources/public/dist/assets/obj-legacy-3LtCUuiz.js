@@ -1,0 +1,1 @@
+(function(){System.register([],function(e,t){return{setters:[],execute:function(){e(`t`,function(e){return e[e.UNKNOWN=0]=`UNKNOWN`,e[e.FOLDER=1]=`FOLDER`,e[e.VIDEO=2]=`VIDEO`,e[e.AUDIO=3]=`AUDIO`,e[e.TEXT=4]=`TEXT`,e[e.IMAGE=5]=`IMAGE`,e}({}))}}})})();
