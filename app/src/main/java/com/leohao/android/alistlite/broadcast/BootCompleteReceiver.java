@@ -38,8 +38,8 @@ public class BootCompleteReceiver extends BroadcastReceiver {
                     // 尝试启动，如果失败则发出通知提示用户手动打开应用
                     try {
                         ContextCompat.startForegroundService(context, serviceIntent);
-                    } catch (RuntimeException e) {
-                        Log.w("BootCompleteReceiver", "Android 12+ 禁止后台启动前台服务，发送通知提醒用户");
+                    } catch (Exception e) {
+                        Log.w("BootCompleteReceiver", "Android 12+ 禁止后台启动前台服务，发送通知提醒用户: " + e.getMessage());
                         sendBootStartNotification(context);
                     }
                 } else {

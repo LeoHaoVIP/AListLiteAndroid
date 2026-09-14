@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.*;
 import android.service.quicksettings.TileService;
 import android.util.Log;
@@ -234,7 +235,12 @@ public class AlistService extends Service {
                 handler.postDelayed(networkCheckRunnable, 500);
             }
         };
-        connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        } else {
+            NetworkRequest request = new NetworkRequest.Builder().build();
+            connectivityManager.registerNetworkCallback(request, networkCallback);
+        }
     }
 
     private void updateNotificationAddress() {
@@ -296,7 +302,20 @@ public class AlistService extends Service {
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentIntent(pendingIntent)
                 .build();
-        startForeground(1, initialNotification);
+        try {
+            startForeground(1, initialNotification);
+        } catch (RuntimeException e) {
+            // Android 12+ (API 31+) 从后台启动前台服务会被系统拒绝
+            // 此处捕获异常，避免因 startForeground() 失败导致应用崩溃
+            Log.w(TAG, "startForeground 失败（可能因后台启动限制）: " + e.getMessage());
+            // 无法作为前台服务运行，释放资源并退出
+            if (wakeLock != null) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+            stopSelf();
+            return;
+        }
         registerNetworkMonitor();
     }
 
