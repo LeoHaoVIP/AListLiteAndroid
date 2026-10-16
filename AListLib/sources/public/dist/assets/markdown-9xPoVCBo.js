@@ -1,1 +1,0 @@
-import{E as e,H as t,Qi as n,an as r}from"./store-C0ogBnvm.js";import{Z as i,an as a}from"./index-CelfHslL.js";var o=()=>{let[o]=t();return n(a,{get loading(){return o.loading},get children(){return n(i,{get children(){return o()?.content},get ext(){return r(e.obj.name)},toc:!0})}})};export{o as default};

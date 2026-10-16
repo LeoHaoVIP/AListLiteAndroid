@@ -1,0 +1,1 @@
+import{$ as e,X as t,aa as n}from"./store-BsSRYN7v.js";import{a as r,o as i}from"./helper-K1wuxsab.js";var a=()=>{let a=e();return t(`manage.sidemenu.upload`),n(i,{type:`upload`,get nameAnalyzer(){return{regex:/^upload (.+) to \[(.+)]\((.+)\)$/,title:e=>e[1],attrs:{[a(`tasks.attr.upload.path`)]:e=>r(e[2],e[3])}}}})};export{a as default};

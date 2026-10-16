@@ -1,1 +1,0 @@
-import{Qi as e,Zn as t,la as n,oa as r,qi as i}from"./store-C0ogBnvm.js";var a=a=>{let[o,s]=r(!1);return e(i,{get when(){return!o()},get fallback(){return a.fallbackErr},get children(){return e(t,n(a,{onError:()=>{s(!0)}}))}})};export{a as t};
