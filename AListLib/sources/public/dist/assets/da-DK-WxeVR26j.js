@@ -1,0 +1,1 @@
+var e=`Engelsk`,t={lang:e};export{e as n,t};

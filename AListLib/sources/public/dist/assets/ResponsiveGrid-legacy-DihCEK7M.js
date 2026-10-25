@@ -1,0 +1,1 @@
+(function(){System.register([`./store-legacy-BSWt4atL.js`],function(e,t){var n,r,i;return{setters:[function(e){n=e.cr,r=e.p,i=e.va}],execute:function(){e(`t`,e=>{let t=r(`settings_layout`),a;return t===`responsive`&&(a=`repeat(auto-fill, minmax(424px, 1fr))`),i(n,{w:`$full`,gap:`$2`,templateColumns:{"@initial":`1fr`,"@lg":a},get children(){return e.children}})})}}})})();

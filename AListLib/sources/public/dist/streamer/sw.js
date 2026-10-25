@@ -112,7 +112,7 @@ self.onfetch = (event) => {
   if (headers.has("Content-Disposition")) {
     responseHeaders.set(
       "Content-Disposition",
-      headers.get("Content-Disposition")
+      headers.get("Content-Disposition"),
     )
   }
 
@@ -131,7 +131,7 @@ self.onfetch = (event) => {
       .replace(/\*/g, "%2A")
     responseHeaders.set(
       "Content-Disposition",
-      "attachment; filename*=UTF-8''" + fileName
+      "attachment; filename*=UTF-8''" + fileName,
     )
   }
 

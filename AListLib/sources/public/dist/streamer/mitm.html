@@ -58,7 +58,7 @@
                   sw = swReg.active
                   resolve()
                 }
-              })
+              }),
             )
           })
         )
@@ -89,7 +89,7 @@
 
     // pass along version for possible backwards compatibility in sw.js
     data.streamSaverVersion = new URLSearchParams(location.search).get(
-      "version"
+      "version",
     )
 
     if (data.streamSaverVersion === "1.2.0") {
@@ -99,7 +99,7 @@
     /** @since v2.0.0 */
     if (!data.headers) {
       console.warn(
-        "[StreamSaver] pass `data.headers` that you would like to pass along to the service worker\nit should be a 2D array or a key/val object that fetch's Headers api accepts"
+        "[StreamSaver] pass `data.headers` that you would like to pass along to the service worker\nit should be a 2D array or a key/val object that fetch's Headers api accepts",
       )
     } else {
       // test if it's correct
@@ -110,7 +110,7 @@
     /** @since v2.0.0 */
     if (typeof data.filename === "string") {
       console.warn(
-        "[StreamSaver] You shouldn't send `data.filename` anymore. It should be included in the Content-Disposition header option"
+        "[StreamSaver] You shouldn't send `data.filename` anymore. It should be included in the Content-Disposition header option",
       )
       // Do what File constructor do with fileNames
       data.filename = data.filename.replace(/\//g, ":")
@@ -119,21 +119,21 @@
     /** @since v2.0.0 */
     if (data.size) {
       console.warn(
-        "[StreamSaver] You shouldn't send `data.size` anymore. It should be included in the content-length header option"
+        "[StreamSaver] You shouldn't send `data.size` anymore. It should be included in the content-length header option",
       )
     }
 
     /** @since v2.0.0 */
     if (data.readableStream) {
       console.warn(
-        "[StreamSaver] You should send the readableStream in the messageChannel, not through mitm"
+        "[StreamSaver] You should send the readableStream in the messageChannel, not through mitm",
       )
     }
 
     /** @since v2.0.0 */
     if (!data.pathname) {
       console.warn(
-        "[StreamSaver] Please send `data.pathname` (eg: /pictures/summer.jpg)"
+        "[StreamSaver] Please send `data.pathname` (eg: /pictures/summer.jpg)",
       )
       data.pathname = Math.random().toString().slice(-6) + "/" + data.filename
     }

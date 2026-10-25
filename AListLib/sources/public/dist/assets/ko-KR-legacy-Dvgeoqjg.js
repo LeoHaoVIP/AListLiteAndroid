@@ -1,0 +1,1 @@
+(function(){System.register([],function(e,t){var n;return{setters:[],execute:function(){e(`n`,n=`영어`),e(`t`,{lang:n})}}})})();

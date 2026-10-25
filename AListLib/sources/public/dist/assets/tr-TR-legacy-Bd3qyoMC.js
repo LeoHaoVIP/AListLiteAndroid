@@ -1,0 +1,1 @@
+(function(){System.register([],function(e,t){var n;return{setters:[],execute:function(){e(`t`,n=`İngilizce`),e(`n`,{lang:n})}}})})();

@@ -1,0 +1,1 @@
+var e=`영어`,t={lang:e};export{e as n,t};

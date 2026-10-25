@@ -1,0 +1,1 @@
+(function(){System.register([`./store-legacy-BSWt4atL.js`,`./Upload-legacy-BbtFb4_K.js`],function(e,t){var n,r,i,a;return{setters:[function(e){n=e.Vn,r=e.hi,i=e.va},function(e){a=e.default}],execute:function(){e(`default`,()=>i(r,{justifyContent:`center`,h:`100vh`,get children(){return i(n,{w:`$md`,get children(){return i(a,{})}})}}))}}})})();
