@@ -1,1 +1,0 @@
-(function(){System.register([`./store-legacy-BSWt4atL.js`],function(e,t){var n,r,i,a,o;return{setters:[function(e){n=e.Ea,r=e.hr,i=e.ka,a=e.pa,o=e.va}],execute:function(){e(`t`,e=>{let[t,s]=n(!1);return o(a,{get when(){return!t()},get fallback(){return e.fallbackErr},get children(){return o(r,i(e,{onError:()=>{s(!0)}}))}})})}}})})();
