@@ -114,6 +114,16 @@ public class AlistService extends Service {
                     String toastMsg = alistServer.isHttpsEnabled() ? "AList 服务已开启（HTTPS 加密）" : "AList 服务已开启";
                     showToast(toastMsg);
                 }
+            } catch (LinkageError e) {
+                // 原生库 libgojni.so 加载失败（UnsatisfiedLinkError 等），通常是设备/系统版本过低不兼容
+                // LinkageError 是 Error 的子类，无法被下方 catch (Exception) 捕获，必须单独处理
+                Log.e(TAG, "原生库加载失败，设备可能不兼容", e);
+                sendStatusBroadcast(Alist.STATUS_STARTUP_ERROR);
+                // 修正磁贴状态（磁贴 onClick 已预先切换为开启）
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    updateAlistTileServiceState(AlistTileService.ACTION_TILE_OFF);
+                }
+                showToast("当前设备系统版本过低，无法加载 AList 核心组件，服务无法启动");
             } catch (Exception e) {
                 Log.e(TAG, e.getLocalizedMessage());
                 // 通知 Activity 启动失败

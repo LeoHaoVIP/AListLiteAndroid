@@ -54,6 +54,8 @@ import com.leohao.android.alistlite.window.PopupMenuWindow;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -84,6 +86,19 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private ValueCallback<Uri[]> mFilePathCallback;
     private ValueCallback<Uri> mUploadMessage;
     private static final int FILE_CHOOSER_REQUEST_CODE = 100;
+    /**
+     * OpenList 4.x 前端（Vue3 + Vite）依赖较新的 Chromium 内核（ES2020：可选链/空值合并等）。
+     * 低于该版本的系统 WebView 无法渲染页面，表现为白屏/黑屏。
+     */
+    private static final int MIN_SUPPORTED_CHROMIUM_VERSION = 80;
+    /**
+     * 检测到的 WebView 内核（Chromium）主版本号，-1 表示未检测或检测失败
+     */
+    private int webViewChromiumVersion = -1;
+    /**
+     * 是否已就内核过低提示过用户（保证只提示一次）
+     */
+    private boolean webViewCompatWarned = false;
 
     // ==================== 生命周期 ====================
 
@@ -318,6 +333,13 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                // WebView 内核过旧时提示一次，避免用户面对白屏/黑屏不知所措
+                if (!webViewCompatWarned && webViewChromiumVersion > 0
+                        && webViewChromiumVersion < MIN_SUPPORTED_CHROMIUM_VERSION
+                        && url.startsWith("http")) {
+                    webViewCompatWarned = true;
+                    showWebViewCompatDialog();
+                }
                 // Blob 下载拦截
                 view.evaluateJavascript(
                         "(function(){" +
@@ -392,6 +414,58 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             dm.enqueue(request);
             Toast.makeText(getApplicationContext(), "开始下载: " + fileName, Toast.LENGTH_SHORT).show();
         });
+        // 检测 WebView 内核版本，用于在页面无法渲染时给出明确提示
+        webViewChromiumVersion = detectWebViewChromiumVersion();
+    }
+
+    /**
+     * 检测 WebView 内核（Chromium）主版本号。
+     * 通过解析 User-Agent 中的 "Chrome/x" 得到，无法解析时返回 -1。
+     */
+    private int detectWebViewChromiumVersion() {
+        try {
+            String ua = webView.getSettings().getUserAgentString();
+            Matcher matcher = Pattern.compile("Chrome/(\\d+)").matcher(ua);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "检测 WebView 内核版本失败: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    /**
+     * WebView 内核过旧时弹窗提示：新版 OpenList 前端依赖较新的 Chromium 内核，
+     * 旧内核会导致白屏/黑屏，但服务端本身正常，可改用外部浏览器访问。
+     */
+    private void showWebViewCompatDialog() {
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("WebView 内核版本过低")
+                .setMessage(String.format(
+                        "当前设备的 WebView 内核（Chrome %d）过旧，可能无法正常显示页面（白屏/黑屏）。\n\n" +
+                                "AList 服务本身仍在正常运行，可尝试：\n" +
+                                "1. 升级系统 WebView 组件；\n" +
+                                "2. 使用外部浏览器访问服务地址。",
+                        webViewChromiumVersion))
+                .setPositiveButton("在浏览器打开", (d, w) -> openInExternalBrowser())
+                .setNegativeButton("知道了", null)
+                .show();
+    }
+
+    /**
+     * 用系统浏览器打开服务的外部访问地址（局域网地址），供 WebView 无法渲染时兜底。
+     */
+    private void openInExternalBrowser() {
+        if (alistServer == null || !alistServer.hasRunning()) {
+            showToast("AList 服务未启动");
+            return;
+        }
+        try {
+            startActivity(Intent.parseUri(alistServer.getExternalAddress(), Intent.URI_INTENT_SCHEME));
+        } catch (Exception e) {
+            showToast("获取服务地址失败");
+        }
     }
 
     // ==================== 服务通信 ====================
