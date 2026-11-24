@@ -1,15 +1,15 @@
 cd ../sources
-# 固定 golang.org/x/mobile 版本。
-# 上游 @latest（v0.0.0-20261117202452-47699113848a 起）只升了依赖
-# （x/mod 0.43 / x/tools 0.53 / x/sys 0.50 / x/image 0.48），cmd/gomobile 源码无变化，
-# 但会让 gomobile 生成的 per-arch go.mod 在 `go mod tidy` 阶段报
-#   go: error reading go.mod: missing module declaration
-#   gomobile: go mod tidy -v failed: exit status 1
-# 导致 alistlib.aar 产不出来（Actions run 152 起持续失败）。
-# 20261011 这一版经 run 151 实测可正常产出 aar，钉住以免每天被上游漂移打穿。
-# 上游修好后可改回 @latest。
-X_MOBILE_VERSION=v0.0.0-20261011034528-197770444867
+# gomobile 生成 per-arch go.mod 前会执行 `go list -m -json all`（遍历完整依赖图）。
+# OpenList 的间接依赖 github.com/ajroetker/go-highway 把子模块 hwy/goat 引到根本不存在的
+# v0.0.0（module proxy 上只有 v0.0.1）→ 探测整体报错 → gomobile 静默写出空 go.mod →
+# `go mod tidy` 报 "go: error reading go.mod: missing module declaration"，
+# alistlib.aar 产不出来（Actions run 152 起持续失败就是这个）。
+# 补一条 replace 让依赖图可解析；上游修好依赖后这段可删。
+if grep -q "github.com/ajroetker/go-highway " go.mod; then
+  go mod edit -replace=github.com/ajroetker/go-highway/hwy/goat=github.com/ajroetker/go-highway/hwy/goat@v0.0.1
+fi
+
 go mod download golang.org/x/mobile
-go install golang.org/x/mobile/cmd/gomobile@${X_MOBILE_VERSION}
+go install golang.org/x/mobile/cmd/gomobile@latest
 gomobile init
-go get golang.org/x/mobile/bind@${X_MOBILE_VERSION}
+go get golang.org/x/mobile/bind
