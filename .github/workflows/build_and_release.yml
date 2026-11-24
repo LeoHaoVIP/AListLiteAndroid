@@ -71,16 +71,24 @@ jobs:
 
       - name: 6-BuildOpenListArtifacts
         env:
-          # gomobile 在临时目录里 `go mod tidy` 会去 sum.golang.org 校验哈希，
-          # runner 访问该站点偶发 stream error 导致构建失败（见 run 162）。
-          # 关闭 sumdb 远程校验（本地 go.sum 校验保持不变），消除这类网络抖动。
-          GOSUMDB: 'off'
-          GOFLAGS: '-mod=mod'
+          # sum.golang.org 偶发 stream error 会让 gomobile 的 go mod tidy 失败（run 162）。
+          # 注意不要用 GOSUMDB=off：go 要求工具链模块必须校验，关掉后连 go1.27.3 都不肯下载（run 163）。
+          # 用重试兜住这类网络抖动即可。
+          BUILD_RETRIES: '3'
         run: |
           cd $GITHUB_WORKSPACE/AListLib/scripts
           sh install_alist.sh
           sh install_gomobile.sh
-          sh build_aar.sh
+          attempt=0
+          until sh build_aar.sh; do
+            attempt=$((attempt + 1))
+            if [ "$attempt" -ge "$BUILD_RETRIES" ]; then
+              echo "build_aar.sh failed after $BUILD_RETRIES attempts"
+              exit 1
+            fi
+            echo "build_aar.sh failed (attempt $attempt/$BUILD_RETRIES), retrying in 20s..."
+            sleep 20
+          done
 
       - name: 7-CommitChanges
         run: |
