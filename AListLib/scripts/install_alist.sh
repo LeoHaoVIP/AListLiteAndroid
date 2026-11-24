@@ -1,16 +1,45 @@
 # Backend
-TAG_NAME=$(curl -s -k https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep -o '"tag_name": ".*"' | cut -d'"' -f4)
+TAG_NAME=$(curl -s -k --retry 3 --retry-delay 3 https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep -o '"tag_name": ".*"' | cut -d'"' -f4)
+if [ -z "$TAG_NAME" ]; then
+  echo "ERROR: 获取 OpenList 最新 tag 失败"
+  exit 1
+fi
 # TAG_NAME=v4.0.3
-URL="https://github.com/OpenListTeam/OpenList/archive/refs/tags/${TAG_NAME}.tar.gz"
-echo "Downloading openlist ${TAG_NAME} from ${URL}"
-curl -L -k $URL -o "openlist${TAG_NAME}.tar.gz"
+TGZ="openlist${TAG_NAME}.tar.gz"
+
+# 下载并校验压缩包：runner 到 github 的连接会偶发抖动，残缺包会让 tar 解压失败，
+# 而脚本是"先清空 sources 再解压"，所以必须校验通过后再动手清理（见 Actions run 164）。
+fetch_tarball() {
+  url="$1"
+  out="$2"
+  i=1
+  while [ "$i" -le 5 ]; do
+    echo "Downloading $url (attempt $i/5)"
+    if curl -fL -k --retry 2 --retry-delay 3 --connect-timeout 20 --max-time 300 -o "$out" "$url" \
+       && tar tzf "$out" > /dev/null 2>&1; then
+      return 0
+    fi
+    echo "download or integrity check failed, retrying..."
+    rm -f "$out"
+    sleep 5
+    i=$((i + 1))
+  done
+  return 1
+}
+
+fetch_tarball "https://github.com/OpenListTeam/OpenList/archive/refs/tags/${TAG_NAME}.tar.gz" "$TGZ" || {
+  echo "ERROR: OpenList 源码包下载失败: ${TAG_NAME}"
+  exit 1
+}
+
 find ../sources/ -mindepth 1 -maxdepth 1 ! -name "alistlib" ! -name "alitvlib" -exec rm -rf {} +
-tar xf "openlist${TAG_NAME}.tar.gz" --strip-components 1 -C ../sources
+tar xf "$TGZ" --strip-components 1 -C ../sources
 rm -f ../sources/.gitignore
 # Frontend
-URL=https://github.com/OpenListTeam/OpenList-Frontend/releases/latest/download/openlist-frontend-dist-${TAG_NAME}.tar.gz
-echo "Downloading openlist-frontend from ${URL}"
-curl -L -k ${URL} -o dist.tar.gz
+fetch_tarball "https://github.com/OpenListTeam/OpenList-Frontend/releases/latest/download/openlist-frontend-dist-${TAG_NAME}.tar.gz" "dist.tar.gz" || {
+  echo "ERROR: OpenList 前端包下载失败: ${TAG_NAME}"
+  exit 1
+}
 rm -rf ../sources/public/dist
 mkdir ../sources/public/dist
 tar xf dist.tar.gz -C ../sources/public/dist
