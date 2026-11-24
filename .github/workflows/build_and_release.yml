@@ -103,6 +103,11 @@ jobs:
 
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
+        with:
+          # SDK 仓库里已没有 'tools' 包，v3 默认的 'tools platform-tools' 会导致
+          # sdkmanager 报 "Failed to find package 'tools'" 并 exit 1（Actions run 120-151 失败原因）。
+          # 该步骤仅需 licenses + platform-tools；ANDROID_HOME 与 apksigner 均由 runner 镜像自带。
+          packages: 'platform-tools'
 
       - name: 12-SignAPK
         uses: ilharp/sign-android-release@v2
