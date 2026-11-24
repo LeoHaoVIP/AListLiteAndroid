@@ -1,0 +1,1 @@
+(function(){System.register([`./rolldown-runtime-legacy-C3AR840j.js`],function(e,t){var n;return{setters:[function(e){n=e.t}],execute:function(){e(`t`,n((e,t)=>{t.exports={}}))}}})})();

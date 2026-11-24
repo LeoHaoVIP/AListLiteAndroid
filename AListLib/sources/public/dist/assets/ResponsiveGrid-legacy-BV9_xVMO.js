@@ -1,0 +1,1 @@
+(function(){System.register([`./store-legacy-DxhJyMhP.js`],function(e,t){var n,r,i;return{setters:[function(e){n=e.ga,r=e.or,i=e.p}],execute:function(){e(`t`,e=>{let t=i(`settings_layout`),a;return t===`responsive`&&(a=`repeat(auto-fill, minmax(424px, 1fr))`),n(r,{w:`$full`,gap:`$2`,templateColumns:{"@initial":`1fr`,"@lg":a},get children(){return e.children}})})}}})})();

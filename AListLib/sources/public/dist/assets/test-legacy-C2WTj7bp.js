@@ -1,0 +1,1 @@
+(function(){System.register([`./store-legacy-DxhJyMhP.js`,`./Upload-legacy-nPuKS_f2.js`],function(e,t){var n,r,i,a;return{setters:[function(e){n=e.ga,r=e.pi,i=e.zn},function(e){a=e.default}],execute:function(){e(`default`,()=>n(r,{justifyContent:`center`,h:`100vh`,get children(){return n(i,{w:`$md`,get children(){return n(a,{})}})}}))}}})})();
