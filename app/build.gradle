@@ -62,8 +62,9 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources false
+            // 关闭 R8：开启后 Java 崩溃堆栈会变成 a.b.c，需要在 Bugly 侧上传 mapping 才能还原。
+            // 为了在 Bugly 直接看到完整堆栈，这里保持不混淆（proguard-rules.pro 规则保留备用）。
+            minifyEnabled false
             signingConfig null
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->

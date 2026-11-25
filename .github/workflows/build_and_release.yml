@@ -123,14 +123,6 @@ jobs:
           BUGLY_APP_ID: ${{ secrets.BUGLY_APP_ID }}
         run: ./gradlew assembleRelease -q
 
-      - name: 10.1-UploadMapping
-        # 开启 R8 后，Java 崩溃堆栈是混淆名，必须把 mapping.txt 上传到 Bugly 才能还原
-        uses: actions/upload-artifact@v4
-        with:
-          name: mapping-release
-          path: app/build/outputs/mapping/release/mapping.txt
-          if-no-files-found: error
-
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3
         with:
