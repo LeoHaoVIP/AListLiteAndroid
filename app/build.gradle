@@ -2,6 +2,43 @@ plugins {
     id 'com.android.application'
 }
 
+// 版本号唯一来源：CI 只 sed 这一行（.github/workflows/build_and_release.yml 的 5-UpdateVersionInfo）
+def APP_VERSION_NAME = "3.0.1-auto10"
+
+// versionCode 由 versionName 推导，避免历史上每次发版都是 1（覆盖安装/升级判定都受影响）
+//   3.0.1-auto11 -> 3*1000000 + 0*10000 + 1*100 + 11 = 3000111
+def computeVersionCode = { String name ->
+    def m = (name =~ /^(\d+)\.(\d+)(?:\.(\d+))?(?:-auto(\d+))?/)
+    if (!m.find()) {
+        return 1
+    }
+    int major = m.group(1) as int
+    int minor = (m.group(2) ?: "0") as int
+    int patch = (m.group(3) ?: "0") as int
+    int build = (m.group(4) ?: "0") as int
+    return major * 1000000 + minor * 10000 + patch * 100 + build
+}
+
+// Bugly AppID 永不入库：
+//   CI -> 环境变量 BUGLY_APP_ID（GitHub Secrets）
+//   本机 -> 项目根目录的 bugly.properties（已在 .gitignore 中），内容：buglyAppId=xxxxxxxx
+def resolveBuglyAppId = {
+    def fromEnv = System.getenv('BUGLY_APP_ID')
+    if (fromEnv) {
+        return fromEnv
+    }
+    def buglyPropsFile = rootProject.file('bugly.properties')
+    if (buglyPropsFile.exists()) {
+        def props = new Properties()
+        buglyPropsFile.withInputStream { props.load(it) }
+        def fromLocal = props.getProperty('buglyAppId')
+        if (fromLocal) {
+            return fromLocal
+        }
+    }
+    return 'YOUR_BUGLY_APP_ID'
+}
+
 android {
     compileSdk 34
 
@@ -9,10 +46,11 @@ android {
         applicationId "com.leohao.android.alistlite"
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "3.0.1-auto10"
+        versionName APP_VERSION_NAME
+        versionCode computeVersionCode(APP_VERSION_NAME)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "AListLite-v${versionName}")
+        manifestPlaceholders = [BUGLY_APPID: resolveBuglyAppId()]
     }
     splits {
         abi {
@@ -24,7 +62,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources false
             signingConfig null
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
@@ -53,8 +92,8 @@ dependencies {
     implementation fileTree(include: ['*.jar', '*.aar'], dir: 'libs')
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
-    implementation 'commons-io:commons-io:2.4'
-    implementation 'org.apache.commons:commons-lang3:3.11'
+    // commons-io 已移除：2.4 有 CVE-2021-29425，2.6+ 在 Android 8 以下会因 java.nio.file 缺类崩溃，
+    // 本项目只用 4 个文件 API，已用 util/FileHelper.java 自行实现。
     implementation 'com.jayway.jsonpath:json-path:2.8.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.3.0'

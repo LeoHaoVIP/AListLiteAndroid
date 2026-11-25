@@ -12,3 +12,6 @@
 .externalNativeBuild
 .cxx
 /.idea/
+
+# 本机私有配置：含 Bugly AppID，禁止入库
+/bugly.properties

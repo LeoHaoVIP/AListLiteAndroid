@@ -60,8 +60,8 @@ jobs:
           APP_VERSION=$(echo "${{ env.NEW_TAG }}" | sed 's/^v//')
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
           echo "Updating App version to: ${APP_VERSION}"
-          # 更新 app 模块的 build.gradle 中的版本号
-          sed -i "s/versionName \".*\"/versionName \"${APP_VERSION}\"/" app/build.gradle
+          # 更新 app 模块的版本号（build.gradle 里版本号只有一个来源：def APP_VERSION_NAME）
+          sed -i "s/def APP_VERSION_NAME = \".*\"/def APP_VERSION_NAME = \"${APP_VERSION}\"/" app/build.gradle
           # OPENLIST 最新版本
           LATEST_OPENLIST_VERSION=$(curl -k -sL https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep '"tag_name": ".*"' | cut -d'"' -f4 | cut -d'v' -f2)
           echo "LATEST_OPENLIST_VERSION=${LATEST_OPENLIST_VERSION}" >> $GITHUB_ENV
@@ -104,16 +104,32 @@ jobs:
             git push
           fi
 
-      - name: 8-ReplaceBuglyAppID
+      - name: 8-CheckBuglySecret
         run: |
-          # 替换 BUGLY APP ID
-          sed -i 's/YOUR_BUGLY_APP_ID/${{ secrets.BUGLY_APP_ID }}/g' $GITHUB_WORKSPACE/app/src/main/AndroidManifest.xml
+          # BUGLY APP ID 不再写进仓库（AndroidManifest 使用 ${BUGLY_APPID} 占位符），
+          # 由下面的 10-BuildAPK 通过环境变量 BUGLY_APP_ID 注入。这里只做存在性检查。
+          if [ -z "${{ secrets.BUGLY_APP_ID }}" ]; then
+            echo "::error::缺少 Secrets.BUGLY_APP_ID，Bugly 将使用占位符，请先配置仓库 Secret"
+            exit 1
+          fi
+          echo "BUGLY_APP_ID 已配置"
 
       - name: 9-GrantGradlew
         run: chmod +x gradlew
 
       - name: 10-BuildAPK
+        env:
+          # 注入到 app/build.gradle 的 manifestPlaceholders[BUGLY_APPID]
+          BUGLY_APP_ID: ${{ secrets.BUGLY_APP_ID }}
         run: ./gradlew assembleRelease -q
+
+      - name: 10.1-UploadMapping
+        # 开启 R8 后，Java 崩溃堆栈是混淆名，必须把 mapping.txt 上传到 Bugly 才能还原
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapping-release
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: error
 
       - name: 11-SetupAndroidSDK
         uses: android-actions/setup-android@v3

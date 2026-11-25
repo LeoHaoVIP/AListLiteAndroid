@@ -16,13 +16,12 @@ import cn.hutool.json.JSONUtil;
 import com.jayway.jsonpath.JsonPath;
 import com.leohao.android.alistlite.service.AlistService;
 import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.FileHelper;
 import com.leohao.android.alistlite.util.SelfSignedCertGenerator;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.leohao.android.alistlite.AlistLiteApplication.applicationContext;
@@ -80,37 +79,56 @@ public class Alist {
      * 同时兼容旧版本：若外部存储已有数据而内部存储尚无，则自动迁移。
      */
     public String getDataPath() {
-        if (dataPath == null) {
-            synchronized (this) {
-                if (dataPath == null) {
-                    Context ctx = applicationContext;
-                    if (ctx == null) {
-                        Log.w("Alist", "applicationContext is null, this should not happen normally");
-                        return null;
-                    }
-                    // 优先使用内部存储，避免原生代码 SELinux 权限问题
-                    File intDir = new File(ctx.getFilesDir(), "data");
-                    // 检查外部存储是否有旧数据需要迁移
-                    File extDir = ctx.getExternalFilesDir("data");
-                    if (extDir != null && extDir.exists() && !intDir.exists()) {
-                        // 外部存储存在旧数据，迁移至内部存储
-                        try {
-                            FileUtils.copyDirectory(extDir, intDir);
-                            Log.i("Alist", "数据已从外部存储迁移到内部存储: " + intDir.getAbsolutePath());
-                        } catch (IOException e) {
-                            Log.w("Alist", "数据迁移失败，沿用外部存储作为数据目录: " + e.getMessage());
-                            dataPath = extDir.getAbsolutePath();
-                            return dataPath;
-                        }
-                    }
-                    if (!intDir.exists()) {
-                        intDir.mkdirs();
-                    }
-                    dataPath = intDir.getAbsolutePath();
+        if (dataPath != null) {
+            return dataPath;
+        }
+        synchronized (this) {
+            if (dataPath == null) {
+                Context ctx = applicationContext;
+                if (ctx == null) {
+                    Log.w("Alist", "applicationContext is null, this should not happen normally");
+                    return null;
                 }
+                // 优先使用内部存储，避免原生代码 SELinux 权限问题
+                File intDir = new File(ctx.getFilesDir(), "data");
+                // 检查外部存储是否有旧数据需要迁移
+                File extDir = ctx.getExternalFilesDir("data");
+                if (extDir != null && extDir.exists() && !intDir.exists()) {
+                    // 外部存储存在旧数据，迁移至内部存储
+                    // 注意：这里是大文件拷贝（可能几十 MB），不要在 UI 线程首次触发；
+                    // AlistLiteApplication 会在进程启动时先丢到后台线程预热（见 prepareDataDirInBackground）。
+                    long startAt = System.currentTimeMillis();
+                    try {
+                        FileHelper.copyDirectory(extDir, intDir);
+                        Log.i("Alist", "数据已从外部存储迁移到内部存储: " + intDir.getAbsolutePath()
+                                + "，耗时 " + (System.currentTimeMillis() - startAt) + "ms");
+                    } catch (IOException e) {
+                        Log.w("Alist", "数据迁移失败，沿用外部存储作为数据目录: " + e.getMessage());
+                        dataPath = extDir.getAbsolutePath();
+                        return dataPath;
+                    }
+                }
+                if (!intDir.exists()) {
+                    intDir.mkdirs();
+                }
+                dataPath = intDir.getAbsolutePath();
             }
         }
         return dataPath;
+    }
+
+    /**
+     * 在后台线程预热数据目录，避免旧数据迁移（大文件拷贝）落在主线程。
+     * 由 Application#onCreate 调用；重复调用无副作用。
+     */
+    public static void prepareDataDirInBackground() {
+        new Thread(() -> {
+            try {
+                getInstance().getDataPath();
+            } catch (Throwable t) {
+                Log.w("Alist", "数据目录预热失败: " + t);
+            }
+        }, "alist-data-prepare").start();
     }
 
     /**
@@ -184,19 +202,19 @@ public class Alist {
      */
     public String getConfigValue(String jsonPath) throws IOException {
         File configFile = new File(getConfigPath());
-        String configString = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+        String configString = FileHelper.readText(configFile);
         return JsonPath.read(configString, jsonPath).toString();
     }
 
     private JSONObject readConfig() throws IOException {
         File configFile = new File(getConfigPath());
-        String configString = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+        String configString = FileHelper.readText(configFile);
         return JSONUtil.parseObj(configString);
     }
 
     private void writeConfig(JSONObject config) throws IOException {
         File configFile = new File(getConfigPath());
-        FileUtils.write(configFile, config.toStringPretty(), StandardCharsets.UTF_8);
+        FileHelper.writeText(configFile, config.toStringPretty());
     }
 
     /**

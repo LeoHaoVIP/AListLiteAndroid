@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.util.TypedValue;
@@ -24,15 +26,14 @@ import com.leohao.android.alistlite.R;
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.ClipBoardHelper;
 import com.leohao.android.alistlite.util.Constants;
+import com.leohao.android.alistlite.util.FileHelper;
 import com.leohao.android.alistlite.util.SharedDataHelper;
 import com.yuyh.jsonviewer.library.JsonRecyclerView;
-import org.apache.commons.io.FileUtils;
 
 import java.nio.charset.Charset;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -354,7 +355,7 @@ public class DialogHelper {
         String configPath = String.format("%s%s%s", dataPath, File.separator, Constants.ALIST_CONFIG_FILENAME);
         File configFile = new File(configPath);
         try {
-            configJsonData = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+            configJsonData = FileHelper.readText(configFile);
         } catch (Exception e) {
             configJsonData = Constants.ERROR_MSG_CONFIG_DATA_READ.replace("MSG", Objects.requireNonNull(e.getLocalizedMessage()));
             editButton.setVisibility(View.INVISIBLE);
@@ -384,7 +385,7 @@ public class DialogHelper {
                     return;
                 }
                 try {
-                    FileUtils.write(configFile, jsonEditText.getText());
+                    FileHelper.writeText(configFile, jsonEditText.getText());
                     Toast.makeText(activity, "重启服务以应用新配置", Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
                     Toast.makeText(activity, Constants.ERROR_MSG_CONFIG_DATA_WRITE, Toast.LENGTH_SHORT).show();
@@ -420,25 +421,29 @@ public class DialogHelper {
         }
         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
         final AtomicBoolean running = new AtomicBoolean(true);
-        new Thread(() -> {
-            while (running.get()) {
-                activity.runOnUiThread(() -> {
-                    synchronized (Alist.ALIST_LOGS) {
-                        String logs = Alist.ALIST_LOGS.toString();
-                        textView.setText(logs);
-                        if (!logs.equals(textView.getText().toString())) {
-                            scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
-                        }
-                    }
-                });
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    break;
-                }
+        final Handler logHandler = new Handler(Looper.getMainLooper());
+        // 原实现是「先 setText 再比较」，两者必然相等 → 自动滚动从未生效；且用 Thread+sleep 轮询。
+        // 改为主线程 Handler 轮询：仅当内容变化时刷新并滚动到底，弹窗关闭即停止。
+        final Runnable[] pollTask = new Runnable[1];
+        pollTask[0] = () -> {
+            if (!running.get()) {
+                return;
             }
-        }).start();
-        dialog.setOnDismissListener(d -> running.set(false));
+            String logs;
+            synchronized (Alist.ALIST_LOGS) {
+                logs = Alist.ALIST_LOGS.toString();
+            }
+            if (!logs.equals(textView.getText().toString())) {
+                textView.setText(logs);
+                scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+            }
+            logHandler.postDelayed(pollTask[0], 500);
+        };
+        logHandler.post(pollTask[0]);
+        dialog.setOnDismissListener(d -> {
+            running.set(false);
+            logHandler.removeCallbacks(pollTask[0]);
+        });
         dialog.setView(dialogView);
         dialog.show();
         int width = activity.getResources().getDisplayMetrics().widthPixels;
