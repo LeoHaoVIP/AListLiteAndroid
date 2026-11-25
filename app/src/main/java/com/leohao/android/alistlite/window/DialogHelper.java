@@ -45,9 +45,55 @@ public class DialogHelper {
     private static AlertDialog currentDialog = null;
 
     private static void dismissCurrent() {
-        if (currentDialog != null && currentDialog.isShowing()) {
-            currentDialog.dismiss();
+        safeDismiss(currentDialog);
+        currentDialog = null;
+    }
+
+    /**
+     * 安全关闭对话框。
+     * <p>
+     * Bugly #85048：宿主 Activity 已销毁时 {@code isShowing()} 仍可能返回 true，
+     * 此时 {@code dismiss()} 会在 WindowManager 内部抛
+     * {@code IllegalArgumentException: View ... not attached to window manager}。
+     */
+    public static void safeDismiss(AlertDialog dialog) {
+        if (dialog == null) {
+            return;
         }
+        try {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        } catch (IllegalArgumentException e) {
+            // 宿主窗口已失效，忽略即可，无需上报崩溃
+            Log.w(TAG, "dismiss 对话框失败（宿主窗口已销毁）: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 解析端口号，容错处理用户粘贴整段地址的情况。
+     * <p>
+     * Bugly #80022：用户在端口输入框粘贴 "http://192.168.0.114:5244"，
+     * 原先直接 Integer.parseInt 抛 NumberFormatException 导致崩溃。
+     * 这里取末尾数字段，解析失败返回 -1。
+     */
+    private static int parsePortOrDefault(String raw, int fallback) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return fallback;
+        }
+        java.util.regex.Matcher matcher =
+                java.util.regex.Pattern.compile("(\\d{1,5})\\s*/?\\s*$").matcher(raw.trim());
+        if (matcher.find()) {
+            try {
+                int port = Integer.parseInt(matcher.group(1));
+                if (port >= 1 && port <= 65535) {
+                    return port;
+                }
+            } catch (NumberFormatException ignored) {
+                // 落到下面的 -1
+            }
+        }
+        return -1;
     }
 
     /**
@@ -257,14 +303,18 @@ public class DialogHelper {
             AlertDialog enableDialog = currentDialog;
             enableDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String portStr = portInput.getText().toString().trim();
-                int port = portStr.isEmpty() ? 5245 : Integer.parseInt(portStr);
+                int port = parsePortOrDefault(portStr, 5245);
+                if (port <= 0) {
+                    Toast.makeText(activity, "端口格式不正确，请输入 1-65535 之间的数字", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (!Alist.isPortAvailable(port)) {
                     Toast.makeText(activity, "端口 " + port + " 已被占用，请更换", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 try {
                     alistServer.enableHttps(port);
-                    enableDialog.dismiss();
+                    safeDismiss(enableDialog);
                     onRestart.run();
                 } catch (Exception e) {
                     Toast.makeText(activity, "操作失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();

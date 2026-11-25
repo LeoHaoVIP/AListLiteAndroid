@@ -135,7 +135,10 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacks(networkCheckRunnable);
-        if (networkChangeDialog != null && networkChangeDialog.isShowing()) networkChangeDialog.dismiss();
+        if (networkChangeDialog != null) {
+            DialogHelper.safeDismiss(networkChangeDialog);
+            networkChangeDialog = null;
+        }
         if (broadcastScheduler != null) broadcastScheduler.shutdownNow();
         if (connectivityManager != null && networkCallback != null)
             connectivityManager.unregisterNetworkCallback(networkCallback);
@@ -568,8 +571,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             String address = alistServer.getExternalAddress();
             Log.i(TAG, "外部地址已更新为 " + address);
             boolean isLocal = address.contains("localhost") || address.contains("127.0.0.1");
-            if (networkChangeDialog != null && networkChangeDialog.isShowing()) {
-                networkChangeDialog.dismiss();
+            if (networkChangeDialog != null) {
+                DialogHelper.safeDismiss(networkChangeDialog);
+                networkChangeDialog = null;
             }
             networkChangeDialog = new AlertDialog.Builder(this, R.style.IOSAlertDialog)
                     .setTitle("网络环境变化")
