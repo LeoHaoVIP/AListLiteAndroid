@@ -28,6 +28,8 @@ import com.leohao.android.alistlite.util.SharedDataHelper;
 import com.yuyh.jsonviewer.library.JsonRecyclerView;
 import org.apache.commons.io.FileUtils;
 
+import java.nio.charset.Charset;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -149,9 +151,12 @@ public class DialogHelper {
             int idx = currentIndex.get();
             String addr = allAddresses.get(idx);
             String ipType = addr.contains("://[") ? "IPv6" : "IPv4";
-            qrImageView.setImageBitmap(generateQr(addr, 500));
+            Bitmap qr = generateQr(addr, 500);
+            qrImageView.setImageBitmap(qr);
+            qrImageView.setVisibility(qr == null ? View.GONE : View.VISIBLE);
             currentIpText.setText(String.format(Locale.CHINA, "(%d/%d) %s", idx + 1, totalCount, addr));
-            alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s（%s），点击按钮可切换", allLabels.get(idx), ipType));
+            String qrTip = qr == null ? "\r\n\r\n当前设备无法生成二维码，请点击地址直接打开" : "";
+            alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s（%s），点击按钮可切换%s", allLabels.get(idx), ipType, qrTip));
         };
         refreshView.run();
 
@@ -462,6 +467,13 @@ public class DialogHelper {
             return bitmap;
         } catch (WriterException e) {
             Log.e(TAG, "generateQr: " + e.getMessage());
+            return null;
+        } catch (RuntimeException e) {
+            // Bugly #23058：zxing 3.4.1 的 Encoder.append8BitBytes 内部执行
+            // content.getBytes(encoding.name())，个别 ROM 的 Charset.name() 会返回 ICU 内部名
+            // （如 "icu[utf-8]"），Charset.forName 判定为非法名并抛 IllegalCharsetNameException。
+            // 这是 unchecked 异常，只 catch WriterException 兜不住，会直接崩掉界面。
+            Log.e(TAG, "generateQr failed (charset " + Charset.defaultCharset().name() + "): " + e);
             return null;
         }
     }
