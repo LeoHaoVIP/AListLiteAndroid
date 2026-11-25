@@ -43,6 +43,22 @@ fetch_tarball "https://github.com/OpenListTeam/OpenList-Frontend/releases/latest
 rm -rf ../sources/public/dist
 mkdir ../sources/public/dist
 tar xf dist.tar.gz -C ../sources/public/dist
+
+# 旧内核兜底：上游 index.html 的 legacy 入口只对"不支持 ES module"的浏览器生效，
+# 而 iOS 15.4 以下 Safari、旧 Android WebView 都支持 module，会拿到用了
+# structuredClone / Object.hasOwn / Array.prototype.at 的 modern 包 → 白屏。
+# 这里注入能力探测，让这类内核改走 legacy(systemjs) 包（见 patch_frontend_compat.py）。
+PY=""
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+fi
+if [ -n "$PY" ]; then
+  "$PY" patch_frontend_compat.py ../sources/public/dist/index.html || echo "WARN: 前端兼容补丁未应用（不阻塞构建）"
+else
+  echo "WARN: 未找到 python，跳过前端兼容补丁"
+fi
 # Alter Config
 cp ../../app/src/main/res/drawable/alistlite.png ../sources/public/dist/images/logo.png
 sed -i 's#https://github.com/OpenListTeam/OpenList#https://github.com/LeoHaoVIP/AListLiteAndroid#g' ../sources/internal/bootstrap/data/setting.go
