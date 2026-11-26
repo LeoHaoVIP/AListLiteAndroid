@@ -4,6 +4,11 @@ on:
   push:
     branches-ignore: [ '*' ]
   workflow_dispatch:  # 支持手动触发
+    inputs:
+      version:
+        description: '指定版本号（如 3.0.2），留空则按标签自动递增'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -36,6 +41,13 @@ jobs:
       - name: 4-GetLatestTag
         id: get_latest_tag
         run: |
+          MANUAL_VERSION="${{ inputs.version }}"
+          if [[ -n "$MANUAL_VERSION" ]]; then
+            NEW_TAG="v${MANUAL_VERSION}"
+            echo "Manual version specified: $NEW_TAG"
+            echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+            exit 0
+          fi
           LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]+)?(-auto[0-9]+)?$' | head -n 1)
           echo "Latest tag: $LATEST_TAG"
           # 正则匹配：明确分组（分组1=基础版本，分组4=auto编号）
