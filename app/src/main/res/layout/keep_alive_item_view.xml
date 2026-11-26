@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/ios_surface"
+    android:padding="14dp"
+    android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <TextView
+        android:id="@+id/tv_guide_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:textColor="@color/ios_text_primary"
+        android:fontFamily="sans-serif-medium"/>
+
+    <TextView
+        android:id="@+id/tv_guide_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textSize="13sp"
+        android:textColor="@color/ios_text_secondary"/>
+
+    <TextView
+        android:id="@+id/tv_guide_action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textSize="13sp"
+        android:textColor="@color/ios_accent"
+        android:fontFamily="sans-serif-medium"/>
+</LinearLayout>

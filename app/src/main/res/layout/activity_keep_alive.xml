@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ios_background">
+
+    <TextView
+        android:id="@+id/keep_alive_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:text="@string/activity_title_keep_alive"
+        android:textSize="18sp"
+        android:textColor="@color/ios_text_primary"
+        android:fontFamily="sans-serif-medium"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/keep_alive_title">
+
+        <LinearLayout
+            android:id="@+id/keep_alive_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="16dp"/>
+    </ScrollView>
+</RelativeLayout>

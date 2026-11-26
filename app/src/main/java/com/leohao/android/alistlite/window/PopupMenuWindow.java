@@ -117,5 +117,24 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             listener.showSystemInfo(view);
         });
+        //存储诊断
+        popupView.findViewById(R.id.btn_storageDiagnostic).setOnClickListener((view) -> {
+            dismiss();
+            listener.showStorageDiagnostic(view);
+        });
+        //后台保活引导
+        popupView.findViewById(R.id.btn_keepAliveGuide).setOnClickListener((view) -> {
+            dismiss();
+            listener.showKeepAliveGuide(view);
+        });
+        //导出 / 导入配置
+        popupView.findViewById(R.id.btn_exportConfig).setOnClickListener((view) -> {
+            dismiss();
+            listener.exportConfig(view);
+        });
+        popupView.findViewById(R.id.btn_importConfig).setOnClickListener((view) -> {
+            dismiss();
+            listener.importConfig(view);
+        });
     }
 }

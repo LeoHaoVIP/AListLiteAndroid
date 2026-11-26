@@ -18,12 +18,17 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
+    <!-- TV / 盒子：允许在没有触摸屏的 Leanback 设备上安装并出现在电视桌面 -->
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+
     <application
             android:name=".AlistLiteApplication"
             android:allowBackup="false"
             android:hardwareAccelerated="true"
             android:icon="@drawable/ic_launcher"
             android:label="@string/app_name"
+            android:banner="@drawable/alistlite"
             android:usesCleartextTraffic="true"
             android:supportsRtl="true"
             android:requestLegacyExternalStorage="true"
@@ -40,6 +45,8 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <!-- 电视桌面（Leanback）入口 -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
             </intent-filter>
         </activity>
         <activity
@@ -55,6 +62,16 @@
                 android:hardwareAccelerated="true"
                 android:launchMode="singleTask"
                 android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
+        <activity
+                android:name=".StorageDiagnosticActivity"
+                android:label="@string/activity_title_storage_diagnostic"
+                android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
+
+        <activity
+                android:name=".KeepAliveActivity"
+                android:label="@string/activity_title_keep_alive"
+                android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
+
         <service
                 android:name=".service.AlistService"
                 android:exported="true"

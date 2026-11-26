@@ -21,6 +21,7 @@ import android.provider.Settings;
 import android.service.quicksettings.TileService;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -53,6 +54,8 @@ import com.leohao.android.alistlite.window.OnMenuActionListener;
 import com.leohao.android.alistlite.window.PopupMenuWindow;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -89,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private ValueCallback<Uri[]> mFilePathCallback;
     private ValueCallback<Uri> mUploadMessage;
     private static final int FILE_CHOOSER_REQUEST_CODE = 100;
+    private static final int EXPORT_CONFIG_REQUEST_CODE = 101;
+    private static final int IMPORT_CONFIG_REQUEST_CODE = 102;
     /**
      * OpenList 4.x 前端（Vue3 + Vite）依赖较新的 Chromium 内核（ES2020：可选链/空值合并等）。
      * 低于该版本的系统 WebView 无法渲染页面，表现为白屏/黑屏。
@@ -112,6 +117,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         alistServer = Alist.getInstance();
         initWidgets();
         initFocusSettings();
+        if (isTvDevice()) {
+            applyTvTextScale();
+        }
         checkPermissions();
         checkUpdates(null);
         initBroadcastScheduler();
@@ -234,7 +242,134 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 mUploadMessage.onReceiveValue(result);
                 mUploadMessage = null;
             }
+            return;
         }
+        if (requestCode == EXPORT_CONFIG_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                doExportConfig(data.getData());
+            }
+            return;
+        }
+        if (requestCode == IMPORT_CONFIG_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                confirmImportConfig(data.getData());
+            }
+            return;
+        }
+    }
+
+    // ==================== 配置导出 / 导入 ====================
+
+    @Override
+    public void exportConfig(View view) {
+        if (!alistServer.hasRunning()) {
+            showToast("请先启动服务，再导出配置");
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_TITLE, ConfigBackupHelper.suggestFileName());
+        try {
+            startActivityForResult(intent, EXPORT_CONFIG_REQUEST_CODE);
+        } catch (Exception e) {
+            showToast("当前设备不支持选择保存位置");
+        }
+    }
+
+    @Override
+    public void importConfig(View view) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        try {
+            startActivityForResult(intent, IMPORT_CONFIG_REQUEST_CODE);
+        } catch (Exception e) {
+            showToast("当前设备不支持选择文件");
+        }
+    }
+
+    @Override
+    public void showStorageDiagnostic(View view) {
+        startActivity(new Intent(this, StorageDiagnosticActivity.class));
+    }
+
+    @Override
+    public void showKeepAliveGuide(View view) {
+        startActivity(new Intent(this, KeepAliveActivity.class));
+    }
+
+    private void doExportConfig(Uri target) {
+        new Thread(() -> {
+            String message;
+            boolean ok;
+            try {
+                OutputStream os = getContentResolver().openOutputStream(target);
+                if (os == null) {
+                    throw new IOException("无法写入所选位置");
+                }
+                int count;
+                try {
+                    count = ConfigBackupHelper.export(this, os);
+                } finally {
+                    os.close();
+                }
+                ok = true;
+                message = "已导出 " + count + " 个文件";
+            } catch (Exception e) {
+                ok = false;
+                message = "导出失败：" + e.getMessage();
+            }
+            final boolean success = ok;
+            final String text = message;
+            runOnUiThread(() -> showToast(text));
+        }, "config-export").start();
+    }
+
+    private void confirmImportConfig(Uri source) {
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("导入配置")
+                .setMessage("导入会覆盖当前的网盘挂载与账号配置，且需要重启服务后生效。确定继续？")
+                .setPositiveButton("导入", (d, w) -> doImportConfig(source))
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void doImportConfig(Uri source) {
+        // 先停服，避免数据库正在写入时被覆盖
+        boolean wasRunning = alistServer.hasRunning();
+        if (wasRunning) {
+            alistServer.shutdown();
+        }
+        new Thread(() -> {
+            String message;
+            try {
+                InputStream is = getContentResolver().openInputStream(source);
+                if (is == null) {
+                    throw new IOException("无法读取所选文件");
+                }
+                int count;
+                try {
+                    count = ConfigBackupHelper.importFrom(this, is);
+                } finally {
+                    is.close();
+                }
+                message = "已导入 " + count + " 个文件，正在重启服务";
+            } catch (Exception e) {
+                message = "导入失败：" + e.getMessage();
+            }
+            final String text = message;
+            runOnUiThread(() -> {
+                showToast(text);
+                // 重新加载页面并拉起服务，让新配置生效
+                try {
+                    alistServer.startup();
+                    webView.reload();
+                } catch (Exception ignored) {
+                }
+                sslIndicator.postDelayed(this::updateSslIndicator, 1500);
+            });
+        }, "config-import").start();
     }
 
     // ==================== 初始化 ====================
@@ -888,6 +1023,12 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         if (isActivityRunning()) {
             popupMenuWindow.showAsDropDown(view, 0, 50);
             backgroundAlpha(0.6f);
+            // TV 上默认焦点会落在菜单中间项，把顶部的「服务管理」组挤出屏幕，
+            // 导致「远程访问」「服务日志」不可见也不可点。强制焦点回到第一项。
+            View firstItem = popupMenuWindow.getContentView().findViewById(R.id.btn_showQrCode);
+            if (firstItem != null) {
+                firstItem.requestFocus();
+            }
         }
     }
 
@@ -923,6 +1064,59 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
 
     void showToast(String msg) {
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    // ==================== TV 适配 ====================
+
+    /**
+     * 是否运行在电视 / 大屏设备上（含 Leanback 盒子和投影）
+     */
+    private boolean isTvDevice() {
+        PackageManager pm = getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature("android.hardware.type.television")) {
+            return true;
+        }
+        int uiMode = getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_TYPE_MASK;
+        return uiMode == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION;
+    }
+
+    /**
+     * 电视观看距离远，原生控件与网页字号各放大一档
+     */
+    private void applyTvTextScale() {
+        try {
+            if (appInfoTextView != null) {
+                appInfoTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX,
+                        appInfoTextView.getTextSize() * 1.2f);
+            }
+            if (sslIndicator != null) {
+                sslIndicator.setTextSize(TypedValue.COMPLEX_UNIT_PX,
+                        sslIndicator.getTextSize() * 1.1f);
+            }
+            // WebView 内的 OpenList 页面整体放大，避免远距离看不清
+            if (webView != null && webView.getSettings().getTextZoom() < 115) {
+                webView.getSettings().setTextZoom(115);
+            }
+            if (popupMenuWindow != null) {
+                scaleTextSizes(popupMenuWindow.getContentView(), 1.15f);
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "applyTvTextScale: " + t);
+        }
+    }
+
+    private void scaleTextSizes(View view, float factor) {
+        if (view instanceof TextView) {
+            TextView tv = (TextView) view;
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, tv.getTextSize() * factor);
+        } else if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                scaleTextSizes(group.getChildAt(i), factor);
+            }
+        }
     }
 
 }
