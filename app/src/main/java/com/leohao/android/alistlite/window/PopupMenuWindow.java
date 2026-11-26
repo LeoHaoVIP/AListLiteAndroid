@@ -61,7 +61,7 @@ public class PopupMenuWindow extends PopupWindow {
 
         //设置窗口进入和退出的动画
         setAnimationStyle(R.style.PopupMenuWindowStyle);
-        //定义点击事件监听
+        //定义点击事件监听（菜单只保留高频项，低频项在「设置」二级页）
         View popupView = getContentView();
         //远程访问（显示二维码）
         popupView.findViewById(R.id.btn_showQrCode).setOnClickListener((view) -> {
@@ -73,10 +73,10 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             listener.openInBrowser(view);
         });
-        //权限配置
-        popupView.findViewById(R.id.btn_startPermissionCheckActivity).setOnClickListener((view) -> {
+        //服务日志
+        popupView.findViewById(R.id.btn_serviceLogs).setOnClickListener((view) -> {
             dismiss();
-            listener.startPermissionCheckActivity(view);
+            listener.showServiceLogs(view);
         });
         //一键登录
         popupView.findViewById(R.id.btn_oneClickLogin).setOnClickListener((view) -> {
@@ -93,49 +93,15 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             listener.toggleHttps(view);
         });
-        //高级配置
-        popupView.findViewById(R.id.btn_manageConfigData).setOnClickListener((view) -> {
+        //设置（权限、诊断、保活、导入导出、高级配置、阿里云盘令牌、检查更新）
+        popupView.findViewById(R.id.btn_settings).setOnClickListener((view) -> {
             dismiss();
-            listener.manageConfigData(view);
-        });
-        //服务日志
-        popupView.findViewById(R.id.btn_serviceLogs).setOnClickListener((view) -> {
-            dismiss();
-            listener.showServiceLogs(view);
-        });
-        //检查更新
-        popupView.findViewById(R.id.btn_checkUpdates).setOnClickListener((view) -> {
-            dismiss();
-            listener.checkUpdates(view);
-        });
-        //进入阿里云盘 TV 版 Token 获取页面（该 Token 对于开通阿里云盘会员的用户暂不限速）
-        popupView.findViewById(R.id.btn_showAliTvTokenGetPage).setOnClickListener((view) -> {
-            dismiss();
-            listener.showAliTvTokenGetPage(view);
+            listener.showSettings(view);
         });
         //关于 AList
         popupView.findViewById(R.id.btn_showSystemInfo).setOnClickListener((view) -> {
             dismiss();
             listener.showSystemInfo(view);
-        });
-        //存储诊断
-        popupView.findViewById(R.id.btn_storageDiagnostic).setOnClickListener((view) -> {
-            dismiss();
-            listener.showStorageDiagnostic(view);
-        });
-        //后台保活引导
-        popupView.findViewById(R.id.btn_keepAliveGuide).setOnClickListener((view) -> {
-            dismiss();
-            listener.showKeepAliveGuide(view);
-        });
-        //导出 / 导入配置
-        popupView.findViewById(R.id.btn_exportConfig).setOnClickListener((view) -> {
-            dismiss();
-            listener.exportConfig(view);
-        });
-        popupView.findViewById(R.id.btn_importConfig).setOnClickListener((view) -> {
-            dismiss();
-            listener.importConfig(view);
         });
     }
 }

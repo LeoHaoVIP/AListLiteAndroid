@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  横屏 / 电视：两列网格 + 紧凑行高
-  电视 1080p 下屏幕高度有限，单列 15 项需要滚动才能看到底部，
-  这里改成两列并把分组标题压扁，整页一屏放得下。
+  横屏 / 电视：两列网格，8 项一屏放得下
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="wrap_content"
              android:layout_height="wrap_content"
              android:fitsSystemWindows="true">
-
-    <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none">
 
     <GridLayout
             android:layout_width="match_parent"
@@ -25,7 +18,6 @@
             android:background="@drawable/popup_menu_border"
             android:elevation="8dp">
 
-        <!-- 服务 -->
         <TextView
                 android:id="@+id/menu_section_service"
                 style="@style/PopupMenuSectionHeader"
@@ -54,47 +46,6 @@
                 android:drawableStart="@drawable/ic_menu_logs"
                 android:text="@string/popup_menu_item_service_logs"/>
 
-        <!-- 存储与配置 -->
-        <TextView
-                style="@style/PopupMenuSectionHeader"
-                android:layout_width="0dp"
-                android:layout_columnSpan="2"
-                android:layout_columnWeight="2"
-                android:paddingTop="8dp"
-                android:paddingBottom="0dp"
-                android:text="存储与配置"/>
-
-        <TextView
-                android:id="@+id/btn_startPermissionCheckActivity"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_permission"
-                android:text="@string/popup_menu_item_permission"/>
-
-        <TextView
-                android:id="@+id/btn_storageDiagnostic"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_diagnostic"
-                android:text="@string/popup_menu_item_storage_diagnostic"/>
-
-        <TextView
-                android:id="@+id/btn_manageConfigData"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_config"
-                android:text="@string/popup_menu_item_advanced_config"/>
-
-        <TextView
-                android:id="@+id/btn_exportConfig"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_export"
-                android:text="@string/popup_menu_item_export_config"/>
-
-        <TextView
-                android:id="@+id/btn_importConfig"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_import"
-                android:text="@string/popup_menu_item_import_config"/>
-
-        <!-- 安全 -->
         <TextView
                 style="@style/PopupMenuSectionHeader"
                 android:layout_width="0dp"
@@ -123,32 +74,19 @@
                 android:text="@string/popup_menu_item_https"/>
 
         <TextView
-                android:id="@+id/btn_showAliTvTokenGetPage"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_cloud"
-                android:text="@string/popup_menu_item_alitv_token_get"/>
-
-        <!-- 其它 -->
-        <TextView
                 style="@style/PopupMenuSectionHeader"
                 android:layout_width="0dp"
                 android:layout_columnSpan="2"
                 android:layout_columnWeight="2"
                 android:paddingTop="8dp"
                 android:paddingBottom="0dp"
-                android:text="其它"/>
+                android:text="更多"/>
 
         <TextView
-                android:id="@+id/btn_keepAliveGuide"
+                android:id="@+id/btn_settings"
                 style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/ic_menu_keepalive"
-                android:text="@string/popup_menu_item_keep_alive"/>
-
-        <TextView
-                android:id="@+id/btn_checkUpdates"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/refresh"
-                android:text="@string/popup_menu_item_check_updates"/>
+                android:drawableStart="@drawable/ic_menu_config"
+                android:text="@string/popup_menu_item_settings"/>
 
         <TextView
                 android:id="@+id/btn_showSystemInfo"
@@ -156,5 +94,4 @@
                 android:drawableStart="@drawable/ic_menu_info"
                 android:text="@string/popup_menu_item_about"/>
     </GridLayout>
-    </ScrollView>
 </FrameLayout>

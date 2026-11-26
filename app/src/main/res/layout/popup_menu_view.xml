@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  竖屏（手机）单列菜单：分组顺序按使用频率排列
-  服务 > 存储与配置 > 安全 > 其它
-  横屏（电视）见 layout-land/popup_menu_view.xml，改为两列以免超出屏幕
+  竖屏（手机）单列菜单：只放高频操作，低频功能收进「设置」二级页。
+  横屏（电视）见 layout-land/popup_menu_view.xml（两列）。
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="wrap_content"
@@ -50,43 +49,6 @@
 
             <View style="@style/PopupMenuDivider"/>
 
-            <!-- 存储与配置 -->
-            <TextView
-                    style="@style/PopupMenuSectionHeader"
-                    android:text="存储与配置"/>
-
-            <TextView
-                    android:id="@+id/btn_startPermissionCheckActivity"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_permission"
-                    android:text="@string/popup_menu_item_permission"/>
-
-            <TextView
-                    android:id="@+id/btn_storageDiagnostic"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_diagnostic"
-                    android:text="@string/popup_menu_item_storage_diagnostic"/>
-
-            <TextView
-                    android:id="@+id/btn_manageConfigData"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_config"
-                    android:text="@string/popup_menu_item_advanced_config"/>
-
-            <TextView
-                    android:id="@+id/btn_exportConfig"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_export"
-                    android:text="@string/popup_menu_item_export_config"/>
-
-            <TextView
-                    android:id="@+id/btn_importConfig"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_import"
-                    android:text="@string/popup_menu_item_import_config"/>
-
-            <View style="@style/PopupMenuDivider"/>
-
             <!-- 安全 -->
             <TextView
                     style="@style/PopupMenuSectionHeader"
@@ -110,30 +72,18 @@
                     android:drawableStart="@drawable/ic_shortcut_https"
                     android:text="@string/popup_menu_item_https"/>
 
-            <TextView
-                    android:id="@+id/btn_showAliTvTokenGetPage"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_cloud"
-                    android:text="@string/popup_menu_item_alitv_token_get"/>
-
             <View style="@style/PopupMenuDivider"/>
 
-            <!-- 其它 -->
+            <!-- 更多 -->
             <TextView
                     style="@style/PopupMenuSectionHeader"
-                    android:text="其它"/>
+                    android:text="更多"/>
 
             <TextView
-                    android:id="@+id/btn_keepAliveGuide"
+                    android:id="@+id/btn_settings"
                     style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/ic_menu_keepalive"
-                    android:text="@string/popup_menu_item_keep_alive"/>
-
-            <TextView
-                    android:id="@+id/btn_checkUpdates"
-                    style="@style/PopupMenuItem"
-                    android:drawableStart="@drawable/refresh"
-                    android:text="@string/popup_menu_item_check_updates"/>
+                    android:drawableStart="@drawable/ic_menu_config"
+                    android:text="@string/popup_menu_item_settings"/>
 
             <TextView
                     android:id="@+id/btn_showSystemInfo"

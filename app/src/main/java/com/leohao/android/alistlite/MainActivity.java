@@ -92,8 +92,6 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private ValueCallback<Uri[]> mFilePathCallback;
     private ValueCallback<Uri> mUploadMessage;
     private static final int FILE_CHOOSER_REQUEST_CODE = 100;
-    private static final int EXPORT_CONFIG_REQUEST_CODE = 101;
-    private static final int IMPORT_CONFIG_REQUEST_CODE = 102;
     /**
      * OpenList 4.x 前端（Vue3 + Vite）依赖较新的 Chromium 内核（ES2020：可选链/空值合并等）。
      * 低于该版本的系统 WebView 无法渲染页面，表现为白屏/黑屏。
@@ -244,132 +242,11 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             }
             return;
         }
-        if (requestCode == EXPORT_CONFIG_REQUEST_CODE) {
-            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
-                doExportConfig(data.getData());
-            }
-            return;
-        }
-        if (requestCode == IMPORT_CONFIG_REQUEST_CODE) {
-            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
-                confirmImportConfig(data.getData());
-            }
-            return;
-        }
-    }
-
-    // ==================== 配置导出 / 导入 ====================
-
-    @Override
-    public void exportConfig(View view) {
-        if (!alistServer.hasRunning()) {
-            showToast("请先启动服务，再导出配置");
-            return;
-        }
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/zip");
-        intent.putExtra(Intent.EXTRA_TITLE, ConfigBackupHelper.suggestFileName());
-        try {
-            startActivityForResult(intent, EXPORT_CONFIG_REQUEST_CODE);
-        } catch (Exception e) {
-            showToast("当前设备不支持选择保存位置");
-        }
     }
 
     @Override
-    public void importConfig(View view) {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        try {
-            startActivityForResult(intent, IMPORT_CONFIG_REQUEST_CODE);
-        } catch (Exception e) {
-            showToast("当前设备不支持选择文件");
-        }
-    }
-
-    @Override
-    public void showStorageDiagnostic(View view) {
-        startActivity(new Intent(this, StorageDiagnosticActivity.class));
-    }
-
-    @Override
-    public void showKeepAliveGuide(View view) {
-        startActivity(new Intent(this, KeepAliveActivity.class));
-    }
-
-    private void doExportConfig(Uri target) {
-        new Thread(() -> {
-            String message;
-            boolean ok;
-            try {
-                OutputStream os = getContentResolver().openOutputStream(target);
-                if (os == null) {
-                    throw new IOException("无法写入所选位置");
-                }
-                int count;
-                try {
-                    count = ConfigBackupHelper.export(this, os);
-                } finally {
-                    os.close();
-                }
-                ok = true;
-                message = "已导出 " + count + " 个文件";
-            } catch (Exception e) {
-                ok = false;
-                message = "导出失败：" + e.getMessage();
-            }
-            final boolean success = ok;
-            final String text = message;
-            runOnUiThread(() -> showToast(text));
-        }, "config-export").start();
-    }
-
-    private void confirmImportConfig(Uri source) {
-        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
-                .setTitle("导入配置")
-                .setMessage("导入会覆盖当前的网盘挂载与账号配置，且需要重启服务后生效。确定继续？")
-                .setPositiveButton("导入", (d, w) -> doImportConfig(source))
-                .setNegativeButton("取消", null)
-                .show();
-    }
-
-    private void doImportConfig(Uri source) {
-        // 先停服，避免数据库正在写入时被覆盖
-        boolean wasRunning = alistServer.hasRunning();
-        if (wasRunning) {
-            alistServer.shutdown();
-        }
-        new Thread(() -> {
-            String message;
-            try {
-                InputStream is = getContentResolver().openInputStream(source);
-                if (is == null) {
-                    throw new IOException("无法读取所选文件");
-                }
-                int count;
-                try {
-                    count = ConfigBackupHelper.importFrom(this, is);
-                } finally {
-                    is.close();
-                }
-                message = "已导入 " + count + " 个文件，正在重启服务";
-            } catch (Exception e) {
-                message = "导入失败：" + e.getMessage();
-            }
-            final String text = message;
-            runOnUiThread(() -> {
-                showToast(text);
-                // 重新加载页面并拉起服务，让新配置生效
-                try {
-                    alistServer.startup();
-                    webView.reload();
-                } catch (Exception ignored) {
-                }
-                sslIndicator.postDelayed(this::updateSslIndicator, 1500);
-            });
-        }, "config-import").start();
+    public void showSettings(View view) {
+        startActivity(new Intent(this, SettingsActivity.class));
     }
 
     // ==================== 初始化 ====================

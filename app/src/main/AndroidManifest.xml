@@ -63,6 +63,11 @@
                 android:launchMode="singleTask"
                 android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
         <activity
+                android:name=".SettingsActivity"
+                android:label="@string/activity_title_settings"
+                android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
+
+        <activity
                 android:name=".StorageDiagnosticActivity"
                 android:label="@string/activity_title_storage_diagnostic"
                 android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>

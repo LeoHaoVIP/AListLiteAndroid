@@ -30,15 +30,6 @@ public interface OnMenuActionListener {
 
     void showSystemInfo(View view);
 
-    /** 导出配置（config.json + 数据库） */
-    void exportConfig(View view);
-
-    /** 导入配置 */
-    void importConfig(View view);
-
-    /** 存储诊断 */
-    void showStorageDiagnostic(View view);
-
-    /** 后台保活引导 */
-    void showKeepAliveGuide(View view);
+    /** 打开设置二级页（权限、诊断、保活、导入导出等低频功能） */
+    void showSettings(View view);
 }
