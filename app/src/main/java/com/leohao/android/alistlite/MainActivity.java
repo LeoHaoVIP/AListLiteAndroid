@@ -154,9 +154,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         }
         allFilesAccessPrompted = true;
         new AlertDialog.Builder(this, R.style.IOSAlertDialog)
-                .setTitle("本地存储无法写入")
-                .setMessage("「所有文件访问」权限未开启，本地存储只能浏览，无法上传、重命名或删除（会提示 permission denied）。\n\n点击「去授权」后，在设置里打开本应用的「所有文件访问 / 管理所有文件」。")
-                .setPositiveButton("去授权", (d, w) -> {
+                .setTitle("需要文件访问权限")
+                .setMessage("开启「所有文件访问」后，才能向本地存储上传、重命名或删除文件。")
+                .setPositiveButton("去开启", (d, w) -> {
                     try {
                         startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
                                 Uri.parse("package:" + getPackageName())));
@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                         startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
                     }
                 })
-                .setNegativeButton("稍后再说", null)
+                .setNegativeButton("稍后", null)
                 .show();
     }
 
