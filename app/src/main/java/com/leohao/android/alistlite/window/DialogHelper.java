@@ -103,6 +103,13 @@ public class DialogHelper {
      * 显示远程访问二维码弹框
      */
     public static void showQrCode(Activity activity, Alist alistServer) {
+        showQrCode(activity, alistServer, null);
+    }
+
+    /**
+     * @param fallback 设备没有浏览器时的兜底打开方式（通常是应用内 WebView）
+     */
+    public static void showQrCode(Activity activity, Alist alistServer, UrlFallback fallback) {
         if (!alistServer.hasRunning()) {
             Toast.makeText(activity, "AList 服务未启动", Toast.LENGTH_SHORT).show();
             return;
@@ -135,7 +142,7 @@ public class DialogHelper {
         ImageView qrImageView = new ImageView(activity);
         qrImageView.setAdjustViewBounds(true);
         qrImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        qrImageView.setOnClickListener(v -> openUrl(activity, allAddresses.get(currentIndex.get())));
+        qrImageView.setOnClickListener(v -> openUrl(activity, allAddresses.get(currentIndex.get()), fallback));
 
         TextView currentIpText = new TextView(activity);
         currentIpText.setGravity(Gravity.CENTER);
@@ -502,9 +509,27 @@ public class DialogHelper {
     }
 
     private static void openUrl(Activity activity, String url) {
+        openUrl(activity, url, null);
+    }
+
+    private static void openUrl(Activity activity, String url, UrlFallback fallback) {
         try {
             activity.startActivity(Intent.parseUri(url, Intent.URI_INTENT_SCHEME));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // 没有浏览器（电视、精简系统）：回落到应用内打开，并把地址留给用户手动取用
+            if (fallback != null) {
+                fallback.open(url);
+            } else {
+                ClipBoardHelper.getInstance().copyUrl(url);
+                Toast.makeText(activity, "未找到浏览器，地址已复制", Toast.LENGTH_SHORT).show();
+            }
         }
+    }
+
+    /**
+     * 无浏览器时的兜底打开方式
+     */
+    public interface UrlFallback {
+        void open(String url);
     }
 }

@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private void handleShortcutIntent(Intent intent) {
         if (intent == null) return;
         if ("remote_access".equals(intent.getStringExtra("shortcut"))) {
-            DialogHelper.showQrCode(this, alistServer);
+            DialogHelper.showQrCode(this, alistServer, url -> webView.loadUrl(url));
         }
     }
 
@@ -493,13 +493,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.startsWith("blob")) return false;
-                String current = view.getUrl();
-                boolean onInfoPage = current != null && current.startsWith("file:///android_asset/html/");
-                if (onInfoPage && (url.startsWith("http://") || url.startsWith("https://"))) {
-                    // 关于 / 更新日志页里的外链交给系统浏览器，别把 App 内页面顶掉
-                    openExternalUrl(url);
-                    return true;
-                }
+                // 默认所有网页都在 WebView 里打开：部分设备（电视、平板）没有浏览器。
+                // 只有非 http 的 scheme（mailto:、intent:、market: 等）才交给系统处理。
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
                         openExternalUrl(url);
@@ -582,16 +577,26 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
 
     /**
      * 用系统浏览器打开服务的外部访问地址（局域网地址），供 WebView 无法渲染时兜底。
+     * 设备上没有浏览器时（电视、精简平板）自动回落到应用内 WebView。
      */
     private void openInExternalBrowser() {
         if (alistServer == null || !alistServer.hasRunning()) {
             showToast("AList 服务未启动");
             return;
         }
+        String address;
         try {
-            startActivity(Intent.parseUri(alistServer.getExternalAddress(), Intent.URI_INTENT_SCHEME));
+            address = alistServer.getExternalAddress();
         } catch (Exception e) {
             showToast("获取服务地址失败");
+            return;
+        }
+        try {
+            startActivity(Intent.parseUri(address, Intent.URI_INTENT_SCHEME));
+        } catch (Exception e) {
+            Log.w(TAG, "no external browser, fallback to webview: " + e.getLocalizedMessage());
+            showToast("未找到浏览器，已在应用内打开");
+            webView.loadUrl(address);
         }
     }
 
@@ -803,7 +808,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
 
     @Override
     public void showQrCode(View view) {
-        DialogHelper.showQrCode(this, alistServer);
+        DialogHelper.showQrCode(this, alistServer, url -> webView.loadUrl(url));
     }
 
     @Override
@@ -928,7 +933,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
 
     @Override
     public void checkUpdates(View view) {
-        UpdateChecker.check(this, currentAppVersion);
+        // 下载页优先在 App 内 WebView 打开（部分电视/平板没有浏览器）
+        UpdateChecker.check(this, currentAppVersion, url -> webView.loadUrl(url));
     }
 
     @Override

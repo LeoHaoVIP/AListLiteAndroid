@@ -20,12 +20,24 @@ public class UpdateChecker {
     private static final String TAG = "UpdateChecker";
 
     /**
+     * 打开链接的方式。默认交给系统浏览器；App 内传入 WebView 的加载器，
+     * 保证没有浏览器的设备（电视、平板）也能看到下载页。
+     */
+    public interface UrlOpener {
+        void open(String url);
+    }
+
+    /**
      * 检查新版本并提示下载
      *
      * @param activity       Activity 上下文
      * @param currentVersion 当前应用版本号
      */
     public static void check(Activity activity, String currentVersion) {
+        check(activity, currentVersion, null);
+    }
+
+    public static void check(Activity activity, String currentVersion, UrlOpener opener) {
         new Thread(() -> {
             try {
                 String releaseInfo;
@@ -56,8 +68,8 @@ public class UpdateChecker {
                                 .setTitle(title)
                                 .setMessage(updateJournal)
                                 .setCancelable(true)
-                                .setPositiveButton("镜像加速下载", (d, w) -> openExternalUrl(activity, downloadLinkFast))
-                                .setNeutralButton("GitHub官网下载", (d, w) -> openExternalUrl(activity, downloadLinkGitHub))
+                                .setPositiveButton("镜像加速下载", (d, w) -> openUrl(activity, opener, downloadLinkFast))
+                                .setNeutralButton("GitHub官网下载", (d, w) -> openUrl(activity, opener, downloadLinkGitHub))
                                 .setNegativeButton("取消", null)
                                 .show();
                     });
@@ -76,6 +88,18 @@ public class UpdateChecker {
         } else {
             activity.runOnUiThread(() -> Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show());
         }
+    }
+
+    private static void openUrl(Activity activity, UrlOpener opener, String url) {
+        if (opener != null) {
+            try {
+                opener.open(url);
+                return;
+            } catch (Exception e) {
+                Log.w(TAG, "openUrl in-app failed: " + e.getLocalizedMessage());
+            }
+        }
+        openExternalUrl(activity, url);
     }
 
     private static void openExternalUrl(Activity activity, String url) {
