@@ -1,12 +1,209 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Reward</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>项目捐助</title>
+<style>
+  :root {
+    --bg: #f2f3f7;
+    --card: #ffffff;
+    --card-alt: #f7f8fa;
+    --text: #101114;
+    --text-2: #6b7280;
+    --text-3: #9aa1ad;
+    --line: rgba(0, 0, 0, .07);
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, .1);
+    --coffee: #c98b3f;
+    --coffee-soft: rgba(201, 139, 63, .12);
+    --shadow: 0 6px 20px rgba(17, 24, 39, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --card-alt: #242426;
+      --text: #f2f2f7;
+      --text-2: #9b9ba1;
+      --text-3: #6e6e73;
+      --line: rgba(255, 255, 255, .09);
+      --accent: #0a84ff;
+      --accent-soft: rgba(10, 132, 255, .18);
+      --coffee: #e0a75f;
+      --coffee-soft: rgba(224, 167, 95, .16);
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { text-align: center; padding: 30px 0 6px; }
+  .badge {
+    width: 76px; height: 76px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px;
+    background: var(--coffee-soft);
+  }
+  h1 { margin: 0; font-size: 23px; font-weight: 700; letter-spacing: -.3px; }
+  .tagline {
+    margin: 9px auto 0; max-width: 290px;
+    font-size: 13px; line-height: 1.7; color: var(--text-2);
+  }
+
+  h2 {
+    margin: 26px 0 10px 4px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .6px; text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  /* ---------- QR card ---------- */
+  .qr-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 20px 18px 16px;
+    text-align: center;
+  }
+  .qr-frame {
+    display: inline-block;
+    padding: 10px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    line-height: 0;
+  }
+  .qr-frame img {
+    width: 208px; height: 208px;
+    border-radius: 8px;
+    display: block;
+    -webkit-user-drag: none;
+  }
+  .qr-title {
+    margin-top: 14px;
+    font-size: 14px; font-weight: 600;
+  }
+  .qr-sub {
+    margin-top: 5px;
+    font-size: 12px; color: var(--text-3); line-height: 1.6;
+  }
+
+  /* ---------- List ---------- */
+  .list {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 14px;
+    font-size: 13.5px; line-height: 1.6;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .lead { font-size: 16px; line-height: 1.4; width: 22px; text-align: center; flex: none; }
+  .row .label { flex: 1; }
+  .row .label b { font-weight: 600; }
+  .row .label span {
+    display: block; font-size: 11.5px; color: var(--text-3); margin-top: 2px;
+  }
+
+  /* ---------- Ways to support ---------- */
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tile {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13.5px; font-weight: 500;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .tile:active { transform: scale(.97); background: var(--card-alt); }
+  .tile .emoji { font-size: 17px; line-height: 1; }
+
+  footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: var(--text-3);
+  }
+  footer .heart { color: #ff453a; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
 </head>
 <body>
-<p align="center"><img width="100" src="../images/rewardcode.png" alt="yoga logo"></p>
-<h5 align="center">Buy Me a Coffee!</h5>
-<h4 align="center">“你的支持是我持续优化的强大动力”</h4>
+
+<div class="hero">
+  <div class="badge">☕</div>
+  <h1>请我喝杯咖啡</h1>
+  <p class="tagline">AListLite 完全免费、无广告、代码开源。<br>如果你觉得它省了你的时间，可以请我喝一杯。</p>
+</div>
+
+<h2>扫码支持</h2>
+<div class="qr-card">
+  <div class="qr-frame">
+    <img src="../images/rewardcode.png" alt="微信赞赏码">
+  </div>
+  <div class="qr-title">微信赞赏码</div>
+  <div class="qr-sub">微信扫码即可，金额随意 · 长按图片可保存</div>
+</div>
+
+<h2>捐助用在哪里</h2>
+<div class="list">
+  <div class="row">
+    <span class="lead">🧪</span>
+    <span class="label"><b>测试设备与流量</b><span>不同系统版本的手机、电视盒子、网盘挂载验证</span></span>
+  </div>
+  <div class="row">
+    <span class="lead">🧯</span>
+    <span class="label"><b>崩溃监控等外部服务</b><span>Bugly 崩溃上报、代码托管与发布下载</span></span>
+  </div>
+  <div class="row">
+    <span class="lead">⏳</span>
+    <span class="label"><b>持续适配与维护</b><span>跟随 OpenList 新版本、适配新系统与新机型</span></span>
+  </div>
+</div>
+
+<h2>不花钱也能帮上忙</h2>
+<div class="grid">
+  <a class="tile" href="https://github.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer">
+    <span class="emoji">⭐</span><span>Star 项目</span>
+  </a>
+  <a class="tile" href="https://github.com/LeoHaoVIP/AListLiteAndroid/issues" target="_blank" rel="noopener noreferrer">
+    <span class="emoji">🐞</span><span>反馈问题</span>
+  </a>
+  <a class="tile" href="https://github.com/LeoHaoVIP/AListLiteAndroid/discussions" target="_blank" rel="noopener noreferrer">
+    <span class="emoji">💬</span><span>参与讨论</span>
+  </a>
+  <a class="tile" href="release-log.html">
+    <span class="emoji">📋</span><span>看看更新</span>
+  </a>
+</div>
+
+<footer>
+  无论是否捐助，都不影响你使用全部功能。<br>
+  <span class="heart">♥</span> 感谢每一位使用、反馈和分享的人。<br>
+  AListLite 以 AGPL-3.0 协议开源
+</footer>
+
 </body>
 </html>
