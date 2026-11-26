@@ -89,16 +89,16 @@
                 android:text="@string/popup_menu_item_alitv_token_get"/>
 
         <TextView
-                android:id="@+id/btn_checkUpdates"
-                style="@style/PopupMenuItemGrid"
-                android:drawableStart="@drawable/refresh"
-                android:text="@string/popup_menu_item_check_updates"/>
-
-        <TextView
                 android:id="@+id/btn_settings"
                 style="@style/PopupMenuItemGrid"
                 android:drawableStart="@drawable/ic_menu_config"
                 android:text="@string/popup_menu_item_settings"/>
+
+        <TextView
+                android:id="@+id/btn_checkUpdates"
+                style="@style/PopupMenuItemGrid"
+                android:drawableStart="@drawable/refresh"
+                android:text="@string/popup_menu_item_check_updates"/>
 
         <TextView
                 android:id="@+id/btn_showSystemInfo"

@@ -168,19 +168,38 @@ public class SettingsActivity extends AppCompatActivity {
                 if (os == null) {
                     throw new Exception("无法写入所选位置");
                 }
-                int count;
                 try {
-                    count = ConfigBackupHelper.export(this, os);
+                    ConfigBackupHelper.export(this, os);
                 } finally {
                     os.close();
                 }
-                message = "已导出 " + count + " 个文件";
+                message = "已导出 " + queryDisplayName(target);
             } catch (Exception e) {
                 message = "导出失败：" + e.getMessage();
             }
             final String text = message;
             runOnUiThread(() -> toast(text));
         }, "config-export").start();
+    }
+
+    /**
+     * 取用户实际保存的文件名（SAF 允许用户改名）
+     */
+    private String queryDisplayName(Uri uri) {
+        try (android.database.Cursor cursor = getContentResolver()
+                .query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    String name = cursor.getString(index);
+                    if (name != null && !name.isEmpty()) {
+                        return name;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return ConfigBackupHelper.suggestFileName();
     }
 
     private void confirmImport(Uri source) {
