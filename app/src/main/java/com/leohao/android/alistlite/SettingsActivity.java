@@ -1,13 +1,10 @@
 package com.leohao.android.alistlite;
 
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +20,6 @@ import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.ConfigBackupHelper;
 import com.leohao.android.alistlite.window.DialogHelper;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -36,6 +31,10 @@ import java.util.List;
 public class SettingsActivity extends AppCompatActivity {
 
     private static final int IMPORT_REQUEST_CODE = 202;
+    private static final int EXPORT_TREE_REQUEST_CODE = 203;
+
+    private static final String PREFS = "settings_ui";
+    private static final String PREF_LAST_EXPORT_TREE = "last_export_tree";
 
     private static class Item {
         final int iconRes;
@@ -185,25 +184,73 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * 直接写到「下载/AListLite」，不再弹系统的保存位置对话框
-     * （那个对话框在部分机型上会弹出一个无法点击的文件名输入框）
+     * 导出：让用户选一个文件夹，App 自己在里面建 zip
+     * 用 ACTION_OPEN_DOCUMENT_TREE 而不是 ACTION_CREATE_DOCUMENT，
+     * 因为后者的保存对话框里有文件名输入栏，部分 ROM 上点不动
      */
     private void startExport() {
         if (!Alist.getInstance().hasRunning()) {
             toast("请先启动服务，再导出配置");
             return;
         }
+        final String last = getSharedPreferences(PREFS, MODE_PRIVATE)
+                .getString(PREF_LAST_EXPORT_TREE, null);
+        if (last != null) {
+            new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                    .setTitle("导出配置")
+                    .setItems(new String[]{"导出到上次的文件夹", "选择其他文件夹"},
+                            (d, which) -> {
+                                if (which == 0) {
+                                    doExportToTree(Uri.parse(last));
+                                } else {
+                                    pickExportTree();
+                                }
+                            })
+                    .setNegativeButton("取消", null)
+                    .show();
+            return;
+        }
+        pickExportTree();
+    }
+
+    private void pickExportTree() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try {
+            startActivityForResult(intent, EXPORT_TREE_REQUEST_CODE);
+        } catch (Exception e) {
+            toast("当前设备不支持选择文件夹");
+        }
+    }
+
+    private void doExportToTree(Uri tree) {
         final String fileName = ConfigBackupHelper.suggestFileName();
         toast("正在导出…");
         new Thread(() -> {
             String message;
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    exportToDownloads(fileName);
-                } else {
-                    exportToDownloadsLegacy(fileName);
+                String folderName = queryTreeFolderName(tree);
+                String docId = DocumentsContract.getTreeDocumentId(tree);
+                Uri parent = DocumentsContract.buildDocumentUriUsingTree(tree, docId);
+                Uri target = DocumentsContract.createDocument(
+                        getContentResolver(), parent, "application/zip", fileName);
+                if (target == null) {
+                    throw new Exception("无法在该文件夹创建文件");
                 }
-                message = "已导出 " + fileName + "（下载/AListLite）";
+                OutputStream os = getContentResolver().openOutputStream(target);
+                if (os == null) {
+                    throw new Exception("无法写入文件");
+                }
+                try {
+                    ConfigBackupHelper.export(this, os);
+                } finally {
+                    os.close();
+                }
+                message = folderName == null || folderName.isEmpty()
+                        ? "已导出 " + fileName
+                        : "已导出 " + fileName + "（" + folderName + "）";
             } catch (Exception e) {
                 Log.e("SettingsActivity", "export config failed", e);
                 message = "导出失败：" + e.getMessage();
@@ -213,50 +260,23 @@ public class SettingsActivity extends AppCompatActivity {
         }, "config-export").start();
     }
 
-    private void exportToDownloads(String fileName) throws Exception {
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
-        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
-                Environment.DIRECTORY_DOWNLOADS + "/AListLite");
-        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
-
-        Uri target = getContentResolver()
-                .insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-        if (target == null) {
-            throw new Exception("无法创建文件");
-        }
+    /**
+     * 取所选文件夹的名字，用于提示
+     */
+    private String queryTreeFolderName(Uri tree) {
         try {
-            OutputStream os = getContentResolver().openOutputStream(target);
-            if (os == null) {
-                throw new Exception("无法写入文件");
+            String docId = DocumentsContract.getTreeDocumentId(tree);
+            Uri parent = DocumentsContract.buildDocumentUriUsingTree(tree, docId);
+            try (android.database.Cursor cursor = getContentResolver().query(
+                    parent, new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME},
+                    null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    return cursor.getString(0);
+                }
             }
-            try {
-                ConfigBackupHelper.export(this, os);
-            } finally {
-                os.close();
-            }
-            ContentValues done = new ContentValues();
-            done.put(MediaStore.MediaColumns.IS_PENDING, 0);
-            getContentResolver().update(target, done, null, null);
-        } catch (Exception e) {
-            getContentResolver().delete(target, null, null);
-            throw e;
+        } catch (Exception ignored) {
         }
-    }
-
-    private void exportToDownloadsLegacy(String fileName) throws Exception {
-        File dir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), "AListLite");
-        if (!dir.exists() && !dir.mkdirs()) {
-            throw new Exception("无法创建目录");
-        }
-        FileOutputStream os = new FileOutputStream(new File(dir, fileName));
-        try {
-            ConfigBackupHelper.export(this, os);
-        } finally {
-            os.close();
-        }
+        return null;
     }
 
     private void startImport() {
@@ -276,8 +296,20 @@ public class SettingsActivity extends AppCompatActivity {
         if (resultCode != RESULT_OK || data == null || data.getData() == null) {
             return;
         }
-        if (requestCode == IMPORT_REQUEST_CODE) {
-            confirmImport(data.getData());
+        Uri uri = data.getData();
+        if (requestCode == EXPORT_TREE_REQUEST_CODE) {
+            // 长期授权，下次可以直接导出到同一个文件夹
+            try {
+                getContentResolver().takePersistableUriPermission(uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            } catch (Exception ignored) {
+            }
+            getSharedPreferences(PREFS, MODE_PRIVATE)
+                    .edit().putString(PREF_LAST_EXPORT_TREE, uri.toString()).apply();
+            doExportToTree(uri);
+        } else if (requestCode == IMPORT_REQUEST_CODE) {
+            confirmImport(uri);
         }
     }
 
