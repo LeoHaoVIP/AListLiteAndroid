@@ -68,6 +68,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MainActivity extends AppCompatActivity implements OnMenuActionListener {
     private static final String TAG = "MainActivity";
+    private static final String KEY_TV_HINT_SHOWN = "tv_hint_shown";
     private ScheduledExecutorService broadcastScheduler = null;
     private ConnectivityManager.NetworkCallback networkCallback = null;
     private ConnectivityManager connectivityManager = null;
@@ -117,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         initFocusSettings();
         if (isTvDevice()) {
             applyTvTextScale();
+            maybeShowTvHint();
         }
         checkPermissions();
         checkUpdates(null);
@@ -209,6 +211,21 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         super.finish();
     }
 
+    /**
+     * 遥控器「菜单」键在任何视图消费之前拦截下来，直接唤起选项面板
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            int keyCode = event.getKeyCode();
+            if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_SETTINGS) {
+                showPopupMenu(findViewById(R.id.btn_showPopupMenu));
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -282,15 +299,51 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         serviceSwitch.setChecked(true);
     }
 
+    /**
+     * 焦点处理：只在电视/机顶盒上生效。
+     * 之前对所有设备、所有视图无条件 setBackground(border / null)，
+     * 会把按钮原本的背景（蓝色圆形刷新键、状态卡片描边）冲掉；改造后：
+     * 用 foreground 叠加焦点环，保留原有 background。
+     */
     private void initFocusSettings() {
-        appInfoTextView.postDelayed(() -> appInfoTextView.requestFocus(), 1000);
+        final boolean tv = isTvDevice();
+        if (tv) {
+            appInfoTextView.postDelayed(() -> appInfoTextView.requestFocus(), 1000);
+        }
         List<View> views = AppUtil.getAllViews(this);
         views.addAll(AppUtil.getAllChildViews(popupMenuWindow.getContentView()));
         for (View view : views) {
-            view.setOnFocusChangeListener((v, hasFocus) -> {
-                view.setBackground(hasFocus ? getDrawable(R.drawable.background_border) : null);
-            });
+            if (!tv || view instanceof WebView) {
+                continue;
+            }
+            if (!view.isFocusable() && !view.isClickable()) {
+                continue;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                view.setForeground(getDrawable(R.drawable.focus_ring_overlay));
+            }
         }
+    }
+
+    /**
+     * 电视上给一次遥控器操作提示（只提示一次）
+     */
+    private void maybeShowTvHint() {
+        if (!isTvDevice()) {
+            return;
+        }
+        SharedDataHelper shared = SharedDataHelper.getInstance();
+        if (shared.getBoolShareData(KEY_TV_HINT_SHOWN, false)) {
+            return;
+        }
+        shared.putSharedData(KEY_TV_HINT_SHOWN, true);
+        // 延后一点，避免和启动时的「初始登录信息」等 Toast 互相顶掉
+        appInfoTextView.postDelayed(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                Log.d(TAG, "show tv key hint");
+                showToast("方向键移动焦点 · 菜单键打开选项 · 返回键后退");
+            }
+        }, 15000);
     }
 
     private void checkPermissions() {
@@ -324,6 +377,11 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private void initWebview() {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
+        if (isTvDevice()) {
+            // 电视/盒子没有触屏，让 WebView 能被遥控器方向键滚动
+            webView.setFocusable(true);
+            webView.setFocusableInTouchMode(true);
+        }
         webView.getSettings().setAllowFileAccess(true);
         webView.getSettings().setAllowContentAccess(true);
         webView.removeJavascriptInterface("searchBoxJavaBredge_");

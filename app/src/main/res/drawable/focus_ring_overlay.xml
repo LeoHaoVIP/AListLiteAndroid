@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 作为 foreground 叠加：有焦点时显示描边，不影响原有 background -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true"
+          android:drawable="@drawable/focus_ring_shape"/>
+    <item android:drawable="@android:color/transparent"/>
+</selector>

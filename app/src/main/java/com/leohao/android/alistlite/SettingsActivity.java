@@ -101,6 +101,10 @@ public class SettingsActivity extends AppCompatActivity {
             ((TextView) row.findViewById(R.id.tv_desc)).setText(item.desc);
             ((TextView) row.findViewById(R.id.tv_action)).setText(item.actionText);
             row.setOnClickListener(v -> item.action.run());
+            if (isTvDevice() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // 遥控器方向键移动焦点时给个明显的描边
+                row.setForeground(getDrawable(R.drawable.focus_ring_overlay));
+            }
 
             if (card.getChildCount() > 0) {
                 View divider = new View(this);
@@ -428,6 +432,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void doImport(Uri source) {
+        final String sourceName = queryDisplayName(source);
         final Alist alist = Alist.getInstance();
         // 先停服，避免数据库正在写入时被覆盖
         if (alist.hasRunning()) {
@@ -440,13 +445,12 @@ public class SettingsActivity extends AppCompatActivity {
                 if (is == null) {
                     throw new Exception("无法读取所选文件");
                 }
-                int count;
                 try {
-                    count = ConfigBackupHelper.importFrom(this, is);
+                    ConfigBackupHelper.importFrom(this, is);
                 } finally {
                     is.close();
                 }
-                message = "已导入 " + count + " 个文件，服务正在重启";
+                message = "已导入 " + sourceName + "，服务正在重启";
             } catch (Exception e) {
                 message = "导入失败：" + e.getMessage();
             }
@@ -469,11 +473,45 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 取文件的显示名（用户可能改过名），用于导入提示
+     */
+    private String queryDisplayName(Uri uri) {
+        try (android.database.Cursor cursor = getContentResolver()
+                .query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    String name = cursor.getString(index);
+                    if (name != null && !name.isEmpty()) {
+                        return name;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "配置文件";
+    }
+
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density);
+    }
+
+    /**
+     * 是否运行在电视 / 大屏设备上
+     */
+    private boolean isTvDevice() {
+        android.content.pm.PackageManager pm = getPackageManager();
+        if (pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature("android.hardware.type.television")) {
+            return true;
+        }
+        int uiMode = getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_TYPE_MASK;
+        return uiMode == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION;
     }
 }
