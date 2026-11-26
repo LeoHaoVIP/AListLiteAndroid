@@ -42,7 +42,7 @@ public final class ConfigBackupHelper {
      * 建议的文件名，如 alistlite-config-20261126-1345.zip
      */
     public static String suggestFileName() {
-        String ts = new SimpleDateFormat("yyyyMMdd-HHmm", Locale.CHINA).format(new Date());
+        String ts = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.CHINA).format(new Date());
         return "alistlite-config-" + ts + ".zip";
     }
 

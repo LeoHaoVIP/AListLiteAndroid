@@ -924,7 +924,12 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         WindowManager.LayoutParams lp = getWindow().getAttributes();
         lp.alpha = bgAlpha;
         getWindow().setAttributes(lp);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        if (bgAlpha >= 1.0f) {
+            // 复位时必须清掉 dim，否则后续页面（如系统文件选择器）可能吃到残留的遮罩/焦点状态
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        } else {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        }
     }
 
     private void openExternalUrl(String url) {

@@ -1,11 +1,18 @@
 package com.leohao.android.alistlite;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,32 +21,31 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.ConfigBackupHelper;
-import com.leohao.android.alistlite.util.UpdateChecker;
 import com.leohao.android.alistlite.window.DialogHelper;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 设置二级页：把主菜单里的低频功能收进来，避免弹出菜单过长。
- * 分为「存储」「后台」「数据」「其它」四组。
- *
- * @author LeoHao
+ * 二级页：低频设置项集中在这里（权限、诊断、高级配置、保活、备份）
  */
 public class SettingsActivity extends AppCompatActivity {
 
-    private static final int EXPORT_REQUEST_CODE = 201;
     private static final int IMPORT_REQUEST_CODE = 202;
 
     private static class Item {
+        final int iconRes;
         final String title;
         final String desc;
         final String actionText;
         final Runnable action;
 
-        Item(String title, String desc, String actionText, Runnable action) {
+        Item(int iconRes, String title, String desc, String actionText, Runnable action) {
+            this.iconRes = iconRes;
             this.title = title;
             this.desc = desc;
             this.actionText = actionText;
@@ -52,25 +58,54 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         LinearLayout container = findViewById(R.id.settings_container);
+        container.setPadding(dp(12), 0, dp(12), dp(16));
+        renderItems(container);
+    }
+
+    /**
+     * 分组标题 + 卡片容器：每组一块圆角卡片，行间用 1px 分隔线
+     */
+    private void renderItems(LinearLayout container) {
         LayoutInflater inflater = LayoutInflater.from(this);
+        LinearLayout card = null;
+        boolean firstGroup = true;
         for (Object entry : buildItems()) {
             if (entry instanceof String) {
                 TextView header = new TextView(this);
                 header.setText((String) entry);
                 header.setTextSize(12);
-                header.setPadding(dp(4), dp(12), dp(4), dp(4));
+                header.setPadding(dp(6), firstGroup ? dp(2) : dp(20), dp(6), dp(8));
                 header.setTextColor(getResources().getColor(R.color.ios_text_secondary));
                 container.addView(header);
+                firstGroup = false;
+
+                card = new LinearLayout(this);
+                card.setOrientation(LinearLayout.VERTICAL);
+                card.setBackgroundResource(R.drawable.settings_card_bg);
+                container.addView(card, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                continue;
+            }
+            if (card == null) {
                 continue;
             }
             final Item item = (Item) entry;
-            View row = inflater.inflate(R.layout.keep_alive_item_view, container, false);
-            ((TextView) row.findViewById(R.id.tv_guide_title)).setText(item.title);
-            ((TextView) row.findViewById(R.id.tv_guide_desc)).setText(item.desc);
-            TextView actionView = row.findViewById(R.id.tv_guide_action);
-            actionView.setText(item.actionText + " ›");
+            View row = inflater.inflate(R.layout.settings_item_view, card, false);
+            ((ImageView) row.findViewById(R.id.iv_icon)).setImageResource(item.iconRes);
+            ((TextView) row.findViewById(R.id.tv_title)).setText(item.title);
+            ((TextView) row.findViewById(R.id.tv_desc)).setText(item.desc);
+            ((TextView) row.findViewById(R.id.tv_action)).setText(item.actionText);
             row.setOnClickListener(v -> item.action.run());
-            container.addView(row);
+
+            if (card.getChildCount() > 0) {
+                View divider = new View(this);
+                divider.setBackgroundColor(getResources().getColor(R.color.ios_separator_opaque));
+                LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 1);
+                dlp.setMarginStart(dp(52));
+                card.addView(divider, dlp);
+            }
+            card.addView(row);
         }
     }
 
@@ -100,38 +135,103 @@ public class SettingsActivity extends AppCompatActivity {
         List<Object> list = new ArrayList<>();
 
         list.add("存储与权限");
-        list.add(new Item("权限配置", "查看并开启存储、通知、后台等权限", "去查看",
+        list.add(new Item(R.drawable.ic_menu_permission, "权限配置",
+                "查看并开启存储、通知、后台等权限", "去查看",
                 () -> startActivity(new Intent(this, PermissionActivity.class))));
-        list.add(new Item("存储诊断", "检查各存储卷能否写入、权限是否生效", "检测",
+        list.add(new Item(R.drawable.ic_menu_diagnostic, "存储诊断",
+                "检查各存储卷能否写入、权限是否生效", "检测",
                 () -> startActivity(new Intent(this, StorageDiagnosticActivity.class))));
 
         list.add("服务");
-        list.add(new Item("高级配置", "编辑 config.json：端口、HTTPS、数据库等（改错会导致服务无法启动）", "编辑",
+        list.add(new Item(R.drawable.ic_menu_config, "高级配置",
+                "编辑 config.json：端口、HTTPS、数据库等（改错会导致服务无法启动）", "编辑",
                 () -> DialogHelper.showConfigEditor(this)));
-        list.add(new Item("后台保活", "按当前系统给出自启动与电池优化的设置入口", "去设置",
+        list.add(new Item(R.drawable.ic_menu_keepalive, "后台保活",
+                "按当前系统给出自启动与电池优化的设置入口", "去设置",
                 () -> startActivity(new Intent(this, KeepAliveActivity.class))));
 
         list.add("备份");
-        list.add(new Item("导出配置", "把网盘挂载与账号配置打包保存，便于换机", "导出",
+        list.add(new Item(R.drawable.ic_menu_export, "导出配置",
+                "把网盘挂载与账号配置打包保存，便于换机", "导出",
                 this::startExport));
-        list.add(new Item("导入配置", "从备份文件恢复配置，会覆盖当前设置", "导入",
+        list.add(new Item(R.drawable.ic_menu_import, "导入配置",
+                "从备份文件恢复配置，会覆盖当前设置", "导入",
                 this::startImport));
         return list;
     }
 
+    /**
+     * 直接写到「下载/AListLite」，不再弹系统的保存位置对话框
+     * （那个对话框在部分机型上会弹出一个无法点击的文件名输入框）
+     */
     private void startExport() {
         if (!Alist.getInstance().hasRunning()) {
             toast("请先启动服务，再导出配置");
             return;
         }
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/zip");
-        intent.putExtra(Intent.EXTRA_TITLE, ConfigBackupHelper.suggestFileName());
+        final String fileName = ConfigBackupHelper.suggestFileName();
+        toast("正在导出…");
+        new Thread(() -> {
+            String message;
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    exportToDownloads(fileName);
+                } else {
+                    exportToDownloadsLegacy(fileName);
+                }
+                message = "已导出 " + fileName + "（下载/AListLite）";
+            } catch (Exception e) {
+                Log.e("SettingsActivity", "export config failed", e);
+                message = "导出失败：" + e.getMessage();
+            }
+            final String text = message;
+            runOnUiThread(() -> toast(text));
+        }, "config-export").start();
+    }
+
+    private void exportToDownloads(String fileName) throws Exception {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOWNLOADS + "/AListLite");
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+
+        Uri target = getContentResolver()
+                .insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        if (target == null) {
+            throw new Exception("无法创建文件");
+        }
         try {
-            startActivityForResult(intent, EXPORT_REQUEST_CODE);
+            OutputStream os = getContentResolver().openOutputStream(target);
+            if (os == null) {
+                throw new Exception("无法写入文件");
+            }
+            try {
+                ConfigBackupHelper.export(this, os);
+            } finally {
+                os.close();
+            }
+            ContentValues done = new ContentValues();
+            done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            getContentResolver().update(target, done, null, null);
         } catch (Exception e) {
-            toast("当前设备不支持选择保存位置");
+            getContentResolver().delete(target, null, null);
+            throw e;
+        }
+    }
+
+    private void exportToDownloadsLegacy(String fileName) throws Exception {
+        File dir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), "AListLite");
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new Exception("无法创建目录");
+        }
+        FileOutputStream os = new FileOutputStream(new File(dir, fileName));
+        try {
+            ConfigBackupHelper.export(this, os);
+        } finally {
+            os.close();
         }
     }
 
@@ -152,54 +252,9 @@ public class SettingsActivity extends AppCompatActivity {
         if (resultCode != RESULT_OK || data == null || data.getData() == null) {
             return;
         }
-        Uri uri = data.getData();
-        if (requestCode == EXPORT_REQUEST_CODE) {
-            doExport(uri);
-        } else if (requestCode == IMPORT_REQUEST_CODE) {
-            confirmImport(uri);
+        if (requestCode == IMPORT_REQUEST_CODE) {
+            confirmImport(data.getData());
         }
-    }
-
-    private void doExport(Uri target) {
-        new Thread(() -> {
-            String message;
-            try {
-                OutputStream os = getContentResolver().openOutputStream(target);
-                if (os == null) {
-                    throw new Exception("无法写入所选位置");
-                }
-                try {
-                    ConfigBackupHelper.export(this, os);
-                } finally {
-                    os.close();
-                }
-                message = "已导出 " + queryDisplayName(target);
-            } catch (Exception e) {
-                message = "导出失败：" + e.getMessage();
-            }
-            final String text = message;
-            runOnUiThread(() -> toast(text));
-        }, "config-export").start();
-    }
-
-    /**
-     * 取用户实际保存的文件名（SAF 允许用户改名）
-     */
-    private String queryDisplayName(Uri uri) {
-        try (android.database.Cursor cursor = getContentResolver()
-                .query(uri, null, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                if (index >= 0) {
-                    String name = cursor.getString(index);
-                    if (name != null && !name.isEmpty()) {
-                        return name;
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return ConfigBackupHelper.suggestFileName();
     }
 
     private void confirmImport(Uri source) {
@@ -243,14 +298,6 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
         }, "config-import").start();
-    }
-
-    private void openUrl(String url) {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-        } catch (Exception e) {
-            toast("无法打开该页面");
-        }
     }
 
     private String getVersionName() {

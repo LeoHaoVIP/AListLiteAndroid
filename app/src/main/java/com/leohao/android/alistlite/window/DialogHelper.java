@@ -232,20 +232,16 @@ public class DialogHelper {
      * 设置管理员密码弹框
      */
     public static void showSetPassword(Activity activity, Alist alistServer) {
-        final EditText editText = new EditText(activity);
+        final View content = activity.getLayoutInflater()
+                .inflate(R.layout.dialog_password_input, null);
+        final EditText editText = content.findViewById(R.id.et_password);
         editText.setTransformationMethod(PasswordTransformationMethod.getInstance());
-        editText.setSingleLine();
-        editText.setHint("请输入密码");
-        FrameLayout inputWrapper = new FrameLayout(activity);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        int marginH = (int) (20 * activity.getResources().getDisplayMetrics().density);
-        params.setMargins(marginH, 0, marginH, 0);
-        editText.setLayoutParams(params);
-        inputWrapper.addView(editText);
+        // 光标落到末尾，打开弹窗即可输入
+        editText.requestFocus();
         dismissCurrent();
         currentDialog = new AlertDialog.Builder(activity, R.style.IOSAlertDialog)
                 .setTitle("设置管理员密码")
-                .setView(inputWrapper)
+                .setView(content)
                 .setCancelable(true)
                 .setPositiveButton("确定", (d, w) -> {
                     String pwd = editText.getText().toString().trim();
