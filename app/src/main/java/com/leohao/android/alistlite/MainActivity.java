@@ -17,6 +17,7 @@ import android.net.NetworkRequest;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.*;
+import android.provider.Settings;
 import android.service.quicksettings.TileService;
 import android.text.TextUtils;
 import android.util.Log;
@@ -78,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private TextView sslIndicator;
     private PopupMenuWindow popupMenuWindow;
     private AlertDialog networkChangeDialog = null;
+    /** 「所有文件访问」缺失提示是否已弹过（权限恢复后会自动重置） */
+    private boolean allFilesAccessPrompted = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable networkCheckRunnable = this::updateServerAddressIfNeeded;
     /**
@@ -129,6 +132,40 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         }
         updateSslIndicator();
         updateServerAddressIfNeeded();
+        checkAllFilesAccess();
+    }
+
+    /**
+     * Android 11+ 的「所有文件访问」权限一旦丢失，本地存储会表现为
+     * 「能挂载、能浏览，但写入/删除报 permission denied」（Issue #63/#71/#77 的真实成因，
+     * 已在真机上用撤销 appops 的方式完整复现）。这里每次回到前台检查一次并明确引导。
+     */
+    private void checkAllFilesAccess() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+        if (Environment.isExternalStorageManager()) {
+            // 权限恢复后允许下次再次提示
+            allFilesAccessPrompted = false;
+            return;
+        }
+        if (allFilesAccessPrompted) {
+            return;
+        }
+        allFilesAccessPrompted = true;
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("本地存储无法写入")
+                .setMessage("「所有文件访问」权限未开启，本地存储只能浏览，无法上传、重命名或删除（会提示 permission denied）。\n\n点击「去授权」后，在设置里打开本应用的「所有文件访问 / 管理所有文件」。")
+                .setPositiveButton("去授权", (d, w) -> {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                Uri.parse("package:" + getPackageName())));
+                    } catch (Exception e) {
+                        startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+                    }
+                })
+                .setNegativeButton("稍后再说", null)
+                .show();
     }
 
     @Override
