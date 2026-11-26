@@ -116,19 +116,43 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * 顶部状态行：服务是否运行 + 当前版本，方便判断某些操作（导出/诊断）的前提是否满足
+     * 顶部状态卡片：服务运行状态 + 版本 + 访问地址，点一下可复制地址
      */
     private void updateStatusLine() {
-        TextView status = findViewById(R.id.settings_status);
+        TextView state = findViewById(R.id.settings_status_state);
+        TextView version = findViewById(R.id.settings_status_version);
+        TextView address = findViewById(R.id.settings_status_address);
+        View dot = findViewById(R.id.settings_status_dot);
+
         Alist alist = Alist.getInstance();
-        String address;
+        String addr;
         try {
-            address = alist.hasRunning() ? alist.getServerAddress() : null;
+            addr = alist.hasRunning() ? alist.getServerAddress() : null;
         } catch (Exception e) {
-            address = null;
+            addr = null;
         }
-        String state = address != null ? "服务运行中 · " + address : "服务未运行";
-        status.setText(String.format("%s · v%s", state, getVersionName()));
+        final boolean running = addr != null;
+        state.setText(running ? "服务运行中" : "服务未运行");
+        version.setText("v" + getVersionName());
+        address.setText(running ? addr : "启动服务后这里会显示访问地址");
+
+        int dotColor = getResources().getColor(
+                running ? R.color.ios_success : R.color.ios_text_tertiary);
+        dot.setBackgroundTintList(android.content.res.ColorStateList.valueOf(dotColor));
+
+        final String copyText = running ? addr : null;
+        findViewById(R.id.settings_status_card).setOnClickListener(v -> {
+            if (copyText == null) {
+                toast("服务未运行，暂无地址可复制");
+                return;
+            }
+            android.content.ClipboardManager cm = (android.content.ClipboardManager)
+                    getSystemService(CLIPBOARD_SERVICE);
+            if (cm != null) {
+                cm.setPrimaryClip(android.content.ClipData.newPlainText("AListLite 地址", copyText));
+                toast("已复制 " + copyText);
+            }
+        });
     }
 
     private List<Object> buildItems() {
