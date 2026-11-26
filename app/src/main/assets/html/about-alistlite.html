@@ -1,102 +1,294 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>About AListLite</title>
-    <style>
-        .contributor {
-            display: inline-block;
-            margin: 5px;
-            text-align: center;
-            line-height: 3px;
-            font-size: 12px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>关于 AListLite</title>
+<style>
+  :root {
+    --bg: #f2f3f7;
+    --card: #ffffff;
+    --card-alt: #f7f8fa;
+    --text: #101114;
+    --text-2: #6b7280;
+    --text-3: #9aa1ad;
+    --line: rgba(0, 0, 0, .07);
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, .1);
+    --shadow: 0 6px 20px rgba(17, 24, 39, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --card-alt: #242426;
+      --text: #f2f2f7;
+      --text-2: #9b9ba1;
+      --text-3: #6e6e73;
+      --line: rgba(255, 255, 255, .09);
+      --accent: #0a84ff;
+      --accent-soft: rgba(10, 132, 255, .18);
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+  }
 
-        .avatar {
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-        }
+  /* ---------- Hero ---------- */
+  .hero {
+    text-align: center;
+    padding: 30px 0 22px;
+  }
+  .icon-wrap {
+    width: 92px; height: 92px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #ffffff, #e9edf5);
+    box-shadow: 0 10px 26px rgba(10, 132, 255, .22);
+  }
+  @media (prefers-color-scheme: dark) {
+    .icon-wrap { background: linear-gradient(160deg, #26272b, #1a1b1e); box-shadow: 0 10px 26px rgba(0, 0, 0, .5); }
+  }
+  .icon-wrap img { width: 62px; height: 62px; border-radius: 16px; }
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: -.3px;
+    font-weight: 700;
+  }
+  .tagline {
+    margin: 7px auto 0;
+    max-width: 300px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .pills {
+    margin-top: 14px;
+    display: flex; flex-wrap: wrap; gap: 7px; justify-content: center;
+  }
+  .pill {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .pill.muted { background: var(--card-alt); color: var(--text-2); }
+  #text_version {
+    display: block;
+    margin-top: 14px;
+    font-size: 11.5px;
+    color: var(--text-3);
+    letter-spacing: .2px;
+  }
 
-        h4 {
-            line-height: 1.6em;
-        }
+  /* ---------- Sections ---------- */
+  h2 {
+    margin: 24px 0 10px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
 
-        p {
-            line-height: 1.5;
-        }
-    </style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tile {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .tile:active { transform: scale(.97); background: var(--card-alt); }
+  .tile .emoji { font-size: 18px; line-height: 1; }
+
+  /* ---------- List rows ---------- */
+  .list {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 14px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row:active { background: var(--card-alt); }
+  .row .lead { font-size: 17px; width: 22px; text-align: center; }
+  .row .label { flex: 1; }
+  .row .sub { display: block; font-size: 11.5px; color: var(--text-3); margin-top: 2px; font-weight: 400; }
+  .row .chev { color: var(--text-3); font-size: 17px; line-height: 1; }
+
+  /* ---------- Contributors ---------- */
+  #contributors {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: flex-start;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    min-height: 64px;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--text-3);
+  }
+  #contributors a { text-align: center; text-decoration: none; }
+  #contributors img {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--card-alt);
+    display: block;
+  }
+  #contributors .name {
+    display: block; margin-top: 5px;
+    font-size: 10px; color: var(--text-3);
+    max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  footer {
+    margin-top: 26px;
+    text-align: center;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--text-3);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
 </head>
 <body>
-<p align="center">
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer"><img
-            width="80px" src="../images/alistlite.png"/>
-    </a>
-</p>
-<h3 align="center">AListLite | 在 Android 上一键启动 AList 服务</h3>
-<h4 align="center">AListLite 支持服务一键启动、状态栏磁贴、后台常驻、开机自启和高级配置等功能，界面简洁，上手简单。</h4>
-<p align="center">🔥“您的技能和经验对我们来说非常宝贵。加入我们的开源项目，一起创造有意义的影响吧！”</p>
-<p align="center">
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/releases" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img alt="release" src="https://img.shields.io/github/v/release/LeoHaoVIP/AListLiteAndroid"/>
-    </a>
-    <img alt="platform" src="https://img.shields.io/badge/platform-android-f079f4.svg"/>
-    <img alt="language" src="https://img.shields.io/badge/language-java|go-green.svg"/>
-</p>
-<p align="center">
-    <a href="release-log.html" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/更新日志-33ffff.svg"/>
-    </a>
-    <a href="https://doc.oplist.org.cn/guide/drivers/common" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/挂载教程-338888.svg"/>
-    </a>
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/issues" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/问题反馈-00ccff.svg"/>
-    </a>
-    <a href="mailto:zhaowenhao2867@outlook.com" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/联系开发者-339966.svg"/>
-    </a>
-    <a href="reward.html" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/项目捐助-ffcc99.svg"/>
-    </a>
-</p>
-<p align="center"><strong>项目贡献者</strong></p>
-<div align="center" id="contributors">☻ 加载中...</div>
-<p align="center" id="text_version" style="font-size: 13px">AListLite | Powered by OpenList</p>
-</body>
+
+<div class="hero">
+  <div class="icon-wrap">
+    <img src="../images/alistlite.png" alt="AListLite">
+  </div>
+  <h1>AListLite</h1>
+  <p class="tagline">在 Android 上把网盘装进口袋：一键启动 OpenList 服务，手机就是你的私人云盘。</p>
+  <div class="pills">
+    <span class="pill">Android</span>
+    <span class="pill muted">Java · Go</span>
+    <span class="pill muted">开源</span>
+  </div>
+  <span id="text_version">AListLite</span>
+</div>
+
+<h2>快速入口</h2>
+<div class="grid">
+  <a class="tile" href="release-log.html">
+    <span class="emoji">📋</span><span>更新日志</span>
+  </a>
+  <a class="tile" href="https://doc.oplist.org.cn/guide/drivers/common" target="_blank" rel="noopener noreferrer">
+    <span class="emoji">📘</span><span>挂载教程</span>
+  </a>
+  <a class="tile" href="https://github.com/LeoHaoVIP/AListLiteAndroid/issues" target="_blank" rel="noopener noreferrer">
+    <span class="emoji">🐞</span><span>问题反馈</span>
+  </a>
+  <a class="tile" href="https://www.bilibili.com/video/BV1PA4m1G7Ui" target="_blank" rel="noopener noreferrer">
+    <span class="emoji">🎬</span><span>视频教程</span>
+  </a>
+</div>
+
+<h2>项目</h2>
+<div class="list">
+  <a class="row" href="https://github.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer">
+    <span class="lead">⭐</span>
+    <span class="label">GitHub 仓库<span class="sub">源码、发布与 Star</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="row" href="https://gitee.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer">
+    <span class="lead">🪞</span>
+    <span class="label">Gitee 镜像<span class="sub">国内访问更快</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="row" href="https://github.com/LeoHaoVIP/AListLiteAndroid/discussions" target="_blank" rel="noopener noreferrer">
+    <span class="lead">💬</span>
+    <span class="label">讨论专区<span class="sub">使用答疑与经验分享</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="row" href="mailto:zhaowenhao2867@outlook.com" target="_blank" rel="noopener noreferrer">
+    <span class="lead">✉️</span>
+    <span class="label">联系开发者<span class="sub">zhaowenhao2867@outlook.com</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="row" href="reward.html">
+    <span class="lead">☕</span>
+    <span class="label">项目捐助<span class="sub">请作者喝杯咖啡</span></span>
+    <span class="chev">›</span>
+  </a>
+</div>
+
+<h2>项目贡献者</h2>
+<div id="contributors">☻ 正在加载…</div>
+
+<footer>
+  本项目基于开源项目 <a href="https://github.com/OpenListTeam/OpenList" target="_blank" rel="noopener noreferrer">OpenList</a> 构建，<br>
+  与 OpenList 官方无隶属关系。<br>
+  感谢每一位提交代码、反馈问题与分享教程的人。
+</footer>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const owner = 'LeoHaoVIP';
-        const repo = 'AListLiteAndroid';
-        const contributorsDiv = document.getElementById('contributors');
-        fetch(`https://api.github.com/repos/${owner}/${repo}/contributors`)
-            .then(response => response.json())
-            .then(contributors => {
-                contributorsDiv.innerText = '';
-                contributors.forEach(contributor => {
-                    const contributorDiv = document.createElement('div');
-                    contributorDiv.className = 'contributor';
-                    const img = document.createElement('img');
-                    img.src = contributor.avatar_url;
-                    img.alt = `${contributor.login}'s avatar`;
-                    img.className = 'avatar';
-                    const a = document.createElement('a');
-                    a.href = contributor.html_url
-                    a.target = "_blank"
-                    a.appendChild(img)
-                    contributorDiv.appendChild(a);
-                    contributorsDiv.appendChild(contributorDiv);
-                });
-            }).catch(error => {
-            contributorsDiv.innerText = '😢 贡献者列表加载失败';
-            console.error('Error fetching contributors:', error);
+  (function () {
+    var box = document.getElementById('contributors');
+    var owner = 'LeoHaoVIP';
+    var repo = 'AListLiteAndroid';
+
+    function fail() {
+      box.innerHTML = '😢 贡献者列表加载失败，请检查网络后重试';
+    }
+
+    fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contributors?per_page=30')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (list) {
+        if (!Array.isArray(list) || list.length === 0) { fail(); return; }
+        box.innerHTML = '';
+        list.forEach(function (c) {
+          var a = document.createElement('a');
+          a.href = c.html_url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          var img = document.createElement('img');
+          img.src = c.avatar_url;
+          img.alt = c.login;
+          img.loading = 'lazy';
+          var name = document.createElement('span');
+          name.className = 'name';
+          name.textContent = c.login;
+          a.appendChild(img);
+          a.appendChild(name);
+          box.appendChild(a);
         });
-    });
+      })
+      .catch(fail);
+  })();
 </script>
+</body>
 </html>

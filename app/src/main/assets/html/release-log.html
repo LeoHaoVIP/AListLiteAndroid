@@ -1,127 +1,371 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Release Logs</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>更新日志</title>
+<style>
+  :root {
+    --bg: #f2f3f7;
+    --card: #ffffff;
+    --card-alt: #f7f8fa;
+    --text: #101114;
+    --text-2: #6b7280;
+    --text-3: #9aa1ad;
+    --line: rgba(0, 0, 0, .07);
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, .1);
+    --new: #30d158;
+    --new-soft: rgba(48, 209, 88, .12);
+    --shadow: 0 6px 20px rgba(17, 24, 39, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --card-alt: #242426;
+      --text: #f2f2f7;
+      --text-2: #9b9ba1;
+      --text-3: #6e6e73;
+      --line: rgba(255, 255, 255, .09);
+      --accent: #0a84ff;
+      --accent-soft: rgba(10, 132, 255, .18);
+      --new: #30d158;
+      --new-soft: rgba(48, 209, 88, .16);
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { text-align: center; padding: 28px 0 10px; }
+  .hero img {
+    width: 54px; height: 54px; border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(10, 132, 255, .2);
+  }
+  @media (prefers-color-scheme: dark) {
+    .hero img { box-shadow: 0 8px 20px rgba(0, 0, 0, .5); }
+  }
+  h1 { margin: 12px 0 0; font-size: 21px; font-weight: 700; letter-spacing: -.2px; }
+  .subtitle { margin: 6px auto 0; max-width: 280px; font-size: 12.5px; line-height: 1.6; color: var(--text-2); }
+  #text_version { display: block; margin-top: 10px; font-size: 11.5px; color: var(--text-3); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 22px 4px 10px;
+  }
+  .toolbar h2 {
+    margin: 0; font-size: 12px; font-weight: 600;
+    letter-spacing: .6px; text-transform: uppercase; color: var(--text-3);
+  }
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text-2);
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-family: inherit;
+  }
+  .btn:active { background: var(--card-alt); }
+
+  /* ---------- Timeline ---------- */
+  .timeline { position: relative; padding-left: 16px; }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  .release {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .release::before {
+    content: "";
+    position: absolute;
+    left: -16px; top: 20px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--text-3);
+  }
+  .release.latest { border-color: rgba(48, 209, 88, .45); }
+  .release.latest::before { border-color: var(--new); background: var(--new); }
+
+  .rel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+  .ver {
+    font-size: 14px; font-weight: 700; letter-spacing: -.2px;
+  }
+  .tag-new {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 999px;
+    background: var(--new-soft); color: var(--new);
+  }
+  .meta {
+    margin-left: auto;
+    font-size: 11.5px; color: var(--text-3);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .chip {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  }
+  .chip.muted { background: var(--card-alt); color: var(--text-2); font-weight: 500; }
+
+  .body {
+    margin-top: 11px;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .body .empty { color: var(--text-3); font-style: italic; }
+  .body .li { display: block; padding-left: 12px; text-indent: -12px; }
+
+  .rel-foot {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .rel-foot a {
+    color: var(--accent); font-size: 12.5px; text-decoration: none; font-weight: 500;
+  }
+  .rel-foot .hint { font-size: 11px; color: var(--text-3); }
+
+  /* ---------- States ---------- */
+  .state {
+    text-align: center;
+    color: var(--text-3);
+    font-size: 13px;
+    padding: 34px 10px;
+  }
+  .state .big { display: block; font-size: 26px; margin-bottom: 10px; }
+  .state button {
+    margin-top: 14px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 9px 20px;
+    border-radius: 999px;
+  }
+
+  .skeleton { padding-left: 16px; }
+  .sk {
+    height: 92px; border-radius: 14px; margin-bottom: 12px;
+    background: linear-gradient(90deg, var(--card) 25%, var(--card-alt) 37%, var(--card) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+
+  footer {
+    margin-top: 22px; text-align: center;
+    font-size: 11.5px; line-height: 1.7; color: var(--text-3);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
 </head>
 <body>
-<p align="center">
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid" target="_blank" rel="noopener noreferrer"><img
-            width="80px" src="../images/alistlite.png"/>
-    </a>
-</p>
-<h3 align="center">AListLite | 更新日志</h3>
-<p align="center" id="text_version" style="font-size: 12px">AListLite | Powered by OpenList</p>
-<p align="center">
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/releases" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img alt="release" src="https://img.shields.io/github/v/release/LeoHaoVIP/AListLiteAndroid"/>
-    </a>
-    <img alt="platform" src="https://img.shields.io/badge/platform-android-f079f4.svg"/>
-    <img alt="language" src="https://img.shields.io/badge/language-java|go-green.svg"/>
-</p>
-<p align="center">
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/issues" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/问题反馈-00ccff.svg"/>
-    </a>
-    <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/discussions" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/讨论专区-green.svg"/>
-    </a>
-    <a href="https://www.bilibili.com/video/BV1PA4m1G7Ui" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/视频教程-ffcc99.svg"/>
-    </a>
-    <a href="mailto:zhaowenhao2867@outlook.com" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/联系开发者-339966.svg"/>
-    </a>
-    <a href="reward.html" style="color: white" target="_blank"
-       rel="noopener noreferrer">
-        <img src="https://img.shields.io/badge/项目捐助-33ffff.svg"/>
-    </a>
-</p>
-<div align="center" id="releases">☻ 加载中...</div>
-</body>
-<style>
-    div {
-        font-size: 13px;
-        line-height: 1.5;
-        word-wrap: break-word;
-    }
-</style>
+
+<div class="hero">
+  <img src="../images/alistlite.png" alt="AListLite">
+  <h1>更新日志</h1>
+  <p class="subtitle">每次发布改了什么，都在这里。</p>
+  <span id="text_version">AListLite</span>
+</div>
+
+<div class="toolbar">
+  <h2>最近版本</h2>
+  <button class="btn" id="btn-refresh" type="button">刷新</button>
+</div>
+
+<div id="content">
+  <div class="skeleton">
+    <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+  </div>
+</div>
+
+<footer>
+  完整记录见 <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a><br>
+  遇到问题请到 <a href="https://github.com/LeoHaoVIP/AListLiteAndroid/issues" target="_blank" rel="noopener noreferrer">Issues</a> 反馈
+</footer>
+
 <script>
-    const RECENT_RELEASE_ITEM_NUM = 10;
-    document.addEventListener('DOMContentLoaded', function () {
-        const owner = 'LeoHaoVIP';
-        const repo = 'AListLiteAndroid';
-        const releasesDiv = document.getElementById('releases');
-        fetch(`https://api.github.com/repos/${owner}/${repo}/releases`)
-            .then(response => response.json())
-            .then(releases => {
-                let i = 0;
-                releasesDiv.innerText = '';
-                for (let j = 0; j < releases.length; j++) {
-                    const release = releases[j];
-                    //发布时间
-                    const releaseTime = new Date(release.published_at);
-                    // 获取年、月、日、小时、分钟和秒
-                    const year = releaseTime.getFullYear();
-                    const month = String(releaseTime.getMonth() + 1).padStart(2, '0');
-                    const day = String(releaseTime.getDate()).padStart(2, '0');
-                    const formattedDate = `${year}.${month}.${day} 发布`;
-                    //APP 版本号
-                    const appVersion = release.tag_name.replaceAll('-', ' ');
-                    //基于的 AList 版本号
-                    const alistVersion = `${release.name.substring(5)}`;
-                    let releaseBody = release.body.replaceAll('**', '');
-                    if (releaseBody.length === 0) {
-                        releaseBody = '-';
-                    }
-                    const releaseDiv = document.createElement('div');
-                    const bodyDiv = document.createElement('div');
-                    const titleP = document.createElement('p');
-                    const dateImg = document.createElement('img');
-                    dateImg.src = "https://img.shields.io/badge/" + formattedDate + "-green.svg";
-                    dateImg.alt = releaseTime;
-                    dateImg.style.marginLeft = '10px';
-                    const versionImg = document.createElement('img');
-                    versionImg.src = "https://img.shields.io/badge/" + appVersion + "-cc9933.svg";
-                    versionImg.alt = appVersion;
-                    const alistImg = document.createElement('img');
-                    alistImg.src = "https://img.shields.io/badge/" + alistVersion + "-33cccc.svg";
-                    alistImg.alt = alistVersion;
-                    alistImg.style.marginLeft = '10px';
-                    const downloadImg = document.createElement('img');
-                    downloadImg.src = "https://img.shields.io/badge/下载-orange.svg";
-                    downloadImg.alt = '发布地址';
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = release.html_url;
-                    downloadLink.target = "_blank";
-                    downloadLink.style.marginLeft = '10px';
-                    downloadLink.style.color = 'white';
-                    downloadLink.rel = 'noopener noreferrer';
-                    downloadLink.appendChild(downloadImg);
-                    titleP.appendChild(versionImg);
-                    titleP.appendChild(dateImg);
-                    titleP.appendChild(alistImg);
-                    titleP.appendChild(downloadLink);
-                    titleP.style.height = '10px';
-                    bodyDiv.innerText = releaseBody;
-                    releaseDiv.appendChild(titleP)
-                    releaseDiv.appendChild(bodyDiv);
-                    releaseDiv.style.textAlign = 'left';
-                    releasesDiv.appendChild(releaseDiv);
-                    i++;
-                    if (i === RECENT_RELEASE_ITEM_NUM) {
-                        break;
-                    }
-                }
-            }).catch(error => {
-            releasesDiv.innerText = '😢 发布日志加载失败';
-            console.error('Error fetching releases:', error);
+  (function () {
+    var OWNER = 'LeoHaoVIP';
+    var REPO = 'AListLiteAndroid';
+    var LIMIT = 15;
+    var content = document.getElementById('content');
+    var btn = document.getElementById('btn-refresh');
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var p = function (n) { return (n < 10 ? '0' : '') + n; };
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+
+    // 发布说明是「emoji + 【分类】」的纯文本，按行渲染即可
+    function renderBody(raw) {
+      var text = String(raw || '').replace(/\*\*/g, '').replace(/\r/g, '');
+      var lines = text.split('\n');
+      var html = '';
+      var count = 0;
+      lines.forEach(function (line) {
+        var t = line.replace(/\s+$/, '');
+        if (!t.trim()) {
+          if (count > 0 && html.slice(-5) !== '<br>') html += '<br>';
+          return;
+        }
+        if (/^\s*[-*]\s+/.test(t)) {
+          html += '<span class="li">• ' + esc(t.replace(/^\s*[-*]\s+/, '')) + '</span>\n';
+        } else {
+          html += esc(t) + '\n';
+        }
+        count++;
+      });
+      html = html.trim();
+      if (!html) return '<span class="empty">这个版本没有写说明</span>';
+      return html;
+    }
+
+    function renderError(msg) {
+      content.innerHTML =
+        '<div class="state"><span class="big">📡</span>' + esc(msg) +
+        '<br><button id="btn-retry" type="button">重试</button></div>';
+      var retry = document.getElementById('btn-retry');
+      if (retry) retry.addEventListener('click', load);
+    }
+
+    function load() {
+      content.innerHTML =
+        '<div class="skeleton"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>';
+      btn.disabled = true;
+
+      fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/releases?per_page=' + LIMIT)
+        .then(function (r) {
+          if (r.status === 403) throw new Error('请求太频繁，请稍后再试');
+          if (!r.ok) throw new Error('网络请求失败（' + r.status + '）');
+          return r.json();
+        })
+        .then(function (list) {
+          if (!Array.isArray(list) || list.length === 0) {
+            throw new Error('没有找到发布记录');
+          }
+          var wrap = document.createElement('div');
+          wrap.className = 'timeline';
+          list.slice(0, LIMIT).forEach(function (rel, index) {
+            var card = document.createElement('div');
+            card.className = 'release' + (index === 0 ? ' latest' : '');
+
+            var tag = String(rel.tag_name || '').replace(/^v/, '');
+            var openlist = '';
+            var name = String(rel.name || '');
+            var m = name.match(/OpenList\s*v?([\d.]+)/i);
+            if (m) openlist = m[1];
+
+            var head = document.createElement('div');
+            head.className = 'rel-head';
+            var ver = document.createElement('span');
+            ver.className = 'ver';
+            ver.textContent = 'v' + tag;
+            head.appendChild(ver);
+            if (index === 0) {
+              var badge = document.createElement('span');
+              badge.className = 'tag-new';
+              badge.textContent = '最新';
+              head.appendChild(badge);
+            }
+            var meta = document.createElement('span');
+            meta.className = 'meta';
+            meta.textContent = fmtDate(rel.published_at);
+            head.appendChild(meta);
+            card.appendChild(head);
+
+            if (openlist || rel.prerelease) {
+              var chips = document.createElement('div');
+              chips.className = 'chips';
+              if (openlist) {
+                var c1 = document.createElement('span');
+                c1.className = 'chip';
+                c1.textContent = 'OpenList v' + openlist;
+                chips.appendChild(c1);
+              }
+              if (rel.prerelease) {
+                var c2 = document.createElement('span');
+                c2.className = 'chip muted';
+                c2.textContent = '预览版';
+                chips.appendChild(c2);
+              }
+              card.appendChild(chips);
+            }
+
+            var body = document.createElement('div');
+            body.className = 'body';
+            body.innerHTML = renderBody(rel.body);
+            card.appendChild(body);
+
+            var foot = document.createElement('div');
+            foot.className = 'rel-foot';
+            var link = document.createElement('a');
+            link.href = rel.html_url || 'https://github.com/' + OWNER + '/' + REPO + '/releases';
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = '查看发布页 ›';
+            var hint = document.createElement('span');
+            hint.className = 'hint';
+            hint.textContent = index === 0 ? '当前分支最新' : '';
+            foot.appendChild(link);
+            foot.appendChild(hint);
+            card.appendChild(foot);
+
+            wrap.appendChild(card);
+          });
+          content.innerHTML = '';
+          content.appendChild(wrap);
+        })
+        .catch(function (e) {
+          renderError(e && e.message ? e.message : '加载失败');
+        })
+        .then(function () {
+          btn.disabled = false;
         });
-    });
+    }
+
+    btn.addEventListener('click', load);
+    load();
+  })();
 </script>
+</body>
 </html>

@@ -493,6 +493,13 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.startsWith("blob")) return false;
+                String current = view.getUrl();
+                boolean onInfoPage = current != null && current.startsWith("file:///android_asset/html/");
+                if (onInfoPage && (url.startsWith("http://") || url.startsWith("https://"))) {
+                    // 关于 / 更新日志页里的外链交给系统浏览器，别把 App 内页面顶掉
+                    openExternalUrl(url);
+                    return true;
+                }
                 if (!url.startsWith("http") && !url.startsWith("file")) {
                     try {
                         openExternalUrl(url);
