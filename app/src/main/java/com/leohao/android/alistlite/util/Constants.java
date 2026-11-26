@@ -32,6 +32,8 @@ public class Constants {
     public static String ANDROID_SHARED_DATA_PREFERENCES_NAME = "USER_INFO";
     public static String ANDROID_SHARED_DATA_KEY_ALIST_INITIALIZED = "alist_initialized";
     public static String ANDROID_SHARED_DATA_KEY_ADMIN_PASSWORD = "admin_password";
+    /** 是否已自动申请过权限（申请过一次后不再每次冷启动重复弹系统页） */
+    public static String ANDROID_SHARED_DATA_KEY_PERMISSION_PROMPTED = "permission_prompted";
     public static String UNIVERSAL_ABI_NAME = "universal";
     public static String VERSION_INFO = "AListLite v%s | Powered by OpenList v%s";
     public static List<String> SUPPORTED_DOWNLOAD_ABI_NAMES = Arrays.asList("x86", "armeabi-v7a", "x86_64", "arm64-v8a");

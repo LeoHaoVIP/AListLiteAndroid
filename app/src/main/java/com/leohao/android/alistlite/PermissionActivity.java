@@ -1,6 +1,7 @@
 package com.leohao.android.alistlite;
 
 import android.app.AlertDialog;
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,6 +25,8 @@ import com.leohao.android.alistlite.model.PermissionItem;
 import com.leohao.android.alistlite.util.Constants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -139,7 +142,24 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
             }
         } catch (PackageManager.NameNotFoundException ignored) {
         }
+        // 关键权限置顶：「所有文件访问」决定能不能写文件，「忽略电池优化」决定后台会不会被杀。
+        // 之前按 manifest 声明顺序排在最后，很容易被前面几项的长说明淹没。
+        Collections.sort(permissionList, (a, b) -> {
+            int ia = PERMISSION_PRIORITY.indexOf(a.getPermissionName());
+            int ib = PERMISSION_PRIORITY.indexOf(b.getPermissionName());
+            if (ia < 0) ia = Integer.MAX_VALUE;
+            if (ib < 0) ib = Integer.MAX_VALUE;
+            return ia - ib;
+        });
     }
+
+    /** 列表顶部优先展示的权限（顺序即展示顺序） */
+    private static final List<String> PERMISSION_PRIORITY = Arrays.asList(
+            Permission.MANAGE_EXTERNAL_STORAGE,
+            Permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Permission.POST_NOTIFICATIONS,
+            Manifest.permission.RECEIVE_BOOT_COMPLETED
+    );
 
     private void showToast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();

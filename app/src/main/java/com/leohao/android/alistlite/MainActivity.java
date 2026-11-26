@@ -279,6 +279,13 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     }
 
     private void checkPermissions() {
+        // 只在首次启动自动申请一次。此前每次冷启动都走 XXPermissions，
+        // 用户拒绝过「所有文件访问」时会被反复弹到系统设置页（真机上已确认），非常打扰。
+        SharedDataHelper shared = SharedDataHelper.getInstance();
+        if (shared.getBoolShareData(Constants.ANDROID_SHARED_DATA_KEY_PERMISSION_PROMPTED, false)) {
+            return;
+        }
+        shared.putSharedData(Constants.ANDROID_SHARED_DATA_KEY_PERMISSION_PROMPTED, true);
         XXPermissions.with(this)
                 .permission(Permission.POST_NOTIFICATIONS)
                 .permission(Permission.MANAGE_EXTERNAL_STORAGE)
