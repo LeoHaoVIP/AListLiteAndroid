@@ -30,7 +30,7 @@
     <string name="popup_menu_item_import_config">导入配置</string>
     <string name="popup_menu_item_storage_diagnostic">存储诊断</string>
     <string name="popup_menu_item_keep_alive">后台保活</string>
-    <string name="popup_menu_item_settings">设置</string>
+    <string name="popup_menu_item_settings">更多选项</string>
     <string name="activity_title_settings">设置</string>
     <string name="activity_title_storage_diagnostic">存储诊断</string>
     <string name="activity_title_keep_alive">后台保活</string>

@@ -74,23 +74,44 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateStatusLine();
+    }
+
+    /**
+     * 顶部状态行：服务是否运行 + 当前版本，方便判断某些操作（导出/诊断）的前提是否满足
+     */
+    private void updateStatusLine() {
+        TextView status = findViewById(R.id.settings_status);
+        Alist alist = Alist.getInstance();
+        String address;
+        try {
+            address = alist.hasRunning() ? alist.getServerAddress() : null;
+        } catch (Exception e) {
+            address = null;
+        }
+        String state = address != null ? "服务运行中 · " + address : "服务未运行";
+        status.setText(String.format("%s · v%s", state, getVersionName()));
+    }
+
     private List<Object> buildItems() {
         List<Object> list = new ArrayList<>();
-        final Alist alist = Alist.getInstance();
 
-        list.add("存储");
+        list.add("存储与权限");
         list.add(new Item("权限配置", "查看并开启存储、通知、后台等权限", "去查看",
                 () -> startActivity(new Intent(this, PermissionActivity.class))));
-        list.add(new Item("存储诊断", "检查各存储卷能否写入", "检测",
+        list.add(new Item("存储诊断", "检查各存储卷能否写入、权限是否生效", "检测",
                 () -> startActivity(new Intent(this, StorageDiagnosticActivity.class))));
-        list.add(new Item("高级配置", "直接编辑 config.json（可能导致服务无法启动）", "编辑",
-                () -> DialogHelper.showConfigEditor(this)));
 
-        list.add("后台");
-        list.add(new Item("后台保活", "按系统给出自启动与电池优化设置入口", "去设置",
+        list.add("服务");
+        list.add(new Item("高级配置", "编辑 config.json：端口、HTTPS、数据库等（改错会导致服务无法启动）", "编辑",
+                () -> DialogHelper.showConfigEditor(this)));
+        list.add(new Item("后台保活", "按当前系统给出自启动与电池优化的设置入口", "去设置",
                 () -> startActivity(new Intent(this, KeepAliveActivity.class))));
 
-        list.add("数据");
+        list.add("备份");
         list.add(new Item("导出配置", "把网盘挂载与账号配置打包保存，便于换机", "导出",
                 this::startExport));
         list.add(new Item("导入配置", "从备份文件恢复配置，会覆盖当前设置", "导入",

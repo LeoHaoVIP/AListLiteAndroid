@@ -9,7 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="16dp"
-        android:paddingBottom="12dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:text="@string/activity_title_settings"
@@ -17,10 +16,22 @@
         android:textColor="@color/ios_text_primary"
         android:fontFamily="sans-serif-medium"/>
 
+    <TextView
+        android:id="@+id/settings_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/settings_title"
+        android:paddingTop="2dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textSize="12sp"
+        android:textColor="@color/ios_text_secondary"/>
+
     <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/settings_title">
+            android:layout_below="@id/settings_status">
 
         <LinearLayout
                 android:id="@+id/settings_container"
