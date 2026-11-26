@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  竖屏（手机）单列菜单：分组顺序按使用频率排列
+  服务 > 存储与配置 > 安全 > 其它
+  横屏（电视）见 layout-land/popup_menu_view.xml，改为两列以免超出屏幕
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="wrap_content"
              android:layout_height="wrap_content"
@@ -19,361 +24,121 @@
                 android:layout_height="wrap_content"
                 android:elevation="8dp">
 
-            <!-- 服务管理 分组 -->
+            <!-- 服务 -->
             <TextView
                     android:id="@+id/menu_section_service"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="2dp"
-                    android:text="服务管理"
-                    android:textSize="11sp"
-                    android:textColor="@color/ios_text_secondary"
-                    android:fontFamily="sans-serif-medium"
-                    android:letterSpacing="0.05"/>
+                    style="@style/PopupMenuSectionHeader"
+                    android:text="服务"/>
 
             <TextView
                     android:id="@+id/btn_showQrCode"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/ic_menu_qrcode"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_qrcode"/>
 
             <TextView
                     android:id="@+id/btn_openInBrowser"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/ic_menu_browser"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_open_browser"/>
 
             <TextView
                     android:id="@+id/btn_serviceLogs"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/ic_menu_logs"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_service_logs"/>
 
-            <!-- 分割线 -->
-            <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginBottom="2dp"
-                    android:background="@color/ios_separator"/>
+            <View style="@style/PopupMenuDivider"/>
 
-            <!-- 安全设置 分组 -->
+            <!-- 存储与配置 -->
             <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="2dp"
-                    android:text="安全设置"
-                    android:textSize="11sp"
-                    android:textColor="@color/ios_text_secondary"
-                    android:fontFamily="sans-serif-medium"
-                    android:letterSpacing="0.05"/>
-
-            <TextView
-                    android:id="@+id/btn_oneClickLogin"
-                    android:drawableStart="@drawable/ic_menu_login"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:text="@string/popup_menu_item_one_click_login"/>
-
-            <TextView
-                    android:id="@+id/btn_setAdminPassword"
-                    android:drawableStart="@drawable/ic_menu_key"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:text="@string/popup_menu_item_password"/>
-
-            <TextView
-                    android:id="@+id/btn_toggleHttps"
-                    android:drawableStart="@drawable/ic_shortcut_https"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:text="@string/popup_menu_item_https"/>
-
-            <!-- 分割线 -->
-            <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginBottom="2dp"
-                    android:background="@color/ios_separator"/>
-
-            <!-- 系统配置 分组 -->
-            <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="2dp"
-                    android:text="系统配置"
-                    android:textSize="11sp"
-                    android:textColor="@color/ios_text_secondary"
-                    android:fontFamily="sans-serif-medium"
-                    android:letterSpacing="0.05"/>
+                    style="@style/PopupMenuSectionHeader"
+                    android:text="存储与配置"/>
 
             <TextView
                     android:id="@+id/btn_startPermissionCheckActivity"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/ic_menu_permission"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_permission"/>
 
             <TextView
                     android:id="@+id/btn_storageDiagnostic"
-                    android:drawableStart="@drawable/ic_menu_permission"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_diagnostic"
                     android:text="@string/popup_menu_item_storage_diagnostic"/>
 
             <TextView
-                    android:id="@+id/btn_keepAliveGuide"
-                    android:drawableStart="@drawable/ic_shortcut_start"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:text="@string/popup_menu_item_keep_alive"/>
-
-            <TextView
                     android:id="@+id/btn_manageConfigData"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/ic_menu_config"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_advanced_config"/>
 
             <TextView
                     android:id="@+id/btn_exportConfig"
-                    android:drawableStart="@drawable/save"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_export"
                     android:text="@string/popup_menu_item_export_config"/>
 
             <TextView
                     android:id="@+id/btn_importConfig"
-                    android:drawableStart="@drawable/edit"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_import"
                     android:text="@string/popup_menu_item_import_config"/>
+
+            <View style="@style/PopupMenuDivider"/>
+
+            <!-- 安全 -->
+            <TextView
+                    style="@style/PopupMenuSectionHeader"
+                    android:text="安全"/>
+
+            <TextView
+                    android:id="@+id/btn_oneClickLogin"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_login"
+                    android:text="@string/popup_menu_item_one_click_login"/>
+
+            <TextView
+                    android:id="@+id/btn_setAdminPassword"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_key"
+                    android:text="@string/popup_menu_item_password"/>
+
+            <TextView
+                    android:id="@+id/btn_toggleHttps"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_shortcut_https"
+                    android:text="@string/popup_menu_item_https"/>
 
             <TextView
                     android:id="@+id/btn_showAliTvTokenGetPage"
-                    android:drawableStart="@drawable/ic_menu_key"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_cloud"
                     android:text="@string/popup_menu_item_alitv_token_get"/>
 
-            <!-- 分割线 -->
-            <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginBottom="2dp"
-                    android:background="@color/ios_separator"/>
+            <View style="@style/PopupMenuDivider"/>
 
-            <!-- 关于 分组 -->
+            <!-- 其它 -->
             <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="2dp"
-                    android:text="关于"
-                    android:textSize="11sp"
-                    android:textColor="@color/ios_text_secondary"
-                    android:fontFamily="sans-serif-medium"
-                    android:letterSpacing="0.05"/>
+                    style="@style/PopupMenuSectionHeader"
+                    android:text="其它"/>
+
+            <TextView
+                    android:id="@+id/btn_keepAliveGuide"
+                    style="@style/PopupMenuItem"
+                    android:drawableStart="@drawable/ic_menu_keepalive"
+                    android:text="@string/popup_menu_item_keep_alive"/>
 
             <TextView
                     android:id="@+id/btn_checkUpdates"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/refresh"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_check_updates"/>
 
             <TextView
                     android:id="@+id/btn_showSystemInfo"
+                    style="@style/PopupMenuItem"
                     android:drawableStart="@drawable/ic_menu_info"
-                    android:drawablePadding="12dp"
-                    android:focusable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
-                    android:textSize="15sp"
-                    android:textColor="@color/menu_text_color"
-                    android:fontFamily="sans-serif"
-                    android:clickable="true"
-                    android:background="?attr/selectableItemBackground"
                     android:text="@string/popup_menu_item_about"/>
         </LinearLayout>
     </ScrollView>

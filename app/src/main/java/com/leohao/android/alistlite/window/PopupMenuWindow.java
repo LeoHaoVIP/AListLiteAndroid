@@ -31,9 +31,9 @@ public class PopupMenuWindow extends PopupWindow {
                 == Configuration.ORIENTATION_LANDSCAPE;
         int popupWidth;
         if (isLandscape) {
-            // 横屏 / TV：占屏幕宽度的 40%，最小 300dp
-            popupWidth = Math.max((int) (screenWidth * 0.4f),
-                    (int) (300 * metrics.density));
+            // 横屏 / TV：两列布局，宽度取屏幕的 58%，最小 420dp
+            popupWidth = Math.max((int) (screenWidth * 0.58f),
+                    (int) (420 * metrics.density));
         } else {
             // 竖屏：占屏幕宽度的 40%，最小 200dp，最大 300dp
             int widthByScreen = (int) (screenWidth * 0.4f);
@@ -53,7 +53,8 @@ public class PopupMenuWindow extends PopupWindow {
         inflate.measure(View.MeasureSpec.makeMeasureSpec(popupWidth, View.MeasureSpec.AT_MOST),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int contentHeight = inflate.getMeasuredHeight();
-        int maxHeight = (int) (screenHeight * 0.75f);
+        // 横屏两列布局给到 88%，竖屏保持 75%
+        int maxHeight = (int) (screenHeight * (isLandscape ? 0.88f : 0.75f));
         if (contentHeight > maxHeight) {
             setHeight(maxHeight);
         }
