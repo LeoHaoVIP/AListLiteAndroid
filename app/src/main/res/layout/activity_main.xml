@@ -166,14 +166,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <!-- WebView 内容区域 -->
+    <!-- WebView 内容区域：全宽铺满，背景透明避免加载时出现白框 -->
     <WebView
         android:id="@+id/webview_alist"
         android:layout_below="@id/tv_alist_status"
-        android:layout_marginTop="6dp"
-        android:layout_marginLeft="6dp"
-        android:layout_marginRight="6dp"
-        android:background="@color/ios_surface"
+        android:background="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

@@ -261,6 +261,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         sslIndicator = findViewById(R.id.tv_ssl_indicator);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
         webView = findViewById(R.id.webview_alist);
+        // 页面自身有背景色，WebView 保持透明，避免加载/切换时露出白底（白框）
+        webView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         popupMenuWindow = new PopupMenuWindow(this, this);
         popupMenuWindow.setOnDismissListener(() -> backgroundAlpha(1.0f));
         initWebview();

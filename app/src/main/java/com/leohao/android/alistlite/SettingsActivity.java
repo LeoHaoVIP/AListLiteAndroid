@@ -1,10 +1,14 @@
 package com.leohao.android.alistlite;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +24,8 @@ import com.leohao.android.alistlite.model.Alist;
 import com.leohao.android.alistlite.util.ConfigBackupHelper;
 import com.leohao.android.alistlite.window.DialogHelper;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -184,9 +190,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * 导出：让用户选一个文件夹，App 自己在里面建 zip
-     * 用 ACTION_OPEN_DOCUMENT_TREE 而不是 ACTION_CREATE_DOCUMENT，
-     * 因为后者的保存对话框里有文件名输入栏，部分 ROM 上点不动
+     * 导出入口：三种方式并存，覆盖不同 ROM 的文件选择器差异
+     * 1) 上次的文件夹（长期授权，最快）
+     * 2) 选择文件夹（ACTION_OPEN_DOCUMENT_TREE，无文件名输入栏）
+     * 3) 兼容模式：直接写系统「下载」目录（不经过任何选择器，任何机型都能走通）
      */
     private void startExport() {
         if (!Alist.getInstance().hasRunning()) {
@@ -195,22 +202,23 @@ public class SettingsActivity extends AppCompatActivity {
         }
         final String last = getSharedPreferences(PREFS, MODE_PRIVATE)
                 .getString(PREF_LAST_EXPORT_TREE, null);
-        if (last != null) {
-            new AlertDialog.Builder(this, R.style.IOSAlertDialog)
-                    .setTitle("导出配置")
-                    .setItems(new String[]{"导出到上次的文件夹", "选择其他文件夹"},
-                            (d, which) -> {
-                                if (which == 0) {
-                                    doExportToTree(Uri.parse(last));
-                                } else {
-                                    pickExportTree();
-                                }
-                            })
-                    .setNegativeButton("取消", null)
-                    .show();
-            return;
-        }
-        pickExportTree();
+        final boolean hasLast = last != null;
+        final String[] items = hasLast
+                ? new String[]{"导出到上次的文件夹", "选择文件夹", "保存到「下载」文件夹（兼容模式）"}
+                : new String[]{"选择文件夹", "保存到「下载」文件夹（兼容模式）"};
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("导出配置")
+                .setItems(items, (d, which) -> {
+                    if (hasLast && which == 0) {
+                        doExportToTree(Uri.parse(last), true);
+                    } else if ((hasLast && which == 1) || (!hasLast && which == 0)) {
+                        pickExportTree();
+                    } else {
+                        doExportToDownloadsCompat();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void pickExportTree() {
@@ -221,11 +229,18 @@ public class SettingsActivity extends AppCompatActivity {
         try {
             startActivityForResult(intent, EXPORT_TREE_REQUEST_CODE);
         } catch (Exception e) {
-            toast("当前设备不支持选择文件夹");
+            Log.e("SettingsActivity", "no document tree picker", e);
+            toast("当前设备没有文件夹选择器，已改用「下载」文件夹");
+            doExportToDownloadsCompat();
         }
     }
 
-    private void doExportToTree(Uri tree) {
+    /**
+     * 写入用户选的文件夹。
+     *
+     * @param fromSaved true 表示来自上次保存的授权目录，失败时清除记录以便重新选择
+     */
+    private void doExportToTree(Uri tree, boolean fromSaved) {
         final String fileName = ConfigBackupHelper.suggestFileName();
         toast("正在导出…");
         new Thread(() -> {
@@ -234,30 +249,120 @@ public class SettingsActivity extends AppCompatActivity {
                 String folderName = queryTreeFolderName(tree);
                 String docId = DocumentsContract.getTreeDocumentId(tree);
                 Uri parent = DocumentsContract.buildDocumentUriUsingTree(tree, docId);
-                Uri target = DocumentsContract.createDocument(
-                        getContentResolver(), parent, "application/zip", fileName);
-                if (target == null) {
-                    throw new Exception("无法在该文件夹创建文件");
-                }
-                OutputStream os = getContentResolver().openOutputStream(target);
-                if (os == null) {
-                    throw new Exception("无法写入文件");
-                }
-                try {
-                    ConfigBackupHelper.export(this, os);
-                } finally {
-                    os.close();
-                }
+                Uri target = createDocumentCompat(parent, fileName);
+                writeZip(target);
                 message = folderName == null || folderName.isEmpty()
                         ? "已导出 " + fileName
                         : "已导出 " + fileName + "（" + folderName + "）";
             } catch (Exception e) {
-                Log.e("SettingsActivity", "export config failed", e);
-                message = "导出失败：" + e.getMessage();
+                Log.e("SettingsActivity", "export to tree failed", e);
+                if (fromSaved) {
+                    // 目录被删除、SD 卡拔出、授权失效 —— 清掉记录，下次重新选
+                    getSharedPreferences(PREFS, MODE_PRIVATE)
+                            .edit().remove(PREF_LAST_EXPORT_TREE).apply();
+                    message = "上次的文件夹不可用（" + e.getMessage() + "），请重新选择文件夹或使用兼容模式";
+                } else {
+                    message = "导出失败：" + e.getMessage() + "，可改用兼容模式";
+                }
             }
             final String text = message;
             runOnUiThread(() -> toast(text));
         }, "config-export").start();
+    }
+
+    /**
+     * 不同 provider 对 MIME 的接受度不同：先按 zip 建，失败再退回通用二进制类型
+     */
+    private Uri createDocumentCompat(Uri parent, String fileName) throws Exception {
+        Uri target = null;
+        try {
+            target = DocumentsContract.createDocument(
+                    getContentResolver(), parent, "application/zip", fileName);
+        } catch (Exception e) {
+            Log.w("SettingsActivity", "createDocument zip failed, retry octet-stream", e);
+        }
+        if (target == null) {
+            target = DocumentsContract.createDocument(
+                    getContentResolver(), parent, "application/octet-stream", fileName);
+        }
+        if (target == null) {
+            throw new Exception("该文件夹不允许创建文件");
+        }
+        return target;
+    }
+
+    private void writeZip(Uri target) throws Exception {
+        OutputStream os = getContentResolver().openOutputStream(target);
+        if (os == null) {
+            throw new Exception("无法写入文件");
+        }
+        try {
+            ConfigBackupHelper.export(this, os);
+        } finally {
+            os.close();
+        }
+    }
+
+    /**
+     * 兼容模式：不经过选择器，直接写系统下载目录
+     */
+    private void doExportToDownloadsCompat() {
+        final String fileName = ConfigBackupHelper.suggestFileName();
+        toast("正在导出…");
+        new Thread(() -> {
+            String message;
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    exportViaMediaStore(fileName);
+                } else {
+                    exportViaPublicDir(fileName);
+                }
+                message = "已导出 " + fileName + "（下载/AListLite）";
+            } catch (Exception e) {
+                Log.e("SettingsActivity", "compat export failed", e);
+                message = "导出失败：" + e.getMessage();
+            }
+            final String text = message;
+            runOnUiThread(() -> toast(text));
+        }, "config-export-compat").start();
+    }
+
+    private void exportViaMediaStore(String fileName) throws Exception {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOWNLOADS + "/AListLite");
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+
+        Uri target = getContentResolver()
+                .insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+        if (target == null) {
+            throw new Exception("无法创建文件");
+        }
+        try {
+            writeZip(target);
+            ContentValues done = new ContentValues();
+            done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            getContentResolver().update(target, done, null, null);
+        } catch (Exception e) {
+            getContentResolver().delete(target, null, null);
+            throw e;
+        }
+    }
+
+    private void exportViaPublicDir(String fileName) throws Exception {
+        File dir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), "AListLite");
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new Exception("无法创建目录");
+        }
+        FileOutputStream os = new FileOutputStream(new File(dir, fileName));
+        try {
+            ConfigBackupHelper.export(this, os);
+        } finally {
+            os.close();
+        }
     }
 
     /**
@@ -307,7 +412,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
             getSharedPreferences(PREFS, MODE_PRIVATE)
                     .edit().putString(PREF_LAST_EXPORT_TREE, uri.toString()).apply();
-            doExportToTree(uri);
+            doExportToTree(uri, false);
         } else if (requestCode == IMPORT_REQUEST_CODE) {
             confirmImport(uri);
         }
