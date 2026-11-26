@@ -95,12 +95,6 @@ public class SettingsActivity extends AppCompatActivity {
                 this::startExport));
         list.add(new Item("导入配置", "从备份文件恢复配置，会覆盖当前设置", "导入",
                 this::startImport));
-
-        list.add("其它");
-        list.add(new Item("阿里云盘令牌", "开启会员后可获得更流畅的播放体验", "获取",
-                () -> openUrl("http://127.0.0.1:4015")));
-        list.add(new Item("检查更新", "查看是否有新版本", "检查",
-                () -> UpdateChecker.check(this, getVersionName())));
         return list;
     }
 

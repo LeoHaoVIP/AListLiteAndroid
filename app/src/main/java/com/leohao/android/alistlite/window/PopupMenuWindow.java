@@ -93,7 +93,17 @@ public class PopupMenuWindow extends PopupWindow {
             dismiss();
             listener.toggleHttps(view);
         });
-        //设置（权限、诊断、保活、导入导出、高级配置、阿里云盘令牌、检查更新）
+        //阿里云盘令牌（在 WebView 内打开）
+        popupView.findViewById(R.id.btn_showAliTvTokenGetPage).setOnClickListener((view) -> {
+            dismiss();
+            listener.showAliTvTokenGetPage(view);
+        });
+        //检查更新
+        popupView.findViewById(R.id.btn_checkUpdates).setOnClickListener((view) -> {
+            dismiss();
+            listener.checkUpdates(view);
+        });
+        //设置（权限、诊断、保活、导入导出、高级配置）
         popupView.findViewById(R.id.btn_settings).setOnClickListener((view) -> {
             dismiss();
             listener.showSettings(view);

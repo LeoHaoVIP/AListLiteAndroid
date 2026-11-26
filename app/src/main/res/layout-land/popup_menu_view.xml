@@ -83,6 +83,18 @@
                 android:text="更多"/>
 
         <TextView
+                android:id="@+id/btn_showAliTvTokenGetPage"
+                style="@style/PopupMenuItemGrid"
+                android:drawableStart="@drawable/ic_menu_cloud"
+                android:text="@string/popup_menu_item_alitv_token_get"/>
+
+        <TextView
+                android:id="@+id/btn_checkUpdates"
+                style="@style/PopupMenuItemGrid"
+                android:drawableStart="@drawable/refresh"
+                android:text="@string/popup_menu_item_check_updates"/>
+
+        <TextView
                 android:id="@+id/btn_settings"
                 style="@style/PopupMenuItemGrid"
                 android:drawableStart="@drawable/ic_menu_config"
