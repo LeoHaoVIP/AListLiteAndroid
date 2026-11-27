@@ -163,7 +163,7 @@ public class DialogHelper {
             qrImageView.setImageBitmap(qr);
             qrImageView.setVisibility(qr == null ? View.GONE : View.VISIBLE);
             currentIpText.setText(String.format(Locale.CHINA, "(%d/%d) %s", idx + 1, totalCount, addr));
-            String qrTip = qr == null ? "\r\n\r\n当前设备无法生成二维码，请点击地址直接打开" : "";
+            String qrTip = qr == null ? "\r\n\r\n当前设备无法生成二维码，请点击「复制地址」后在浏览器打开" : "";
             alertDialog.setMessage(String.format("提示：请确保在同一网络环境内操作\r\n\r\n当前网卡 %s（%s），点击按钮可切换%s", allLabels.get(idx), ipType, qrTip));
         };
         refreshView.run();
@@ -460,7 +460,45 @@ public class DialogHelper {
 
     // ===== 内部工具方法 =====
 
+    /**
+     * QR 里的字符集：zxing 对这个集合走 ALPHANUMERIC 模式，完全不碰 Charset，
+     * 因此在 Charset.name() 返回 ICU 内部名的畸形 ROM 上也能生成（Bugly #23058）。
+     */
+    private static final String QR_ALPHANUMERIC_SET =
+            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
+
     private static Bitmap generateQr(String content, int size) {
+        Bitmap bitmap = encodeQr(content, size);
+        if (bitmap != null) {
+            return bitmap;
+        }
+        // 兜底：转成纯大写（URL 的 scheme / host 大小写不敏感），
+        // 让 zxing 走 ALPHANUMERIC 分支，绕开 String.getBytes(charsetName) 这条崩溃路径
+        String safe = toAlphanumericSafe(content);
+        if (safe != null) {
+            Log.w(TAG, "generateQr: retry with alphanumeric content");
+            bitmap = encodeQr(safe, size);
+        }
+        return bitmap;
+    }
+
+    /**
+     * 转成 zxing ALPHANUMERIC 字符集内的形式；含非法字符（如 IPv6 的 [ ]）时返回 null
+     */
+    private static String toAlphanumericSafe(String content) {
+        if (content == null || content.isEmpty()) {
+            return null;
+        }
+        String upper = content.toUpperCase(Locale.US);
+        for (int i = 0; i < upper.length(); i++) {
+            if (QR_ALPHANUMERIC_SET.indexOf(upper.charAt(i)) < 0) {
+                return null;
+            }
+        }
+        return upper;
+    }
+
+    private static Bitmap encodeQr(String content, int size) {
         try {
             Map<EncodeHintType, Object> hints = new HashMap<>();
             hints.put(EncodeHintType.MARGIN, 1);
