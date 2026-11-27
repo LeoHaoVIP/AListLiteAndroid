@@ -1,9 +1,44 @@
 # Backend
-TAG_NAME=$(curl -s -k --retry 3 --retry-delay 3 https://api.github.com/repos/OpenListTeam/OpenList/releases/latest | grep -o '"tag_name": ".*"' | cut -d'"' -f4)
+# 取 OpenList 最新正式版 tag。
+# runner 上匿名调用 GitHub API 极易被限流（Actions run 45963782778 即因此失败），
+# 所以：带 GH_TOKEN 调用 + 三次重试 + git ls-remote 兜底。
+fetch_latest_tag() {
+  api="https://api.github.com/repos/OpenListTeam/OpenList/releases/latest"
+  i=1
+  while [ "$i" -le 3 ]; do
+    if [ -n "$GH_TOKEN" ]; then
+      body=$(curl -s -k -f --max-time 30 \
+        -H "Authorization: Bearer $GH_TOKEN" \
+        -H "Accept: application/vnd.github+json" "$api" 2>/dev/null)
+    else
+      body=$(curl -s -k -f --max-time 30 \
+        -H "Accept: application/vnd.github+json" "$api" 2>/dev/null)
+    fi
+    tag=$(printf '%s' "$body" | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
+    case "$tag" in
+      v[0-9]*) printf '%s' "$tag"; return 0 ;;
+    esac
+    echo "获取 OpenList tag 失败（第 $i/3 次），10 秒后重试" >&2
+    i=$((i + 1))
+    sleep 10
+  done
+
+  # 兜底：git 协议不受 API 限流影响
+  tag=$(git ls-remote --tags --refs --sort=-v:refname \
+    https://github.com/OpenListTeam/OpenList.git 'v*' 2>/dev/null \
+    | head -1 | sed 's#.*refs/tags/##')
+  case "$tag" in
+    v[0-9]*) printf '%s' "$tag"; return 0 ;;
+  esac
+  return 1
+}
+
+TAG_NAME=$(fetch_latest_tag) || TAG_NAME=""
 if [ -z "$TAG_NAME" ]; then
   echo "ERROR: 获取 OpenList 最新 tag 失败"
   exit 1
 fi
+echo "OpenList tag: $TAG_NAME"
 # TAG_NAME=v4.0.3
 TGZ="openlist${TAG_NAME}.tar.gz"
 
