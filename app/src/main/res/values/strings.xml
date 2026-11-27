@@ -41,6 +41,8 @@
     <string name="storage_manage_disable">停用</string>
     <string name="storage_state_work">使用中</string>
     <string name="storage_state_disabled">已停用</string>
+    <string name="storage_manage_show_capacity">显示云盘容量</string>
+    <string name="storage_manage_show_capacity_desc">关闭 AList 的「隐藏存储详情」，支持的网盘会显示已用/总量</string>
     <string name="activity_title_permission_check">AListlite 权限配置</string>
     <string name="config_view">|&#160;高级配置&#160;</string>
     <string name="check_updates">|&#160;检查更新</string>

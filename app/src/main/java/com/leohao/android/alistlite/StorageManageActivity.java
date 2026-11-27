@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +42,9 @@ public class StorageManageActivity extends AppCompatActivity {
     private TextView subtitle;
     private AlistAdminApi api;
     private String currentBaseUrl;
+    private Switch capacitySwitch;
+    /** 是否已从服务端读到容量开关状态（避免程序设置 switch 时触发保存） */
+    private boolean bindingSwitch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +52,65 @@ public class StorageManageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_storage_manage);
         container = findViewById(R.id.storage_container);
         subtitle = findViewById(R.id.tv_manage_subtitle);
+        capacitySwitch = findViewById(R.id.sw_show_capacity);
         findViewById(R.id.btn_manage_refresh).setOnClickListener(v -> load());
+        View capacityRow = findViewById(R.id.row_show_capacity);
+        capacityRow.setOnClickListener(v -> toggleCapacity(!capacitySwitch.isChecked()));
+        capacitySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!bindingSwitch) {
+                toggleCapacity(isChecked);
+            }
+        });
         load();
+    }
+
+    /**
+     * 开关「显示云盘容量」：实际是同步 AList 的 hide_storage_details 两个设置项。
+     * 关掉隐藏后，storage/list 才会带 mount_details.disk_usage。
+     */
+    private void toggleCapacity(final boolean show) {
+        if (api == null || !api.hasToken()) {
+            toast("请先成功加载一次挂载列表");
+            setSwitchState(!show);
+            return;
+        }
+        new Thread(() -> {
+            try {
+                java.util.Map<String, String> values = new java.util.HashMap<>();
+                values.put("hide_storage_details", show ? "false" : "true");
+                values.put("hide_storage_details_in_manage_page", show ? "false" : "true");
+                api.saveSettings(values);
+                runOnUiThread(() -> {
+                    toast(show ? "已开启，正在重新读取容量" : "已关闭容量显示");
+                    load();
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "toggleCapacity: " + e.getMessage());
+                runOnUiThread(() -> {
+                    toast("设置失败：" + e.getMessage());
+                    setSwitchState(!show);
+                });
+            }
+        }, "storage-capacity-setting").start();
+    }
+
+    private void setSwitchState(boolean checked) {
+        bindingSwitch = true;
+        capacitySwitch.setChecked(checked);
+        bindingSwitch = false;
+    }
+
+    private void bindCapacitySwitch() {
+        new Thread(() -> {
+            try {
+                java.util.Map<String, String> settings = api.getSettings();
+                String hide = settings.get("hide_storage_details_in_manage_page");
+                final boolean show = !"true".equalsIgnoreCase(hide);
+                runOnUiThread(() -> setSwitchState(show));
+            } catch (Exception e) {
+                Log.w(TAG, "bindCapacitySwitch: " + e.getLocalizedMessage());
+            }
+        }, "storage-capacity-state").start();
     }
 
     private void load() {
@@ -72,7 +133,10 @@ public class StorageManageActivity extends AppCompatActivity {
             try {
                 api.login(ADMIN_USER, adminPassword());
                 List<JSONObject> list = api.listStorages();
-                runOnUiThread(() -> renderList(list, base));
+                runOnUiThread(() -> {
+                    renderList(list, base);
+                    bindCapacitySwitch();
+                });
             } catch (Exception e) {
                 Log.e(TAG, "load: " + e.getMessage());
                 final String msg = e.getMessage() == null ? "" : e.getMessage();

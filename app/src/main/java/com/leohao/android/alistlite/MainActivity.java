@@ -663,7 +663,10 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                     case Alist.STATUS_STARTED: {
                         String address = intent.getStringExtra("address");
                         serviceSwitch.setCheckedNoEvent(true);
-                        if (address != null) webView.loadUrl(address);
+                        if (address != null) {
+                            // 只替换主机部分，保留用户当前浏览的路径（网络切换/服务重启不再跳回首页）
+                            swapWebViewHost(address);
+                        }
                         runningInfoTextView.setVisibility(View.GONE);
                         updateSslIndicator();
                         updateAppShortcuts();
@@ -796,7 +799,40 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     }
 
     /**
-     * 页面还停在旧地址时，跟着服务地址一起切过去
+     * 把 WebView 当前页的主机部分换成新地址，路径/锚点保持不变。
+     * 页面为空或停在本地说明页时才直接导航到新地址。
+     */
+    private void swapWebViewHost(String newAddress) {
+        if (webView == null || TextUtils.isEmpty(newAddress)) {
+            return;
+        }
+        String current = webView.getUrl();
+        if (current == null || current.startsWith("about:") || current.startsWith("file:")) {
+            webView.loadUrl(newAddress);
+            return;
+        }
+        try {
+            Uri uri = Uri.parse(current);
+            String authority = uri.getAuthority();
+            if (authority == null) {
+                webView.loadUrl(newAddress);
+                return;
+            }
+            String currentBase = uri.getScheme() + "://" + authority;
+            if (currentBase.equals(newAddress)) {
+                return;
+            }
+            String suffix = current.substring(Math.min(current.length(), currentBase.length()));
+            Log.i(TAG, "页面主机切换 " + currentBase + " → " + newAddress + "，保留路径" + suffix);
+            webView.loadUrl(newAddress + suffix);
+        } catch (Exception e) {
+            Log.w(TAG, "swapWebViewHost: " + e.getLocalizedMessage());
+            webView.loadUrl(newAddress);
+        }
+    }
+
+    /**
+     * 页面还停在旧地址时，带着原来的路径一起切到新地址（不跳回首页）
      */
     private void reloadWebViewIfStale(String oldAddress, String newAddress) {
         if (webView == null || TextUtils.isEmpty(oldAddress) || TextUtils.isEmpty(newAddress)) {
@@ -809,10 +845,12 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         if (oldAddress.equals(newAddress)) {
             return;
         }
-        if (current.startsWith(oldAddress)) {
-            Log.i(TAG, "页面地址已过期，切换到 " + newAddress);
-            webView.loadUrl(newAddress);
+        if (!current.startsWith(oldAddress)) {
+            return;
         }
+        String suffix = current.substring(oldAddress.length());
+        Log.i(TAG, "页面地址已过期，切换到 " + newAddress + suffix);
+        webView.loadUrl(newAddress + suffix);
     }
 
     private void updateSslIndicator() {

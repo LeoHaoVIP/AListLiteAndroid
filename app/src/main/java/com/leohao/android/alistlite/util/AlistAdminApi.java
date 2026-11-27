@@ -112,6 +112,41 @@ public class AlistAdminApi {
     }
 
     /**
+     * 读取 AList 设置（用于「显示云盘容量」开关）
+     */
+    public java.util.Map<String, String> getSettings() throws Exception {
+        JSONObject resp = requestJson("GET", "/api/admin/setting/list", null);
+        checkOk(resp);
+        java.util.Map<String, String> map = new java.util.HashMap<>();
+        org.json.JSONArray arr = resp.optJSONArray("data");
+        if (arr != null) {
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject item = arr.optJSONObject(i);
+                if (item != null) {
+                    map.put(item.optString("key"), item.optString("value"));
+                }
+            }
+        }
+        return map;
+    }
+
+    /**
+     * 批量保存设置；body 必须是数组：[{"key":"a","value":"b"}]
+     * （传对象会报 json: cannot unmarshal object into Go value of type []model.SettingItem）
+     */
+    public void saveSettings(java.util.Map<String, String> values) throws Exception {
+        org.json.JSONArray arr = new org.json.JSONArray();
+        for (java.util.Map.Entry<String, String> e : values.entrySet()) {
+            JSONObject item = new JSONObject();
+            item.put("key", e.getKey());
+            item.put("value", e.getValue());
+            arr.put(item);
+        }
+        JSONObject resp = requestRaw("POST", "/api/admin/setting/save", arr.toString());
+        checkOk(resp);
+    }
+
+    /**
      * 提交整份挂载对象完成更新
      */
     public void update(JSONObject storage) throws Exception {
@@ -129,6 +164,13 @@ public class AlistAdminApi {
     }
 
     private JSONObject requestJson(String method, String path, JSONObject body) throws Exception {
+        return requestRaw(method, path, body == null ? null : body.toString());
+    }
+
+    /**
+     * 原始 JSON 文本请求（保存设置时 body 是数组，不能走 JSONObject）
+     */
+    private JSONObject requestRaw(String method, String path, String bodyText) throws Exception {
         if (TextUtils.isEmpty(baseUrl)) {
             throw new Exception("服务地址为空");
         }
@@ -143,8 +185,8 @@ public class AlistAdminApi {
             if (!TextUtils.isEmpty(token)) {
                 conn.setRequestProperty("Authorization", token);
             }
-            if (body != null) {
-                byte[] bytes = body.toString().getBytes("UTF-8");
+            if (bodyText != null) {
+                byte[] bytes = bodyText.getBytes("UTF-8");
                 conn.setDoOutput(true);
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
                 conn.setFixedLengthStreamingMode(bytes.length);
