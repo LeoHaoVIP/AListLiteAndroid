@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>WebDAV 挂载指引</title>
+<style>
+  :root {
+    --bg: #f2f3f7;
+    --card: #ffffff;
+    --card-alt: #f7f8fa;
+    --text: #101114;
+    --text-2: #6b7280;
+    --text-3: #9aa1ad;
+    --line: rgba(0, 0, 0, .07);
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, .1);
+    --shadow: 0 6px 20px rgba(17, 24, 39, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --card-alt: #242426;
+      --text: #f2f2f7;
+      --text-2: #9b9ba1;
+      --text-3: #6e6e73;
+      --line: rgba(255, 255, 255, .09);
+      --accent: #0a84ff;
+      --accent-soft: rgba(10, 132, 255, .18);
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 18px 14px calc(28px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+    line-height: 1.55;
+  }
+
+  h1 { font-size: 21px; margin: 0 0 4px; font-weight: 600; letter-spacing: .2px; }
+  .sub { color: var(--text-2); font-size: 13px; margin-bottom: 16px; }
+
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .card h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin: 0 0 10px;
+    letter-spacing: .3px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--text-2); font-size: 13px; flex: none; margin-right: 12px; }
+  .row .v {
+    font-size: 14px;
+    text-align: right;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .btn:active { opacity: .8; }
+  .btn.ghost {
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-top: 8px;
+  }
+  .btn[disabled] { opacity: .45; }
+
+  .tip {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  ul.steps { margin: 0; padding-left: 18px; font-size: 14px; color: var(--text); }
+  ul.steps li { margin: 5px 0; }
+
+  .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .table th, .table td { text-align: left; padding: 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .table th { color: var(--text-2); font-weight: 500; width: 34%; }
+  .table tr:last-child th, .table tr:last-child td { border-bottom: none; }
+
+  .pill {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin: 0 4px 4px 0;
+  }
+
+  .foot { text-align: center; color: var(--text-3); font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<h1>WebDAV 挂载指引</h1>
+<div class="sub">用第三方播放器「添加网络存储」，直接把这里的文件挂进它们的媒体库</div>
+
+<div class="card">
+  <h2>连接参数</h2>
+  <div class="row"><span class="k">地址</span><span class="v" id="v-url">读取中…</span></div>
+  <div class="row"><span class="k">用户名</span><span class="v" id="v-user">admin</span></div>
+  <div class="row"><span class="k">密码</span><span class="v" id="v-pass">见「密码设置」</span></div>
+  <div class="row"><span class="k">路径</span><span class="v">/dav</span></div>
+  <button class="btn" id="btn-copy" type="button">复制地址</button>
+  <div class="tip" id="tip-state"></div>
+</div>
+
+<div class="card">
+  <h2>一键添加</h2>
+  <button class="btn" id="btn-bmh" type="button" disabled>添加到网易爆米花</button>
+  <div class="tip">需已安装网易爆米花。点击后会打开 App 并预填服务器信息，密码需手动输入。</div>
+</div>
+
+<div class="card">
+  <h2>通用步骤</h2>
+  <ul class="steps">
+    <li>打开客户端的「添加网络存储」（部分软件叫「网络」或「新建服务器」）</li>
+    <li>协议选 <b>WebDAV</b></li>
+    <li>填入上方的地址、用户名与密码</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>按平台选客户端</h2>
+  <table class="table">
+    <tr><th>Android / TV</th><td>nPlayer、VidHub、Kodi</td></tr>
+    <tr><th>iOS / iPadOS</th><td>Infuse、nPlayer、VidHub、Fileball</td></tr>
+    <tr><th>Windows</th><td>PotPlayer、RaiDrive、Kodi</td></tr>
+    <tr><th>macOS</th><td>Infuse、IINA、Mountain Duck</td></tr>
+  </table>
+  <div class="tip">仅列支持 WebDAV 的软件。VLC、MX Player 等只支持直链播放，无法添加整库。</div>
+</div>
+
+<div class="card">
+  <h2>常见的三个问题</h2>
+  <table class="table">
+    <tr><th>提示密码错误 / 401</th><td>用户名默认 <b>admin</b>，密码是 App 管理员密码，可在「密码设置」修改</td></tr>
+    <tr><th>连不上</th><td>确认设备与服务在同一 WiFi；路由器开启 AP 隔离或访客网络时会无法连接</td></tr>
+    <tr><th>能看不能改</th><td>OpenList 的用户权限中需勾选 WebDAV 读取与 WebDAV 管理</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>没有合适的客户端</h2>
+  <div class="tip" style="margin-top:0">
+    直接用浏览器访问服务地址即可浏览与下载；WebDAV 只是给播放器批量挂载用的。
+  </div>
+</div>
+
+<div class="foot">服务停止时 WebDAV 一并不可用</div>
+
+<script>
+  var info = { host: '', port: 5244, user: 'admin', scheme: 'http' };
+
+  function davUrl() {
+    if (!info.host) return '';
+    var h = info.host;
+    if (h.indexOf(':') >= 0 && h.charAt(0) !== '[') h = '[' + h + ']';
+    return info.scheme + '://' + h + ':' + info.port + '/dav/';
+  }
+
+  function copyText(text) {
+    if (!text) return;
+    if (window.AListLite && window.AListLite.copy) {
+      window.AListLite.copy(text);
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+  }
+
+  function openExternal(url) {
+    if (window.AListLite && window.AListLite.openExternal) {
+      window.AListLite.openExternal(url);
+    }
+  }
+
+  function render() {
+    var url = davUrl();
+    document.getElementById('v-user').textContent = info.user || 'admin';
+    var urlEl = document.getElementById('v-url');
+    var copyBtn = document.getElementById('btn-copy');
+    var bmhBtn = document.getElementById('btn-bmh');
+    var tip = document.getElementById('tip-state');
+
+    if (!url) {
+      urlEl.textContent = '服务未启动';
+      copyBtn.disabled = true;
+      bmhBtn.disabled = true;
+      tip.textContent = '先在上方开关里启动 AList 服务，再回到这里。';
+      return;
+    }
+
+    urlEl.textContent = url;
+    copyBtn.disabled = false;
+    tip.textContent = '';
+    if (info.host) bmhBtn.disabled = false;
+  }
+
+  document.getElementById('btn-copy').addEventListener('click', function () {
+    copyText(davUrl());
+  });
+
+  document.getElementById('btn-bmh').addEventListener('click', function () {
+    var link = 'https://bmh.163.com/la/?import=webdav'
+      + '&name=' + encodeURIComponent('AListLite')
+      + '&host=' + encodeURIComponent(info.host)
+      + '&port=' + encodeURIComponent(info.port)
+      + '&scheme=' + encodeURIComponent(info.scheme)
+      + '&path=' + encodeURIComponent('/dav')
+      + '&username=' + encodeURIComponent(info.user || 'admin');
+    openExternal(link);
+  });
+
+  // 由 App 在页面可见后调用
+  window.__setAlistInfo = function (host, port, user, scheme) {
+    info.host = host || '';
+    info.port = port || 5244;
+    info.user = user || 'admin';
+    info.scheme = scheme || 'http';
+    render();
+  };
+
+  render();
+</script>
+</body>
+</html>

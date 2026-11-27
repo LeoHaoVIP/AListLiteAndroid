@@ -82,7 +82,13 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     private WebView webView = null;
     private TextView runningInfoTextView = null;
     private SwitchButton serviceSwitch = null;
+    /** 从「更多选项」跳到 WebDAV 挂载指引 */
+    public static final String EXTRA_OPEN_WEBDAV_GUIDE = "open_webdav_guide";
+
     private Alist alistServer;
+
+    /** 说明页显示期间收到的服务地址，返回网页时使用 */
+    private String pendingServiceAddress;
     private TextView appInfoTextView;
     private TextView sslIndicator;
     private PopupMenuWindow popupMenuWindow;
@@ -212,6 +218,10 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
 
     private void handleShortcutIntent(Intent intent) {
         if (intent == null) return;
+        if (intent.getBooleanExtra(EXTRA_OPEN_WEBDAV_GUIDE, false)) {
+            loadWebdavGuide();
+            return;
+        }
         if ("remote_access".equals(intent.getStringExtra("shortcut"))) {
             DialogHelper.showQrCode(this, alistServer, url -> webView.loadUrl(url));
         }
@@ -406,6 +416,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         webView.getSettings().setAllowContentAccess(true);
         webView.removeJavascriptInterface("searchBoxJavaBredge_");
         webView.addJavascriptInterface(new DownloadBlobFileJsInterface(this), "Android");
+        // 本地说明页（WebDAV 指引）用：复制、外部打开
+        webView.addJavascriptInterface(new com.leohao.android.alistlite.interfaces.GuideJsInterface(this), "AListLite");
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
@@ -506,6 +518,9 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                     String versionInfo = String.format(Constants.VERSION_INFO, currentAppVersion, Constants.OPENLIST_VERSION);
                     String jsCode = "document.getElementById('text_version').innerHTML='" + versionInfo + "';";
                     webView.evaluateJavascript("javascript:(function(){" + jsCode + "})();", null);
+                }
+                if (url.equals(Constants.URL_LOCAL_WEBDAV_GUIDE)) {
+                    injectWebdavInfo();
                 }
             }
 
@@ -814,11 +829,21 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
      * 把 WebView 当前页的主机部分换成新地址，路径/锚点保持不变。
      * 页面为空或停在本地说明页时才直接导航到新地址。
      */
+    /** 是否为内置说明页（本地 assets） */
+    private boolean isLocalPage(String url) {
+        return url != null && url.startsWith("file:///android_asset/html/");
+    }
     private void swapWebViewHost(String newAddress) {
         if (webView == null || TextUtils.isEmpty(newAddress)) {
             return;
         }
         String current = webView.getUrl();
+        // 本地说明页（关于/更新日志/WebDAV 指引）正在显示时，不要被服务广播顶掉
+        if (isLocalPage(current)) {
+            AppLog.i(TAG, "本地说明页显示中，暂不跳转，仅记录地址 " + newAddress);
+            pendingServiceAddress = newAddress;
+            return;
+        }
         if (current == null || current.startsWith("about:") || current.startsWith("file:")) {
             webView.loadUrl(newAddress);
             return;
@@ -1069,6 +1094,38 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         DialogHelper.showLogViewer(this);
     }
 
+    /**
+     * 打开 WebDAV 挂载指引（本地页面，参数在页面可见后注入）
+     */
+    private void loadWebdavGuide() {
+        webView.loadUrl(Constants.URL_LOCAL_WEBDAV_GUIDE);
+    }
+
+    /**
+     * 把当前服务地址注入指引页：页面据此生成 WebDAV 地址与一键添加链接
+     */
+    private void injectWebdavInfo() {        // 页面可能已被导航替换，确认仍在指引页再注入
+        if (!isLocalPage(webView.getUrl())) {
+            return;
+        }
+        String host = "127.0.0.1";
+        int port = 5244;
+        String user = "admin";
+        String scheme = "http";
+        try {
+            if (alistServer != null) {
+                host = alistServer.getPrimaryIP();
+                port = alistServer.getServerPort();
+                user = alistServer.getAdminUser();
+                scheme = alistServer.isHttpsEnabled() ? "https" : "http";
+            }
+        } catch (Exception e) {
+            AppLog.w("WebdavGuide", "读取服务信息失败: " + e.getLocalizedMessage());
+        }
+        String js = String.format("window.__setAlistInfo('%s',%d,'%s','%s');",
+                host, port, user, scheme);
+        webView.evaluateJavascript("javascript:(function(){" + js + "})();", null);
+    }
     @Override
     public void showSystemInfo(View view) {
         webView.loadUrl(Constants.URL_LOCAL_ABOUT_ALIST_LITE);

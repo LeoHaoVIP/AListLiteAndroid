@@ -190,6 +190,9 @@ public class SettingsActivity extends AppCompatActivity {
         list.add(new Item(R.drawable.ic_menu_cloud, "挂载管理",
                 "启停、删除、改路径与备注", "管理",
                 () -> startActivity(new Intent(this, StorageManageActivity.class))));
+        list.add(new Item(R.drawable.ic_menu_cloud, "WebDAV 挂载指引",
+                "用第三方播放器添加网络存储", "查看",
+                this::openWebdavGuide));
         list.add(new Item(R.drawable.ic_menu_config, "高级配置",
                 "直接编辑 config.json，谨慎修改", "编辑",
                 () -> DialogHelper.showConfigEditor(this)));
@@ -413,6 +416,16 @@ public class SettingsActivity extends AppCompatActivity {
         return null;
     }
 
+    /**
+     * 回到主界面打开 WebDAV 挂载指引（页面在 WebView 内，参数由主界面注入）
+     */
+    private void openWebdavGuide() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra(MainActivity.EXTRA_OPEN_WEBDAV_GUIDE, true);
+        startActivity(intent);
+        finish();
+    }
     /**
      * 主题色选择：选完立刻重建当前页面，返回主界面时也会跟着变
      */

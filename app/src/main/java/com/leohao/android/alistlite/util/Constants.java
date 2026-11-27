@@ -24,6 +24,7 @@ public class Constants {
     public static String URL_OPEN_DISCUSSION = "https://github.com/LeoHaoVIP/AListLiteAndroid/discussions";
     public static String URL_LOCAL_ABOUT_ALIST_LITE = "file:///android_asset/html/about-alistlite.html";
     public static String URL_LOCAL_RELEASE_LOG = "file:///android_asset/html/release-log.html";
+    public static String URL_LOCAL_WEBDAV_GUIDE = "file:///android_asset/html/webdav-guide.html";
     public static String URL_ABOUT_BLANK = "about:blank";
     public static String QUICK_DOWNLOAD_ADDRESS = "https://gitee.com/leohaovip/AListLiteAndroid/releases/download";
     public static String QUICK_DOWNLOAD_ADDRESS_GH_PROXY_PREFIX = "https://gh-proxy.org";
