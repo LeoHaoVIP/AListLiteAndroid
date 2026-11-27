@@ -102,10 +102,6 @@
 
 `更多选项` 内按四组排布：存储（权限配置、存储诊断）、服务（挂载管理、高级配置、后台保活、局域网发现）、备份与排查（导出配置、导入配置、一键排障包）、外观（主题色）。
 
-<center class="half">
-<img src="./README/more-options.png" alt="更多选项页面" style="zoom:30%"/>
-</center>
-
 ### 修改管理员密码
 
 点击右上角 `+` 号，选择 `密码设置` 可修改管理员密码，默认登录信息为 `admin` / `123456`。
@@ -144,19 +140,11 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 - 搜索同网段内其它 AListLite / OpenList 设备，5 秒搜索窗口，省电
 - 点条目直接用浏览器打开，或复制地址
 
-<center class="half">
-<img src="./README/lan-discovery.png" alt="局域网发现页面" style="zoom:30%"/>
-</center>
-
 > 只在同一广播域内有效：跨网段、VLAN、路由器开了「AP 隔离/访客网络」都会搜不到。
 
 ## 挂载管理
 
 不用进网页，直接在 App 里管理云盘挂载，电视端用遥控器也能操作：启停、删除、修改挂载路径与备注。页面顶部可切换「显示云盘容量」，开启后支持的网盘会显示已用/总量进度条。
-
-<center class="half">
-<img src="./README/mount-manage.png" alt="挂载管理页面" style="zoom:30%"/>
-</center>
 
 > 部分驱动（如 189CloudPC、AliyundriveOpen）本身不提供容量接口，即使开关打开也不会显示进度条，这是网盘驱动的限制。
 
@@ -182,10 +170,6 @@ Android N（7.0）及以上版本可在控制栏设置 AListLite 快速启停磁
 | `alist.log` | OpenList 服务端日志 |
 
 打包完成后直接调起系统分享面板，选择邮件应用即可发送，收件人、主题、正文与附件都会自动填好。
-
-<center class="half">
-<img src="./README/diagnostics-share.png" alt="排障包分享" style="zoom:30%"/>
-</center>
 
 ## 外观
 
