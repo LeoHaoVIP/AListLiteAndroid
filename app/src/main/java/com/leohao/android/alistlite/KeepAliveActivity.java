@@ -47,6 +47,8 @@ public class KeepAliveActivity extends AppCompatActivity {
         ThemeHelper.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_keep_alive);
+        // 电视端：遥控器没有指针，列表和卡片也要画焦点环
+        findViewById(android.R.id.content).post(() -> com.leohao.android.alistlite.util.TvUiHelper.applyFocusRing(this));
         LinearLayout container = findViewById(R.id.keep_alive_container);
         LayoutInflater inflater = LayoutInflater.from(this);
         for (Guide guide : buildGuides()) {

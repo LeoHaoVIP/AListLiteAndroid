@@ -46,6 +46,8 @@ public class LanDevicesActivity extends AppCompatActivity {
         ThemeHelper.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lan_devices);
+        // 电视端：遥控器没有指针，列表和卡片也要画焦点环
+        findViewById(android.R.id.content).post(() -> com.leohao.android.alistlite.util.TvUiHelper.applyFocusRing(this));
         container = findViewById(R.id.lan_container);
         subtitle = findViewById(R.id.tv_lan_subtitle);
         empty = findViewById(R.id.tv_lan_empty);

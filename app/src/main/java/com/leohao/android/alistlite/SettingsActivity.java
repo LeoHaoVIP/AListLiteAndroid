@@ -70,6 +70,8 @@ public class SettingsActivity extends AppCompatActivity {
         appliedAccentIndex = ThemeHelper.indexOf(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        // 电视端：遥控器没有指针，列表和卡片也要画焦点环
+        findViewById(android.R.id.content).post(() -> com.leohao.android.alistlite.util.TvUiHelper.applyFocusRing(this));
         LinearLayout container = findViewById(R.id.settings_container);
         container.setPadding(dp(12), 0, dp(12), dp(16));
         renderItems(container);
@@ -469,14 +471,14 @@ public class SettingsActivity extends AppCompatActivity {
         try {
             startActivity(Intent.createChooser(mail, "发送排障包到 " + DEV_EMAIL));
         } catch (Exception e) {
-            AppLog.w("SettingsActivity", "no mail app: " + e.getLocalizedMessage());
-            // 没有邮件客户端：退回保存到下载目录
+            AppLog.w("SettingsActivity", "no share target: " + e.getLocalizedMessage());
+            // 没有可分享的应用：退回保存到下载目录
             new Thread(() -> {
                 String message;
                 try {
                     String saved = com.leohao.android.alistlite.util.DiagnosticsCollector
                             .saveToDownloads(this);
-                    message = "没有邮件应用，已保存为 " + saved + "（下载/AListLite）";
+                    message = "已保存为 " + saved + "（下载/AListLite）";
                 } catch (Exception ex) {
                     message = "生成失败：" + ex.getMessage();
                 }
@@ -485,7 +487,6 @@ public class SettingsActivity extends AppCompatActivity {
             }, "diagnostics-fallback").start();
         }
     }
-
     private void startImport() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
