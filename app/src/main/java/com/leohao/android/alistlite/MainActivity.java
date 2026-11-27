@@ -277,6 +277,14 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         appInfoTextView = findViewById(R.id.tv_app_info);
         sslIndicator = findViewById(R.id.tv_ssl_indicator);
         runningInfoTextView = findViewById(R.id.tv_alist_status);
+        // 长按标题手动重连：网络异常时不用重启 App
+        if (appInfoTextView != null) {
+            appInfoTextView.setOnLongClickListener(v -> {
+                showToast("正在重新检测网络");
+                scheduleNetworkRecover();
+                return true;
+            });
+        }
         webView = findViewById(R.id.webview_alist);
         // 页面自身有背景色，WebView 保持透明，避免加载/切换时露出白底（白框）
         webView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
@@ -621,19 +629,18 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         networkCallback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
-                runOnUiThread(MainActivity.this::updateServerAddressIfNeeded);
+                scheduleNetworkRecover();
             }
 
             @Override
             public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities capabilities) {
-                runOnUiThread(MainActivity.this::updateServerAddressIfNeeded);
+                scheduleNetworkRecover();
             }
 
             @Override
             public void onLost(@NonNull Network network) {
                 // 延迟检查，等网络接口完全拆除后再获取最终状态，避免读到过渡态 IPv6
-                handler.removeCallbacks(networkCheckRunnable);
-                handler.postDelayed(networkCheckRunnable, 2000);
+                scheduleNetworkRecover();
             }
         };
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -680,40 +687,131 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     }
 
     private String lastPrimaryIP = null;
-    private boolean firstNetworkCheck = true;
+    /** 上一次提示过的对外地址，避免重复 toast */
+    private String lastShownAddress = null;
 
     /**
-     * 网络变化时弹框提示（仅比较首选 IP，避免临时 IPv6 地址轮换导致误判）
+     * 网络自愈：切换 Wi-Fi / 热点 / 拔插网线后，自动把服务拉回可用状态。
+     * <p>
+     * 1) 服务已停（系统回收、切换时被杀）→ 直接重启
+     * 2) 端口探活失败（绑定丢了）→ 重启
+     * 3) 对外地址变了 → 刷新缓存、页面从旧地址跳到新地址、给一次轻提示
      */
     private void updateServerAddressIfNeeded() {
-        if (alistServer == null || !alistServer.hasRunning()) return;
+        if (alistServer == null || serviceSwitch == null) {
+            return;
+        }
+        final boolean wantRunning = serviceSwitch.isChecked();
+        if (alistServer.hasRunning()) {
+            // Go 内核可能还在跑，但前台 Service / 通知栏被系统停掉了。
+            // ACTION_STARTUP 是幂等的（内核已在运行就只刷新通知），这里补一次最省事。
+            if (wantRunning) {
+                ensureWrapperService();
+            }
+        }
+        if (!alistServer.hasRunning()) {
+            if (wantRunning) {
+                Log.i(TAG, "网络变化：服务已停止，自动重启");
+                showToast("网络环境变化，正在重新启动服务");
+                restartService();
+            }
+            return;
+        }
+        final String oldAddress = alistServer.getCachedServerAddress();
+        final String oldPrimaryIP = lastPrimaryIP;
+        new Thread(() -> {
+            final boolean alive = probeLocalServer();
+            String address = null;
+            try {
+                address = alistServer.refreshServerAddress();
+            } catch (Exception e) {
+                Log.w(TAG, "updateServerAddressIfNeeded: 刷新地址失败 " + e.getLocalizedMessage());
+            }
+            try {
+                lastPrimaryIP = alistServer.getPrimaryIP();
+            } catch (Exception ignored) {
+            }
+            final String newAddress = address;
+            runOnUiThread(() -> {
+                if (!alive) {
+                    Log.i(TAG, "网络变化：端口无响应，自动重启服务");
+                    showToast("服务无响应，正在重启");
+                    restartService();
+                    return;
+                }
+                if (newAddress == null) {
+                    return;
+                }
+                reloadWebViewIfStale(oldAddress, newAddress);
+                boolean ipChanged = oldPrimaryIP != null && !oldPrimaryIP.equals(lastPrimaryIP);
+                if (ipChanged && !newAddress.equals(lastShownAddress)) {
+                    lastShownAddress = newAddress;
+                    Log.i(TAG, "外部访问地址已更新为 " + newAddress);
+                    showToast("访问地址已更新：" + newAddress);
+                }
+            });
+        }, "network-recover").start();
+    }
+
+    /**
+     * 网络事件去抖：一次切换会连发 available / capabilities / lost 多个回调，
+     * 合并成 1.5s 后的一次自愈，避免重复重启服务或刷页面。
+     */
+    private void scheduleNetworkRecover() {
+        handler.removeCallbacks(networkCheckRunnable);
+        handler.postDelayed(networkCheckRunnable, 1500);
+    }
+
+    /**
+     * 补挂前台 Service：内核还活着但通知栏没了时用。onStartCommand 内部会判断
+     * 「已在运行就只刷新通知」，所以重复调用安全。
+     */
+    private void ensureWrapperService() {
         try {
-            String currentPrimaryIP = alistServer.getPrimaryIP();
-            if (firstNetworkCheck) {
-                firstNetworkCheck = false;
-                lastPrimaryIP = currentPrimaryIP;
-                return;
+            Log.i(TAG, "网络变化：确保前台服务在位");
+            readyToStartService();
+        } catch (RuntimeException e) {
+            Log.w(TAG, "ensureWrapperService: " + e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * 本机端口探活：TCP 连一下当前配置的端口，判断服务是否还在监听
+     */
+    private boolean probeLocalServer() {
+        try {
+            String key = alistServer.isHttpsEnabled() ? "scheme.https_port" : "scheme.http_port";
+            int port = Integer.parseInt(alistServer.getConfigValue(key).trim());
+            java.net.Socket socket = new java.net.Socket();
+            try {
+                socket.connect(new java.net.InetSocketAddress("127.0.0.1", port), 800);
+                return true;
+            } finally {
+                socket.close();
             }
-            // 首选 IP 未变化则无需弹框（临时 IPv6 地址轮换不影响对外服务地址）
-            if (currentPrimaryIP.equals(lastPrimaryIP)) return;
-            lastPrimaryIP = currentPrimaryIP;
-            String address = alistServer.getExternalAddress();
-            Log.i(TAG, "外部地址已更新为 " + address);
-            boolean isLocal = address.contains("localhost") || address.contains("127.0.0.1");
-            if (networkChangeDialog != null) {
-                DialogHelper.safeDismiss(networkChangeDialog);
-                networkChangeDialog = null;
-            }
-            networkChangeDialog = new AlertDialog.Builder(this, R.style.IOSAlertDialog)
-                    .setTitle("网络环境变化")
-                    .setMessage(isLocal
-                            ? "已切换至本地回环地址，仅本机可访问"
-                            : "外部访问地址已更新为 " + address)
-                    .setPositiveButton("确定", (d, w) -> networkChangeDialog = null)
-                    .setOnDismissListener(d -> networkChangeDialog = null)
-                    .show();
-        } catch (IOException e) {
-            Log.e(TAG, "updateServerAddressIfNeeded: 获取外部地址失败", e);
+        } catch (Exception e) {
+            Log.w(TAG, "probeLocalServer: " + e.getLocalizedMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 页面还停在旧地址时，跟着服务地址一起切过去
+     */
+    private void reloadWebViewIfStale(String oldAddress, String newAddress) {
+        if (webView == null || TextUtils.isEmpty(oldAddress) || TextUtils.isEmpty(newAddress)) {
+            return;
+        }
+        String current = webView.getUrl();
+        if (current == null || current.startsWith("file:")) {
+            return;
+        }
+        if (oldAddress.equals(newAddress)) {
+            return;
+        }
+        if (current.startsWith(oldAddress)) {
+            Log.i(TAG, "页面地址已过期，切换到 " + newAddress);
+            webView.loadUrl(newAddress);
         }
     }
 
