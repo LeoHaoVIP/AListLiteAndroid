@@ -191,6 +191,9 @@ public class SettingsActivity extends AppCompatActivity {
         list.add(new Item(R.drawable.ic_menu_config, "高级配置",
                 "直接编辑 config.json，谨慎修改", "编辑",
                 () -> DialogHelper.showConfigEditor(this)));
+        list.add(new Item(R.drawable.ic_menu_cloud, "局域网发现",
+                "发现同网段其它设备", "搜索",
+                () -> startActivity(new Intent(this, LanDevicesActivity.class))));
         list.add(new Item(R.drawable.ic_menu_keepalive, "后台保活",
                 "自启动与电池优化入口", "去设置",
                 () -> startActivity(new Intent(this, KeepAliveActivity.class))));

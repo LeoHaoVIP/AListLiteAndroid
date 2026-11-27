@@ -360,6 +360,15 @@ public class Alist {
         return buildUrl(getPrimaryIP());
     }
 
+    /**
+     * 获取当前服务监听端口（HTTPS 模式取 https_port）
+     */
+    public int getServerPort() throws IOException {
+        boolean isForceHttps = "true".equals(getConfigValue("scheme.force_https"));
+        boolean isHttpPortLegal = !"-1".equals(getConfigValue("scheme.https_port"));
+        boolean isHttpsMode = isForceHttps && isHttpPortLegal;
+        return Integer.parseInt(getConfigValue(isHttpsMode ? "scheme.https_port" : "scheme.http_port"));
+    }
     private String buildUrl(String ip) throws IOException {
         boolean isForceHttps = "true".equals(getConfigValue("scheme.force_https"));
         boolean isHttpPortLegal = !"-1".equals(getConfigValue("scheme.https_port"));

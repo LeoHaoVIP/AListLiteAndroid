@@ -74,6 +74,10 @@
                 android:launchMode="singleTask"
                 android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
                 <activity
+                android:name=".LanDevicesActivity"
+                android:label="@string/activity_title_lan_devices"
+                android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>
+<activity
                 android:name=".StorageManageActivity"
                 android:label="@string/activity_title_storage_manage"
                 android:configChanges="uiMode|orientation|screenSize|keyboardHidden|keyboard|smallestScreenSize|screenLayout"/>

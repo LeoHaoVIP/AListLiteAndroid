@@ -1,6 +1,7 @@
 package com.leohao.android.alistlite.service;
 
 import com.leohao.android.alistlite.util.AppLog;
+import com.leohao.android.alistlite.util.NsdHelper;
 
 import android.app.*;
 import android.content.ComponentName;
@@ -106,6 +107,13 @@ public class AlistService extends Service {
                 updateNotification(externalAddress, channelId);
                 //通知 Activity 更新 UI（WebView 加载本地地址）
                 sendStatusBroadcast(Alist.STATUS_STARTED, localAddress);
+                // 注册 mDNS：同一局域网内的设备可以直接发现本机服务
+                try {
+                    NsdHelper.register(this, portOf(externalAddress),
+                            externalAddress != null && externalAddress.startsWith("https"));
+                } catch (Exception e) {
+                    AppLog.w(TAG, "mDNS 注册跳过: " + e.getLocalizedMessage());
+                }
                 //更新磁贴状态
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     updateAlistTileServiceState(AlistTileService.ACTION_TILE_ON);
@@ -266,6 +274,20 @@ public class AlistService extends Service {
         }
     }
 
+    /**
+     * 从服务地址里取端口，取不到时回落到默认 5244
+     */
+    private static int portOf(String url) {
+        try {
+            int port = android.net.Uri.parse(url).getPort();
+            if (port > 0) {
+                return port;
+            }
+        } catch (Exception e) {
+            AppLog.w(TAG, "解析端口失败: " + url);
+        }
+        return 5244;
+    }
     public void exitService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE);
@@ -275,7 +297,9 @@ public class AlistService extends Service {
         //关闭服务
         alistServer.shutdown();
         // 通知 Activity 服务已停止
-        sendStatusBroadcast(Alist.STATUS_STOPPED);
+                // 注销 mDNS
+        NsdHelper.unregister(this);
+sendStatusBroadcast(Alist.STATUS_STOPPED);
         if (wakeLock != null) {
             wakeLock.release();
             wakeLock = null;
