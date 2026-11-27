@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +23,7 @@ import com.leohao.android.alistlite.util.SharedDataHelper;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 挂载管理：不用进网页，直接在 App 里查看 / 启用 / 停用 / 删除 / 改基础项。
@@ -38,6 +40,7 @@ public class StorageManageActivity extends AppCompatActivity {
     private LinearLayout container;
     private TextView subtitle;
     private AlistAdminApi api;
+    private String currentBaseUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +66,7 @@ public class StorageManageActivity extends AppCompatActivity {
             return;
         }
         api = new AlistAdminApi(base);
+        currentBaseUrl = base;
         showLoading();
         new Thread(() -> {
             try {
@@ -71,10 +75,53 @@ public class StorageManageActivity extends AppCompatActivity {
                 runOnUiThread(() -> renderList(list, base));
             } catch (Exception e) {
                 Log.e(TAG, "load: " + e.getMessage());
-                final String msg = e.getMessage();
-                runOnUiThread(() -> showState("加载失败", msg + "\n可点右上角重试"));
+                final String msg = e.getMessage() == null ? "" : e.getMessage();
+                runOnUiThread(() -> {
+                    if (msg.toLowerCase().contains("password is incorrect")) {
+                        // 用户可能在网页里改过管理员密码，本地保存的是旧的
+                        promptPassword("管理员密码已变更，请输入当前密码（可在网页版「设置 → 账户」查看）");
+                    } else {
+                        showState("加载失败", msg + "\n可点右上角重试");
+                    }
+                });
             }
         }, "storage-list").start();
+    }
+
+    /**
+     * 管理员密码失效时弹窗手动输入，成功后写回本地，后续一键登录/挂载管理都用新密码
+     */
+    private void promptPassword(String tip) {
+        View content = LayoutInflater.from(this).inflate(R.layout.dialog_password_input, null);
+        final EditText input = content.findViewById(R.id.et_password);
+        input.setHint("请输入当前管理员密码");
+        TextView hint = content.findViewById(R.id.tv_password_hint);
+        hint.setText(tip);
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("需要管理员密码")
+                .setView(content)
+                .setPositiveButton("确定", (d, w) -> {
+                    String pwd = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(pwd)) {
+                        toast("密码不能为空");
+                        return;
+                    }
+                    savePassword(pwd);
+                    api = new AlistAdminApi(currentBaseUrl);
+                    load();
+                })
+                .setNegativeButton("取消", (d, w) -> showState("无法登录管理接口", "管理员密码不是 App 保存的那个\n可重新进入本页再试"))
+                .show();
+    }
+
+    private void savePassword(String pwd) {
+        try {
+            SharedDataHelper.getInstance()
+                    .putSharedData(Constants.ANDROID_SHARED_DATA_KEY_ADMIN_PASSWORD, pwd);
+            Log.i(TAG, "管理员密码已更新到本地");
+        } catch (Exception e) {
+            Log.w(TAG, "savePassword: " + e.getLocalizedMessage());
+        }
     }
 
     /**
@@ -140,8 +187,80 @@ public class StorageManageActivity extends AppCompatActivity {
                 : getString(R.string.storage_manage_disable));
         toggle.setOnClickListener(v -> toggleDisabled(id, !disabled));
 
+        bindUsage(row, item, driver);
+
         row.findViewById(R.id.btn_storage_delete).setOnClickListener(v -> confirmDelete(id, mountPath));
         row.setOnClickListener(v -> showEditDialog(id, mountPath));
+    }
+
+    /**
+     * 容量：优先用服务端 mount_details（要求 AList 关闭「隐藏存储详情」），
+     * 拿不到再对 Local 挂载直接 statfs 本地目录，其余驱动显示「未提供」。
+     */
+    private void bindUsage(View row, JSONObject item, String driver) {
+        TextView usage = row.findViewById(R.id.tv_storage_usage);
+        ProgressBar bar = row.findViewById(R.id.pb_storage_usage);
+
+        long total = 0, used = 0;
+        JSONObject details = item.optJSONObject("mount_details");
+        if (details != null) {
+            JSONObject du = details.optJSONObject("disk_usage");
+            if (du != null) {
+                total = du.optLong("total_space", 0);
+                used = du.optLong("used_space", 0);
+            }
+        }
+        if (total <= 0 && "Local".equalsIgnoreCase(driver)) {
+            long[] local = localDiskUsage(item.optString("addition", ""));
+            if (local != null) {
+                total = local[0];
+                used = local[1];
+            }
+        }
+
+        if (total > 0) {
+            int percent = (int) Math.max(0, Math.min(100, used * 100 / total));
+            usage.setText(String.format(Locale.CHINA, "已用 %s / %s（%d%%）",
+                    formatSize(used), formatSize(total), percent));
+            usage.setVisibility(View.VISIBLE);
+            bar.setProgress(percent);
+            bar.setVisibility(View.VISIBLE);
+        } else {
+            usage.setText("容量：驱动未提供");
+            usage.setVisibility(View.VISIBLE);
+            bar.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Local 驱动的根目录容量（App 有所有文件访问权限，可直接 statfs）
+     */
+    private long[] localDiskUsage(String addition) {
+        try {
+            JSONObject add = new JSONObject(addition);
+            String root = add.optString("root_folder_path", "");
+            if (TextUtils.isEmpty(root)) {
+                return null;
+            }
+            android.os.StatFs stat = new android.os.StatFs(root);
+            long total = stat.getTotalBytes();
+            long free = stat.getAvailableBytes();
+            if (total <= 0) {
+                return null;
+            }
+            return new long[]{total, total - free};
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String formatSize(long bytes) {
+        double gb = bytes / 1024.0 / 1024.0 / 1024.0;
+        if (gb >= 1) {
+            return String.format(Locale.CHINA, "%.1f GB", gb);
+        }
+        double mb = bytes / 1024.0 / 1024.0;
+        return String.format(Locale.CHINA, "%.0f MB", mb);
     }
 
     private void toggleDisabled(final long id, final boolean disabled) {
