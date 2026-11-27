@@ -3,7 +3,7 @@ plugins {
 }
 
 // 版本号唯一来源：CI 只 sed 这一行（.github/workflows/build_and_release.yml 的 5-UpdateVersionInfo）
-def APP_VERSION_NAME = "3.0.2-auto1"
+def APP_VERSION_NAME = "3.0.3-auto1"
 
 // versionCode 由 versionName 推导，避免历史上每次发版都是 1（覆盖安装/升级判定都受影响）
 //   3.0.2 -> 3*1000000 + 0*10000 + 2*100 + 0 = 3000200
