@@ -31,6 +31,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textSize="13sp"
-        android:textColor="@color/ios_accent"
+        android:textColor="?attr/colorAccent"
         android:fontFamily="sans-serif-medium"/>
 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.ThemeHelper;
 import com.leohao.android.alistlite.util.AppLog;
 
 import android.app.AlertDialog;
@@ -42,6 +43,7 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_permission);
         //控件和数据初始化

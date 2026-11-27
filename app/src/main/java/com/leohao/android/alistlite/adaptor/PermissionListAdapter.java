@@ -65,7 +65,7 @@ public class PermissionListAdapter extends BaseAdapter {
         //根据是否授权分别显示（使用 iOS 主题色）
         String statusText = item.getIsGranted() ? "已设置" : "未设置";
         int statusColor = item.getIsGranted()
-                ? ContextCompat.getColor(context, R.color.ios_accent)
+                ? com.leohao.android.alistlite.util.ThemeHelper.accentColor(context)
                 : ContextCompat.getColor(context, R.color.ios_destructive);
         holder.permissionStatusTextView.setText(statusText);
         holder.permissionStatusTextView.setTextColor(statusColor);

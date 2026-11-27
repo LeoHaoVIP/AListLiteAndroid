@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.ThemeHelper;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -27,6 +28,7 @@ public class StorageDiagnosticActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_storage_diagnostic);
         container = findViewById(R.id.diag_container);

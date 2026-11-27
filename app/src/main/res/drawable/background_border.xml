@@ -7,5 +7,5 @@
         android:bottomRightRadius="10dp"
         android:bottomLeftRadius="10dp"/>
     <!-- iOS 蓝色聚焦边框 -->
-    <stroke android:width="2.5dp" android:color="@color/ios_accent"/>
+    <stroke android:width="2.5dp" android:color="?attr/colorAccent"/>
 </shape>

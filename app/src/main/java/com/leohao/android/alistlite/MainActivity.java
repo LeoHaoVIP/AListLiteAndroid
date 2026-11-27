@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.ThemeHelper;
 import com.leohao.android.alistlite.util.AppLog;
 
 import android.annotation.SuppressLint;
@@ -68,6 +69,8 @@ import java.util.concurrent.TimeUnit;
  * @author LeoHao
  */
 public class MainActivity extends AppCompatActivity implements OnMenuActionListener {
+    /** 当前已应用的主题色序号，用于 onResume 时判断是否需要重建 */
+    private int appliedAccentIndex = 0;
     private static final String TAG = "MainActivity";
     private static final String KEY_TV_HINT_SHOWN = "tv_hint_shown";
     private ScheduledExecutorService broadcastScheduler = null;
@@ -112,6 +115,8 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.apply(this);
+        appliedAccentIndex = ThemeHelper.indexOf(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // 仅 debug 包生效：用于验证崩溃落盘链路（adb ... --es __crash_test crash）
@@ -138,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     @Override
     protected void onResume() {
         super.onResume();
+        ThemeHelper.recreateIfChanged(this, appliedAccentIndex);
         if (alistServer != null && serviceSwitch != null) {
             boolean isRunning = alistServer.hasRunning();
             if (serviceSwitch.isChecked() != isRunning) {

@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.ThemeHelper;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
@@ -43,6 +44,7 @@ public class KeepAliveActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_keep_alive);
         LinearLayout container = findViewById(R.id.keep_alive_container);

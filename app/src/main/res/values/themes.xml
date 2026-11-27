@@ -19,4 +19,35 @@
         <item name="android:windowActionBarOverlay">false</item>
         <item name="android:windowTitleBackgroundStyle">@null</item>
     </style>
+
+    <!-- ===== 主题色预设（只改 colorPrimary / colorAccent，其余继承） ===== -->
+    <style name="Theme.AList.Purple">
+        <item name="colorPrimary">#AF52DE</item>
+        <item name="colorPrimaryDark">#AF52DE</item>
+        <item name="colorAccent">#AF52DE</item>
+    </style>
+
+    <style name="Theme.AList.Green">
+        <item name="colorPrimary">#30D158</item>
+        <item name="colorPrimaryDark">#30D158</item>
+        <item name="colorAccent">#30D158</item>
+    </style>
+
+    <style name="Theme.AList.Orange">
+        <item name="colorPrimary">#FF9F0A</item>
+        <item name="colorPrimaryDark">#FF9F0A</item>
+        <item name="colorAccent">#FF9F0A</item>
+    </style>
+
+    <style name="Theme.AList.Pink">
+        <item name="colorPrimary">#FF375F</item>
+        <item name="colorPrimaryDark">#FF375F</item>
+        <item name="colorAccent">#FF375F</item>
+    </style>
+
+    <style name="Theme.AList.Teal">
+        <item name="colorPrimary">#40C8E0</item>
+        <item name="colorPrimaryDark">#40C8E0</item>
+        <item name="colorAccent">#40C8E0</item>
+    </style>
 </resources>

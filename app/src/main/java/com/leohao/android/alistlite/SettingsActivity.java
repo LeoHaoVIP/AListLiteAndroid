@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.ThemeHelper;
 import com.leohao.android.alistlite.util.AppLog;
 
 import android.app.AlertDialog;
@@ -37,11 +38,15 @@ import java.util.List;
  */
 public class SettingsActivity extends AppCompatActivity {
 
+
     private static final int IMPORT_REQUEST_CODE = 202;
     private static final int EXPORT_TREE_REQUEST_CODE = 203;
 
     private static final String PREFS = "settings_ui";
     private static final String PREF_LAST_EXPORT_TREE = "last_export_tree";
+
+    /** 当前已应用的主题色序号，用于 onResume 判断是否需要重建 */
+    private int appliedAccentIndex = 0;
 
     private static class Item {
         final int iconRes;
@@ -61,6 +66,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.apply(this);
+        appliedAccentIndex = ThemeHelper.indexOf(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         LinearLayout container = findViewById(R.id.settings_container);
@@ -122,6 +129,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        com.leohao.android.alistlite.util.ThemeHelper.recreateIfChanged(this, appliedAccentIndex);
         updateStatusLine();
     }
 
@@ -197,6 +205,11 @@ public class SettingsActivity extends AppCompatActivity {
         list.add(new Item(R.drawable.ic_menu_import, "导入配置",
                 "从备份文件恢复配置，会覆盖当前设置", "导入",
                 this::startImport));
+
+        list.add("外观");
+        list.add(new Item(R.drawable.ic_menu_config, "主题色",
+                "按钮、图标与链接的强调色", com.leohao.android.alistlite.util.ThemeHelper.nameOf(this),
+                this::showAccentPicker));
         return list;
     }
 
@@ -396,8 +409,22 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * 一键排障包：收集设备/服务/挂载/日志（脱敏）打包到下载目录
+     * 主题色选择：选完立刻重建当前页面，返回主界面时也会跟着变
      */
+    private void showAccentPicker() {
+        final int current = com.leohao.android.alistlite.util.ThemeHelper.indexOf(this);
+        new AlertDialog.Builder(this, R.style.IOSAlertDialog)
+                .setTitle("主题色")
+                .setSingleChoiceItems(com.leohao.android.alistlite.util.ThemeHelper.ACCENT_NAMES,
+                        current, (d, which) -> {
+                            com.leohao.android.alistlite.util.ThemeHelper.setIndex(this, which);
+                            d.dismiss();
+                            recreate();
+                        })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
     private void startDiagnostics() {
         toast("正在收集信息…");
         new Thread(() -> {

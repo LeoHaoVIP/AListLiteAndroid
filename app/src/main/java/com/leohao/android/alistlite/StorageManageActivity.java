@@ -1,5 +1,6 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.ThemeHelper;
 import com.leohao.android.alistlite.util.AppLog;
 
 import android.app.AlertDialog;
@@ -49,6 +50,7 @@ public class StorageManageActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_storage_manage);
         container = findViewById(R.id.storage_container);

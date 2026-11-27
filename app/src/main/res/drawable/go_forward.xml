@@ -10,7 +10,7 @@
         android:name="chevron_right"
         android:fillColor="#00000000"
         android:pathData="M9,4L17,12L9,20"
-        android:strokeColor="@color/ios_accent"
+        android:strokeColor="?attr/colorAccent"
         android:strokeWidth="2.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"/>

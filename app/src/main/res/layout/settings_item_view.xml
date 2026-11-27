@@ -18,7 +18,7 @@
         android:id="@+id/iv_icon"
         android:layout_width="22dp"
         android:layout_height="22dp"
-        android:tint="@color/ios_accent"
+        android:tint="?attr/colorAccent"
         android:contentDescription="@null"/>
 
     <LinearLayout
@@ -51,7 +51,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:textSize="13sp"
-        android:textColor="@color/ios_accent"/>
+        android:textColor="?attr/colorAccent"/>
 
     <TextView
         android:id="@+id/tv_chevron"
