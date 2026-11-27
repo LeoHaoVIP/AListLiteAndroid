@@ -62,7 +62,9 @@
 | -------- | ------------------------------------------------------------ | ------------ |
 | GitHub   | https://github.com/LeoHaoVIP/AListLiteAndroid/releases/latest |              |
 | Gitee    | https://gitee.com/leohaovip/AListLiteAndroid/releases/latest |              |
-| 天翼云盘 | https://cloud.189.cn/t/VfYNZrqYrMzq                          | 访问码：jc08 |
+| 镜像加速 | https://gh-proxy.com/https://github.com/LeoHaoVIP/AListLiteAndroid/releases | gh-proxy 代理，国内访问更快 |
+
+> 安装包按 CPU 架构分包（`arm64-v8a` / `armeabi-v7a` / `x86` / `x86_64`）另有 `universal` 通用包，拿不准架构就下载通用包。
 
 ### 启动服务
 
