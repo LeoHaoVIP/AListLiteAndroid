@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="4dp">
+
+    <EditText
+        android:id="@+id/et_mount_path"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/input_background"
+        android:inputType="text"
+        android:singleLine="true"
+        android:hint="挂载路径，例如 /阿里云盘"
+        android:textSize="15sp"
+        android:textColorHint="@color/ios_text_tertiary"
+        android:textColor="@color/ios_text_primary"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="11dp"
+        android:paddingBottom="11dp"/>
+
+    <EditText
+        android:id="@+id/et_remark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/input_background"
+        android:inputType="text"
+        android:singleLine="true"
+        android:hint="备注（可留空）"
+        android:textSize="15sp"
+        android:textColorHint="@color/ios_text_tertiary"
+        android:textColor="@color/ios_text_primary"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="11dp"
+        android:paddingBottom="11dp"/>
+
+    <EditText
+        android:id="@+id/et_order"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/input_background"
+        android:inputType="number"
+        android:singleLine="true"
+        android:hint="排序（数字，小的靠前）"
+        android:textSize="15sp"
+        android:textColorHint="@color/ios_text_tertiary"
+        android:textColor="@color/ios_text_primary"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="11dp"
+        android:paddingBottom="11dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:lineSpacingExtra="3dp"
+        android:text="只能改挂载路径、备注和排序。网盘账号、根目录等设置请到网页版修改。"
+        android:textSize="12sp"
+        android:textColor="@color/ios_text_secondary"/>
+</LinearLayout>

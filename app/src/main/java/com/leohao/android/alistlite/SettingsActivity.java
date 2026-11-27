@@ -176,6 +176,9 @@ public class SettingsActivity extends AppCompatActivity {
                 () -> startActivity(new Intent(this, StorageDiagnosticActivity.class))));
 
         list.add("服务");
+        list.add(new Item(R.drawable.ic_menu_config, "挂载管理",
+                "查看挂载、启停、删除，改挂载路径与备注（不用进网页）", "管理",
+                () -> startActivity(new Intent(this, StorageManageActivity.class))));
         list.add(new Item(R.drawable.ic_menu_config, "高级配置",
                 "编辑 config.json：端口、HTTPS、数据库等（改错会导致服务无法启动）", "编辑",
                 () -> DialogHelper.showConfigEditor(this)));

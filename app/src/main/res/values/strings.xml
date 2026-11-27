@@ -34,6 +34,13 @@
     <string name="activity_title_settings">更多选项</string>
     <string name="activity_title_storage_diagnostic">存储诊断</string>
     <string name="activity_title_keep_alive">后台保活</string>
+    <string name="activity_title_storage_manage">挂载管理</string>
+    <string name="storage_manage_refresh">刷新</string>
+    <string name="storage_manage_delete">删除</string>
+    <string name="storage_manage_enable">启用</string>
+    <string name="storage_manage_disable">停用</string>
+    <string name="storage_state_work">使用中</string>
+    <string name="storage_state_disabled">已停用</string>
     <string name="activity_title_permission_check">AListlite 权限配置</string>
     <string name="config_view">|&#160;高级配置&#160;</string>
     <string name="check_updates">|&#160;检查更新</string>
