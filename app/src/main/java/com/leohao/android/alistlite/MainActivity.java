@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -20,7 +22,6 @@ import android.os.*;
 import android.provider.Settings;
 import android.service.quicksettings.TileService;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
@@ -113,6 +114,11 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // 仅 debug 包生效：用于验证崩溃落盘链路（adb ... --es __crash_test crash）
+        if (BuildConfig.DEBUG && getIntent() != null
+                && "crash".equals(getIntent().getStringExtra("__crash_test"))) {
+            throw new IllegalStateException("AppLog crash handler test");
+        }
         alistServer = Alist.getInstance();
         initWidgets();
         initFocusSettings();
@@ -301,7 +307,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             try {
                 readyToStartService();
             } catch (RuntimeException e) {
-                Log.e(TAG, "服务启动失败: " + e.getLocalizedMessage());
+                AppLog.e(TAG, "服务启动失败: " + e.getLocalizedMessage());
             }
         });
         serviceSwitch.setChecked(true);
@@ -348,7 +354,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         // 延后一点，避免和启动时的「初始登录信息」等 Toast 互相顶掉
         appInfoTextView.postDelayed(() -> {
             if (!isFinishing() && !isDestroyed()) {
-                Log.d(TAG, "show tv key hint");
+                AppLog.d(TAG, "show tv key hint");
                 showToast("方向键移动焦点 · 菜单键打开选项 · 返回键后退");
             }
         }, 15000);
@@ -560,7 +566,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 return Integer.parseInt(matcher.group(1));
             }
         } catch (Exception e) {
-            Log.w(TAG, "检测 WebView 内核版本失败: " + e.getMessage());
+            AppLog.w(TAG, "检测 WebView 内核版本失败: " + e.getMessage());
         }
         return -1;
     }
@@ -602,7 +608,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         try {
             startActivity(Intent.parseUri(address, Intent.URI_INTENT_SCHEME));
         } catch (Exception e) {
-            Log.w(TAG, "no external browser, fallback to webview: " + e.getLocalizedMessage());
+            AppLog.w(TAG, "no external browser, fallback to webview: " + e.getLocalizedMessage());
             showToast("未找到浏览器，已在应用内打开");
             webView.loadUrl(address);
         }
@@ -714,7 +720,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         }
         if (!alistServer.hasRunning()) {
             if (wantRunning) {
-                Log.i(TAG, "网络变化：服务已停止，自动重启");
+                AppLog.i(TAG, "网络变化：服务已停止，自动重启");
                 showToast("网络环境变化，正在重新启动服务");
                 restartService();
             }
@@ -728,7 +734,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             try {
                 address = alistServer.refreshServerAddress();
             } catch (Exception e) {
-                Log.w(TAG, "updateServerAddressIfNeeded: 刷新地址失败 " + e.getLocalizedMessage());
+                AppLog.w(TAG, "updateServerAddressIfNeeded: 刷新地址失败 " + e.getLocalizedMessage());
             }
             try {
                 lastPrimaryIP = alistServer.getPrimaryIP();
@@ -737,7 +743,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             final String newAddress = address;
             runOnUiThread(() -> {
                 if (!alive) {
-                    Log.i(TAG, "网络变化：端口无响应，自动重启服务");
+                    AppLog.i(TAG, "网络变化：端口无响应，自动重启服务");
                     showToast("服务无响应，正在重启");
                     restartService();
                     return;
@@ -749,7 +755,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 boolean ipChanged = oldPrimaryIP != null && !oldPrimaryIP.equals(lastPrimaryIP);
                 if (ipChanged && !newAddress.equals(lastShownAddress)) {
                     lastShownAddress = newAddress;
-                    Log.i(TAG, "外部访问地址已更新为 " + newAddress);
+                    AppLog.i(TAG, "外部访问地址已更新为 " + newAddress);
                     showToast("访问地址已更新：" + newAddress);
                 }
             });
@@ -771,10 +777,10 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
      */
     private void ensureWrapperService() {
         try {
-            Log.i(TAG, "网络变化：确保前台服务在位");
+            AppLog.i(TAG, "网络变化：确保前台服务在位");
             readyToStartService();
         } catch (RuntimeException e) {
-            Log.w(TAG, "ensureWrapperService: " + e.getLocalizedMessage());
+            AppLog.w(TAG, "ensureWrapperService: " + e.getLocalizedMessage());
         }
     }
 
@@ -793,7 +799,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 socket.close();
             }
         } catch (Exception e) {
-            Log.w(TAG, "probeLocalServer: " + e.getLocalizedMessage());
+            AppLog.w(TAG, "probeLocalServer: " + e.getLocalizedMessage());
             return false;
         }
     }
@@ -823,10 +829,10 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 return;
             }
             String suffix = current.substring(Math.min(current.length(), currentBase.length()));
-            Log.i(TAG, "页面主机切换 " + currentBase + " → " + newAddress + "，保留路径" + suffix);
+            AppLog.i(TAG, "页面主机切换 " + currentBase + " → " + newAddress + "，保留路径" + suffix);
             webView.loadUrl(newAddress + suffix);
         } catch (Exception e) {
-            Log.w(TAG, "swapWebViewHost: " + e.getLocalizedMessage());
+            AppLog.w(TAG, "swapWebViewHost: " + e.getLocalizedMessage());
             webView.loadUrl(newAddress);
         }
     }
@@ -849,7 +855,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
             return;
         }
         String suffix = current.substring(oldAddress.length());
-        Log.i(TAG, "页面地址已过期，切换到 " + newAddress + suffix);
+        AppLog.i(TAG, "页面地址已过期，切换到 " + newAddress + suffix);
         webView.loadUrl(newAddress + suffix);
     }
 
@@ -912,7 +918,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         } catch (RuntimeException e) {
             serviceSwitch.setCheckedNoEvent(false);
             showToast("服务启动失败，请检查系统权限设置或重启应用");
-            Log.e(TAG, "readyToStartService: 前台服务启动失败", e);
+            AppLog.e(TAG, "readyToStartService: 前台服务启动失败", e);
             throw e;
         }
     }
@@ -935,7 +941,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 updateAppShortcuts();
             } catch (RuntimeException e) {
                 showToast("服务重启失败: " + e.getMessage());
-                Log.e(TAG, "restartService: " + e.getMessage());
+                AppLog.e(TAG, "restartService: " + e.getMessage());
             }
         }, 1500);
     }
@@ -1027,13 +1033,13 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 } catch (Exception e) {
                     runOnUiThread(() -> {
                         showToast("一键登录失败：" + e.getMessage());
-                        Log.e(TAG, "oneClickLogin: ", e);
+                        AppLog.e(TAG, "oneClickLogin: ", e);
                     });
                 }
             }).start();
         } catch (Exception e) {
             showToast("一键登录失败: " + e.getMessage());
-            Log.e(TAG, "oneClickLogin: ", e);
+            AppLog.e(TAG, "oneClickLogin: ", e);
         }
     }
 
@@ -1125,7 +1131,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e(TAG, "getCurrentVersion: ", e);
+            AppLog.e(TAG, "getCurrentVersion: ", e);
         }
         return "unknown";
     }
@@ -1195,7 +1201,7 @@ public class MainActivity extends AppCompatActivity implements OnMenuActionListe
                 scaleTextSizes(popupMenuWindow.getContentView(), 1.15f);
             }
         } catch (Throwable t) {
-            Log.w(TAG, "applyTvTextScale: " + t);
+            AppLog.w(TAG, "applyTvTextScale: " + t);
         }
     }
 

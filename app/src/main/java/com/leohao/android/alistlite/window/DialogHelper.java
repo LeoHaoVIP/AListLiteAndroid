@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite.window;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,7 +10,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.method.PasswordTransformationMethod;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -69,7 +70,7 @@ public class DialogHelper {
             }
         } catch (IllegalArgumentException e) {
             // 宿主窗口已失效，忽略即可，无需上报崩溃
-            Log.w(TAG, "dismiss 对话框失败（宿主窗口已销毁）: " + e.getMessage());
+            AppLog.w(TAG, "dismiss 对话框失败（宿主窗口已销毁）: " + e.getMessage());
         }
     }
 
@@ -120,7 +121,7 @@ public class DialogHelper {
         try {
             portStr = alistServer.getConfigValue(isHttps ? "scheme.https_port" : "scheme.http_port");
         } catch (IOException e) {
-            Log.e(TAG, "showQrCode: 读取端口配置失败", e);
+            AppLog.e(TAG, "showQrCode: 读取端口配置失败", e);
             Toast.makeText(activity, "读取服务配置失败", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -264,7 +265,7 @@ public class DialogHelper {
                         Toast.makeText(activity, String.format("管理员密码已更新：%s | %s", adminUsername, pwd), Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         Toast.makeText(activity, "管理员密码设置失败", Toast.LENGTH_SHORT).show();
-                        Log.e(TAG, "setAdminPassword: ", e);
+                        AppLog.e(TAG, "setAdminPassword: ", e);
                     }
                 })
                 .create();
@@ -327,7 +328,7 @@ public class DialogHelper {
                     onRestart.run();
                 } catch (Exception e) {
                     Toast.makeText(activity, "操作失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "toggleHttps enable: " + e.getMessage());
+                    AppLog.e(TAG, "toggleHttps enable: " + e.getMessage());
                 }
             });
         }
@@ -476,7 +477,7 @@ public class DialogHelper {
         // 让 zxing 走 ALPHANUMERIC 分支，绕开 String.getBytes(charsetName) 这条崩溃路径
         String safe = toAlphanumericSafe(content);
         if (safe != null) {
-            Log.w(TAG, "generateQr: retry with alphanumeric content");
+            AppLog.w(TAG, "generateQr: retry with alphanumeric content");
             bitmap = encodeQr(safe, size);
         }
         return bitmap;
@@ -512,14 +513,14 @@ public class DialogHelper {
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
             return bitmap;
         } catch (WriterException e) {
-            Log.e(TAG, "generateQr: " + e.getMessage());
+            AppLog.e(TAG, "generateQr: " + e.getMessage());
             return null;
         } catch (RuntimeException e) {
             // Bugly #23058：zxing 3.4.1 的 Encoder.append8BitBytes 内部执行
             // content.getBytes(encoding.name())，个别 ROM 的 Charset.name() 会返回 ICU 内部名
             // （如 "icu[utf-8]"），Charset.forName 判定为非法名并抛 IllegalCharsetNameException。
             // 这是 unchecked 异常，只 catch WriterException 兜不住，会直接崩掉界面。
-            Log.e(TAG, "generateQr failed (charset " + Charset.defaultCharset().name() + "): " + e);
+            AppLog.e(TAG, "generateQr failed (charset " + Charset.defaultCharset().name() + "): " + e);
             return null;
         }
     }

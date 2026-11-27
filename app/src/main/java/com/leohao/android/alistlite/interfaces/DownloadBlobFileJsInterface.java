@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite.interfaces;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -7,7 +9,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
-import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
@@ -36,7 +37,7 @@ public class DownloadBlobFileJsInterface {
 
     @JavascriptInterface
     public void getBase64FromBlobData(String base64Data) {
-        Log.i("DOWNLOAD", "getBase64FromBlobData");
+        AppLog.i("DOWNLOAD", "getBase64FromBlobData");
         downloadBase64File(base64Data);
     }
 
@@ -96,7 +97,7 @@ public class DownloadBlobFileJsInterface {
                 Toast.makeText(mContext, "已保存到 Downloads/" + fileName, Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
-            Log.e("DOWNLOAD", "downloadBase64File failed", e);
+            AppLog.e("DOWNLOAD", "downloadBase64File failed", e);
             Toast.makeText(mContext, "文件下载失败", Toast.LENGTH_SHORT).show();
         }
     }

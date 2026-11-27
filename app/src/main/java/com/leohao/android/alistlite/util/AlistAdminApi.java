@@ -1,7 +1,6 @@
 package com.leohao.android.alistlite.util;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -208,7 +207,7 @@ public class AlistAdminApi {
             }
             reader.close();
             String text = sb.toString();
-            Log.d(TAG, method + " " + path + " → " + status);
+            AppLog.d(TAG, method + " " + path + " → " + status);
             if (TextUtils.isEmpty(text)) {
                 throw new Exception("服务返回为空（HTTP " + status + "）");
             }

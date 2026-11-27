@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -9,7 +11,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -239,7 +240,7 @@ public class SettingsActivity extends AppCompatActivity {
         try {
             startActivityForResult(intent, EXPORT_TREE_REQUEST_CODE);
         } catch (Exception e) {
-            Log.e("SettingsActivity", "no document tree picker", e);
+            AppLog.e("SettingsActivity", "no document tree picker", e);
             toast("当前设备没有文件夹选择器，已改用「下载」文件夹");
             doExportToDownloadsCompat();
         }
@@ -265,7 +266,7 @@ public class SettingsActivity extends AppCompatActivity {
                         ? "已导出 " + fileName
                         : "已导出 " + fileName + "（" + folderName + "）";
             } catch (Exception e) {
-                Log.e("SettingsActivity", "export to tree failed", e);
+                AppLog.e("SettingsActivity", "export to tree failed", e);
                 if (fromSaved) {
                     // 目录被删除、SD 卡拔出、授权失效 —— 清掉记录，下次重新选
                     getSharedPreferences(PREFS, MODE_PRIVATE)
@@ -289,7 +290,7 @@ public class SettingsActivity extends AppCompatActivity {
             target = DocumentsContract.createDocument(
                     getContentResolver(), parent, "application/zip", fileName);
         } catch (Exception e) {
-            Log.w("SettingsActivity", "createDocument zip failed, retry octet-stream", e);
+            AppLog.w("SettingsActivity", "createDocument zip failed, retry octet-stream", e);
         }
         if (target == null) {
             target = DocumentsContract.createDocument(
@@ -329,7 +330,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
                 message = "已导出 " + fileName + "（下载/AListLite）";
             } catch (Exception e) {
-                Log.e("SettingsActivity", "compat export failed", e);
+                AppLog.e("SettingsActivity", "compat export failed", e);
                 message = "导出失败：" + e.getMessage();
             }
             final String text = message;
@@ -406,7 +407,7 @@ public class SettingsActivity extends AppCompatActivity {
                         .saveToDownloads(this);
                 message = "已生成 " + name + "（下载/AListLite）";
             } catch (Exception e) {
-                Log.e("SettingsActivity", "diagnostics failed", e);
+                AppLog.e("SettingsActivity", "diagnostics failed", e);
                 message = "生成失败：" + e.getMessage();
             }
             final String text = message;

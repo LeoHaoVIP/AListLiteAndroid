@@ -3,7 +3,6 @@ package com.leohao.android.alistlite.util;
 import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 
 import com.leohao.android.alistlite.model.Alist;
 
@@ -149,7 +148,7 @@ public final class StorageDiagnostic {
             out.flush();
             return true;
         } catch (IOException e) {
-            Log.w(TAG, "probe failed: " + dir + " -> " + e.getMessage());
+            AppLog.w(TAG, "probe failed: " + dir + " -> " + e.getMessage());
             return false;
         } finally {
             //noinspection ResultOfMethodCallIgnored

@@ -3,7 +3,6 @@ package com.leohao.android.alistlite.util;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Looper;
-import android.util.Log;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import cn.hutool.http.Method;
@@ -77,7 +76,7 @@ public class UpdateChecker {
                     showToastOnMain(activity, String.format("当前已是最新版本（v%s）", currentVersion));
                 }
             } catch (Exception e) {
-                Log.e(TAG, "check: " + e.getLocalizedMessage());
+                AppLog.e(TAG, "check: " + e.getLocalizedMessage());
             }
         }).start();
     }
@@ -96,7 +95,7 @@ public class UpdateChecker {
                 opener.open(url);
                 return;
             } catch (Exception e) {
-                Log.w(TAG, "openUrl in-app failed: " + e.getLocalizedMessage());
+                AppLog.w(TAG, "openUrl in-app failed: " + e.getLocalizedMessage());
             }
         }
         openExternalUrl(activity, url);

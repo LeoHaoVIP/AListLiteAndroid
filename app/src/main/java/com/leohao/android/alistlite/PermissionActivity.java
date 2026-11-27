@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.app.AlertDialog;
 import android.Manifest;
 import android.content.Intent;
@@ -9,7 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -103,7 +104,7 @@ public class PermissionActivity extends AppCompatActivity implements OnItemClick
                 }
             });
         } catch (Exception e) {
-            Log.e(TAG, "fail to request permission: " + item.getPermissionName());
+            AppLog.e(TAG, "fail to request permission: " + item.getPermissionName());
         }
     }
 

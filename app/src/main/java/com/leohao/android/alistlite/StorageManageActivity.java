@@ -1,9 +1,10 @@
 package com.leohao.android.alistlite;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,7 +86,7 @@ public class StorageManageActivity extends AppCompatActivity {
                     load();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "toggleCapacity: " + e.getMessage());
+                AppLog.e(TAG, "toggleCapacity: " + e.getMessage());
                 runOnUiThread(() -> {
                     toast("设置失败：" + e.getMessage());
                     setSwitchState(!show);
@@ -108,7 +109,7 @@ public class StorageManageActivity extends AppCompatActivity {
                 final boolean show = !"true".equalsIgnoreCase(hide);
                 runOnUiThread(() -> setSwitchState(show));
             } catch (Exception e) {
-                Log.w(TAG, "bindCapacitySwitch: " + e.getLocalizedMessage());
+                AppLog.w(TAG, "bindCapacitySwitch: " + e.getLocalizedMessage());
             }
         }, "storage-capacity-state").start();
     }
@@ -138,7 +139,7 @@ public class StorageManageActivity extends AppCompatActivity {
                     bindCapacitySwitch();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "load: " + e.getMessage());
+                AppLog.e(TAG, "load: " + e.getMessage());
                 final String msg = e.getMessage() == null ? "" : e.getMessage();
                 runOnUiThread(() -> {
                     if (msg.toLowerCase().contains("password is incorrect")) {
@@ -182,9 +183,9 @@ public class StorageManageActivity extends AppCompatActivity {
         try {
             SharedDataHelper.getInstance()
                     .putSharedData(Constants.ANDROID_SHARED_DATA_KEY_ADMIN_PASSWORD, pwd);
-            Log.i(TAG, "管理员密码已更新到本地");
+            AppLog.i(TAG, "管理员密码已更新到本地");
         } catch (Exception e) {
-            Log.w(TAG, "savePassword: " + e.getLocalizedMessage());
+            AppLog.w(TAG, "savePassword: " + e.getLocalizedMessage());
         }
     }
 
@@ -336,7 +337,7 @@ public class StorageManageActivity extends AppCompatActivity {
                     load();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "toggle: " + e.getMessage());
+                AppLog.e(TAG, "toggle: " + e.getMessage());
                 runOnUiThread(() -> toast("操作失败：" + e.getMessage()));
             }
         }, "storage-toggle").start();
@@ -360,7 +361,7 @@ public class StorageManageActivity extends AppCompatActivity {
                     load();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "delete: " + e.getMessage());
+                AppLog.e(TAG, "delete: " + e.getMessage());
                 runOnUiThread(() -> toast("删除失败：" + e.getMessage()));
             }
         }, "storage-delete").start();
@@ -411,7 +412,7 @@ public class StorageManageActivity extends AppCompatActivity {
                             .show();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "edit: " + e.getMessage());
+                AppLog.e(TAG, "edit: " + e.getMessage());
                 runOnUiThread(() -> toast("读取挂载信息失败：" + e.getMessage()));
             }
         }, "storage-edit-load").start();
@@ -426,7 +427,7 @@ public class StorageManageActivity extends AppCompatActivity {
                     load();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "update: " + e.getMessage());
+                AppLog.e(TAG, "update: " + e.getMessage());
                 runOnUiThread(() -> toast("保存失败：" + e.getMessage()));
             }
         }, "storage-update").start();

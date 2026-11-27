@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite.broadcast;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -9,7 +11,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import com.leohao.android.alistlite.MainActivity;
@@ -39,14 +40,14 @@ public class BootCompleteReceiver extends BroadcastReceiver {
                     try {
                         ContextCompat.startForegroundService(context, serviceIntent);
                     } catch (Exception e) {
-                        Log.w("BootCompleteReceiver", "Android 12+ 禁止后台启动前台服务，发送通知提醒用户: " + e.getMessage());
+                        AppLog.w("BootCompleteReceiver", "Android 12+ 禁止后台启动前台服务，发送通知提醒用户: " + e.getMessage());
                         sendBootStartNotification(context);
                     }
                 } else {
                     ContextCompat.startForegroundService(context, serviceIntent);
                 }
             } catch (Exception e) {
-                Log.e("BootCompleteReceiver", "onReceive: " + e.getLocalizedMessage());
+                AppLog.e("BootCompleteReceiver", "onReceive: " + e.getLocalizedMessage());
             }
         }
     }

@@ -2,7 +2,6 @@ package com.leohao.android.alistlite.util;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.leohao.android.alistlite.model.Alist;
 
@@ -72,7 +71,7 @@ public final class ConfigBackupHelper {
         if (count == 0) {
             throw new IOException("没有可导出的配置（服务是否已启动过？）");
         }
-        Log.i(TAG, "exported " + count + " files from " + dataDir);
+        AppLog.i(TAG, "exported " + count + " files from " + dataDir);
         return count;
     }
 
@@ -133,7 +132,7 @@ public final class ConfigBackupHelper {
             }
         }
         deleteRecursively(tmpDir);
-        Log.i(TAG, "imported " + restored + " files into " + dataDir);
+        AppLog.i(TAG, "imported " + restored + " files into " + dataDir);
         return restored;
     }
 

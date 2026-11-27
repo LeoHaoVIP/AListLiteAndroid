@@ -20,6 +20,8 @@ public class AlistLiteApplication extends Application {
         //获取设备型号
         strategy.setDeviceModel(Build.MODEL);
         CrashReport.initCrashReport(getApplicationContext(), strategy);
+        // 串在 Bugly 之后安装：崩溃时先落盘一份（排障包会带上），再交给 Bugly 上报
+        com.leohao.android.alistlite.util.AppLog.installCrashHandler(getApplicationContext());
         // 进程启动就在后台线程准备好数据目录：旧版本用户从外部存储迁移到内部存储时
         // 是一次完整目录拷贝，若等首次调用方（服务启动/配置弹窗）触发会卡住主线程。
         Alist.prepareDataDirInBackground();

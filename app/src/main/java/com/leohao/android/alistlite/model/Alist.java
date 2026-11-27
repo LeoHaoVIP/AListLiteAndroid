@@ -1,12 +1,13 @@
 package com.leohao.android.alistlite.model;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import alistlib.Alistlib;
 import alistlib.Event;
 import alitvlib.Alitvlib;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Looper;
-import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -86,7 +87,7 @@ public class Alist {
             if (dataPath == null) {
                 Context ctx = applicationContext;
                 if (ctx == null) {
-                    Log.w("Alist", "applicationContext is null, this should not happen normally");
+                    AppLog.w("Alist", "applicationContext is null, this should not happen normally");
                     return null;
                 }
                 // 优先使用内部存储，避免原生代码 SELinux 权限问题
@@ -100,10 +101,10 @@ public class Alist {
                     long startAt = System.currentTimeMillis();
                     try {
                         FileHelper.copyDirectory(extDir, intDir);
-                        Log.i("Alist", "数据已从外部存储迁移到内部存储: " + intDir.getAbsolutePath()
+                        AppLog.i("Alist", "数据已从外部存储迁移到内部存储: " + intDir.getAbsolutePath()
                                 + "，耗时 " + (System.currentTimeMillis() - startAt) + "ms");
                     } catch (IOException e) {
-                        Log.w("Alist", "数据迁移失败，沿用外部存储作为数据目录: " + e.getMessage());
+                        AppLog.w("Alist", "数据迁移失败，沿用外部存储作为数据目录: " + e.getMessage());
                         dataPath = extDir.getAbsolutePath();
                         return dataPath;
                     }
@@ -126,7 +127,7 @@ public class Alist {
             try {
                 getInstance().getDataPath();
             } catch (Throwable t) {
-                Log.w("Alist", "数据目录预热失败: " + t);
+                AppLog.w("Alist", "数据目录预热失败: " + t);
             }
         }, "alist-data-prepare").start();
     }
@@ -164,7 +165,7 @@ public class Alist {
             @Override
             public void onStartError(String s, String s1) {
                 String errorMsg = "onStartError: " + s + " " + s1;
-                Log.e("AListServer", errorMsg);
+                AppLog.e("AListServer", errorMsg);
                 Looper.prepare();
                 showToast(errorMsg);
                 Looper.loop();
@@ -191,7 +192,7 @@ public class Alist {
             }
             String log = String.format("%s[%s] %s\r\n\r\n", levelName, DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"), msg);
             appendLog(log);
-            Log.i(AlistService.TAG, log);
+            AppLog.i(AlistService.TAG, log);
         });
     }
 
@@ -445,7 +446,7 @@ public class Alist {
                 }
             }
         } catch (Exception e) {
-            Log.w("Alist", "getLocalAddresses: " + e.getLocalizedMessage());
+            AppLog.w("Alist", "getLocalAddresses: " + e.getLocalizedMessage());
         }
         // 首选 IP 排首位，其余按遍历顺序
         LinkedHashMap<String, String> sorted = new LinkedHashMap<>();

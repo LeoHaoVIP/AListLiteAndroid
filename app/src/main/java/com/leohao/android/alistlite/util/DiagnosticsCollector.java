@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.webkit.WebSettings;
 
 import com.leohao.android.alistlite.model.Alist;
@@ -107,6 +106,9 @@ public class DiagnosticsCollector {
         putEntry(zos, "info.txt", buildInfo(context, alist));
         putEntry(zos, "config.json", buildSanitizedConfig(alist));
         putEntry(zos, "settings.json", buildSanitizedSettings(alist));
+        // App 侧：环形缓冲日志 + 上次崩溃堆栈（logcat 普通应用读不到，只能自己攒）
+        putEntry(zos, "app-log.txt", AppLog.dump());
+        putEntry(zos, "app-crash.txt", AppLog.readLastCrash(context));
         putEntry(zos, "alist.log", buildLogTail());
 
         zos.finish();
@@ -159,6 +161,11 @@ public class DiagnosticsCollector {
         sb.append("interfaces:\n").append(describeInterfaces());
 
         sb.append("\n[挂载]\n").append(describeStorages(context, alist));
+
+        sb.append("\n[日志]\n");
+        sb.append("logcat: 普通应用无读取权限（Android 7+），改用应用内环形缓冲\n");
+        sb.append("app-log.txt / app-crash.txt 为 App 侧日志与上次崩溃堆栈\n");
+        sb.append("alist.log 为 OpenList 服务端日志\n");
 
         sb.append("\n[权限]\n");
         try {
@@ -374,6 +381,6 @@ public class DiagnosticsCollector {
     }
 
     private static void log(String msg) {
-        Log.d(TAG, msg);
+        AppLog.d(TAG, msg);
     }
 }

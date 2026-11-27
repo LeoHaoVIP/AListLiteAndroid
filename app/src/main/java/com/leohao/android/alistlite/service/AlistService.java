@@ -1,5 +1,7 @@
 package com.leohao.android.alistlite.service;
 
+import com.leohao.android.alistlite.util.AppLog;
+
 import android.app.*;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,7 +13,6 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.*;
 import android.service.quicksettings.TileService;
-import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -117,7 +118,7 @@ public class AlistService extends Service {
             } catch (LinkageError e) {
                 // 原生库 libgojni.so 加载失败（UnsatisfiedLinkError 等），通常是设备/系统版本过低不兼容
                 // LinkageError 是 Error 的子类，无法被下方 catch (Exception) 捕获，必须单独处理
-                Log.e(TAG, "原生库加载失败，设备可能不兼容", e);
+                AppLog.e(TAG, "原生库加载失败，设备可能不兼容", e);
                 sendStatusBroadcast(Alist.STATUS_STARTUP_ERROR);
                 // 修正磁贴状态（磁贴 onClick 已预先切换为开启）
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -125,7 +126,7 @@ public class AlistService extends Service {
                 }
                 showToast("当前设备系统版本过低，无法加载 AList 核心组件，服务无法启动");
             } catch (Exception e) {
-                Log.e(TAG, e.getLocalizedMessage());
+                AppLog.e(TAG, e.getLocalizedMessage());
                 // 通知 Activity 启动失败
                 sendStatusBroadcast(Alist.STATUS_STARTUP_ERROR);
                 // 修正磁贴状态（磁贴 onClick 已预先切换为开启）
@@ -142,7 +143,7 @@ public class AlistService extends Service {
                 alistServer.setCachedServerAddress(externalAddress);
                 updateNotification(externalAddress, channelId);
             } catch (IOException e) {
-                Log.e(TAG, "ACTION_UPDATE_ADDRESS: " + e.getMessage());
+                AppLog.e(TAG, "ACTION_UPDATE_ADDRESS: " + e.getMessage());
             }
         }
         return START_STICKY;
@@ -261,7 +262,7 @@ public class AlistService extends Service {
             String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? CHANNEL_ID : "";
             updateNotification(newAddress, channelId);
         } catch (IOException e) {
-            Log.e(TAG, "updateNotificationAddress: " + e.getMessage());
+            AppLog.e(TAG, "updateNotificationAddress: " + e.getMessage());
         }
     }
 
@@ -317,7 +318,7 @@ public class AlistService extends Service {
         } catch (RuntimeException e) {
             // Android 12+ (API 31+) 从后台启动前台服务会被系统拒绝
             // 此处捕获异常，避免因 startForeground() 失败导致应用崩溃
-            Log.w(TAG, "startForeground 失败（可能因后台启动限制）: " + e.getMessage());
+            AppLog.w(TAG, "startForeground 失败（可能因后台启动限制）: " + e.getMessage());
             // 无法作为前台服务运行，释放资源并退出
             if (wakeLock != null) {
                 wakeLock.release();
