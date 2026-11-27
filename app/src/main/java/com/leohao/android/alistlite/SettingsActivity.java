@@ -185,6 +185,9 @@ public class SettingsActivity extends AppCompatActivity {
         list.add(new Item(R.drawable.ic_menu_keepalive, "后台保活",
                 "按当前系统给出自启动与电池优化的设置入口", "去设置",
                 () -> startActivity(new Intent(this, KeepAliveActivity.class))));
+        list.add(new Item(R.drawable.ic_menu_diagnostic, "一键排障包",
+                "收集版本、设备、挂载与日志（已脱敏），反馈问题时直接附上", "生成",
+                this::startDiagnostics));
 
         list.add("备份");
         list.add(new Item(R.drawable.ic_menu_export, "导出配置",
@@ -389,6 +392,26 @@ public class SettingsActivity extends AppCompatActivity {
         } catch (Exception ignored) {
         }
         return null;
+    }
+
+    /**
+     * 一键排障包：收集设备/服务/挂载/日志（脱敏）打包到下载目录
+     */
+    private void startDiagnostics() {
+        toast("正在收集信息…");
+        new Thread(() -> {
+            String message;
+            try {
+                String name = com.leohao.android.alistlite.util.DiagnosticsCollector
+                        .saveToDownloads(this);
+                message = "已生成 " + name + "（下载/AListLite）";
+            } catch (Exception e) {
+                Log.e("SettingsActivity", "diagnostics failed", e);
+                message = "生成失败：" + e.getMessage();
+            }
+            final String text = message;
+            runOnUiThread(() -> toast(text));
+        }, "diagnostics").start();
     }
 
     private void startImport() {
