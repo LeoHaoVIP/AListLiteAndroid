@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 排障包临时文件：发邮件附件用 -->
+    <cache-path name="diag" path="diag/"/>
+</paths>

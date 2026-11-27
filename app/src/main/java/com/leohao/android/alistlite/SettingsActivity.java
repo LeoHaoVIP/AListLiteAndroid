@@ -176,39 +176,39 @@ public class SettingsActivity extends AppCompatActivity {
     private List<Object> buildItems() {
         List<Object> list = new ArrayList<>();
 
-        list.add("存储与权限");
+        list.add("存储");
         list.add(new Item(R.drawable.ic_menu_permission, "权限配置",
-                "查看并开启存储、通知、后台等权限", "去查看",
+                "存储、通知、后台权限", "去查看",
                 () -> startActivity(new Intent(this, PermissionActivity.class))));
         list.add(new Item(R.drawable.ic_menu_diagnostic, "存储诊断",
-                "检查各存储卷能否写入、权限是否生效", "检测",
+                "检查各存储卷能否写入", "检测",
                 () -> startActivity(new Intent(this, StorageDiagnosticActivity.class))));
 
         list.add("服务");
-        list.add(new Item(R.drawable.ic_menu_config, "挂载管理",
-                "查看挂载、启停、删除，改挂载路径与备注（不用进网页）", "管理",
+        list.add(new Item(R.drawable.ic_menu_cloud, "挂载管理",
+                "启停、删除、改路径与备注", "管理",
                 () -> startActivity(new Intent(this, StorageManageActivity.class))));
         list.add(new Item(R.drawable.ic_menu_config, "高级配置",
-                "编辑 config.json：端口、HTTPS、数据库等（改错会导致服务无法启动）", "编辑",
+                "直接编辑 config.json，谨慎修改", "编辑",
                 () -> DialogHelper.showConfigEditor(this)));
         list.add(new Item(R.drawable.ic_menu_keepalive, "后台保活",
-                "按当前系统给出自启动与电池优化的设置入口", "去设置",
+                "自启动与电池优化入口", "去设置",
                 () -> startActivity(new Intent(this, KeepAliveActivity.class))));
-        list.add(new Item(R.drawable.ic_menu_diagnostic, "一键排障包",
-                "收集版本、设备、挂载与日志（已脱敏），反馈问题时直接附上", "生成",
-                this::startDiagnostics));
 
-        list.add("备份");
+        list.add("备份与排查");
         list.add(new Item(R.drawable.ic_menu_export, "导出配置",
-                "把网盘挂载与账号配置打包保存，便于换机", "导出",
+                "打包网盘与账号配置", "导出",
                 this::startExport));
         list.add(new Item(R.drawable.ic_menu_import, "导入配置",
-                "从备份文件恢复配置，会覆盖当前设置", "导入",
+                "从备份恢复，会覆盖当前配置", "导入",
                 this::startImport));
+        list.add(new Item(R.drawable.ic_menu_logs, "一键排障包",
+                "日志与设备信息，自动发邮件", "发送",
+                this::startDiagnostics));
 
         list.add("外观");
-        list.add(new Item(R.drawable.ic_menu_config, "主题色",
-                "按钮、图标与链接的强调色", com.leohao.android.alistlite.util.ThemeHelper.nameOf(this),
+        list.add(new Item(R.drawable.ic_menu_theme, "主题色",
+                "按钮与图标的强调色", com.leohao.android.alistlite.util.ThemeHelper.nameOf(this),
                 this::showAccentPicker));
         return list;
     }
@@ -425,21 +425,62 @@ public class SettingsActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * 一键排障包：收集信息 → 生成 zip → 打开邮件客户端，收件人与附件都已填好
+     */
     private void startDiagnostics() {
-        toast("正在收集信息…");
+        toast("正在打包…");
         new Thread(() -> {
-            String message;
             try {
-                String name = com.leohao.android.alistlite.util.DiagnosticsCollector
-                        .saveToDownloads(this);
-                message = "已生成 " + name + "（下载/AListLite）";
+                java.io.File zip = com.leohao.android.alistlite.util.DiagnosticsCollector
+                        .saveToCache(this);
+                android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(this,
+                        getPackageName() + ".fileprovider", zip);
+                final String name = zip.getName();
+                runOnUiThread(() -> openDiagnosticMail(uri, name));
             } catch (Exception e) {
-                AppLog.e("SettingsActivity", "diagnostics failed", e);
-                message = "生成失败：" + e.getMessage();
+                AppLog.e("SettingsActivity", "diagnostics build failed", e);
+                final String msg = e.getMessage();
+                runOnUiThread(() -> {
+                    toast("打包失败：" + msg);
+                });
             }
-            final String text = message;
-            runOnUiThread(() -> toast(text));
         }, "diagnostics").start();
+    }
+
+    private static final String DEV_EMAIL = "zhaowenhao2867@outlook.com";
+
+    private void openDiagnosticMail(android.net.Uri uri, String fileName) {
+        Intent mail = new Intent(Intent.ACTION_SEND);
+        mail.setType("application/zip");
+        mail.putExtra(Intent.EXTRA_EMAIL, new String[]{DEV_EMAIL});
+        mail.putExtra(Intent.EXTRA_SUBJECT, String.format("AListLite 排障包 v%s (%s)",
+                getVersionName(), android.os.Build.MODEL));
+        mail.putExtra(Intent.EXTRA_TEXT,
+                "以下为自动生成的排障包，附件含设备信息、挂载摘要、日志与最近一次崩溃。\n\n"
+                        + "问题描述：\n");
+        mail.putExtra(Intent.EXTRA_STREAM, uri);
+        // 分享面板需要 clipData 才能把读取权限传给选中的应用，否则附件读不到
+        mail.setClipData(android.content.ClipData.newRawUri(fileName, uri));
+        mail.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(Intent.createChooser(mail, "发送排障包到 " + DEV_EMAIL));
+        } catch (Exception e) {
+            AppLog.w("SettingsActivity", "no mail app: " + e.getLocalizedMessage());
+            // 没有邮件客户端：退回保存到下载目录
+            new Thread(() -> {
+                String message;
+                try {
+                    String saved = com.leohao.android.alistlite.util.DiagnosticsCollector
+                            .saveToDownloads(this);
+                    message = "没有邮件应用，已保存为 " + saved + "（下载/AListLite）";
+                } catch (Exception ex) {
+                    message = "生成失败：" + ex.getMessage();
+                }
+                final String text = message;
+                runOnUiThread(() -> toast(text));
+            }, "diagnostics-fallback").start();
+        }
     }
 
     private void startImport() {

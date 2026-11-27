@@ -96,6 +96,32 @@ public class DiagnosticsCollector {
     }
 
     /**
+     * 生成 zip 到 cacheDir/diag（发邮件附件用，FileProvider 白名单指向这里）
+     */
+    public static File saveToCache(Context context) throws Exception {
+        File dir = new File(context.getCacheDir(), "diag");
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new Exception("无法创建缓存目录");
+        }
+        // 只保留最新一份
+        File[] olds = dir.listFiles();
+        if (olds != null) {
+            for (File f : olds) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+            }
+        }
+        File out = new File(dir, suggestFileName());
+        FileOutputStream os = new FileOutputStream(out);
+        try {
+            os.write(buildZip(context));
+        } finally {
+            os.close();
+        }
+        return out;
+    }
+
+    /**
      * 组装 zip 内容（不落盘，便于以后加「分享」入口）
      */
     public static byte[] buildZip(Context context) throws Exception {
